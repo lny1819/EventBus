@@ -1,8 +1,6 @@
-﻿using YiDian.EventBus.Abstractions;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 
-namespace YiDian.EventBusMQ
+namespace YiDian.EventBus.MQ
 {
     public class RpcClientFactory : IMLRpcClientFactory
     {

@@ -1,4 +1,4 @@
-﻿namespace YiDian.EventBus.Abstractions
+﻿namespace YiDian.EventBus
 {
     public interface IMLRpcClientFactory
     {

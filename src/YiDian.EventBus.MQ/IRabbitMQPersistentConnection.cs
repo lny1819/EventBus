@@ -1,7 +1,7 @@
 ﻿using RabbitMQ.Client;
 using System;
 
-namespace YiDian.EventBusMQ
+namespace YiDian.EventBus.MQ
 {
     public interface IRabbitMQPersistentConnection
         : IDisposable

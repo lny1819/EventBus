@@ -1,8 +1,5 @@
 ﻿using Autofac;
 using Microsoft.Extensions.Logging;
-using YiDian.EventBus;
-using YiDian.EventBus.Abstractions;
-using YiDian.EventBus.Abstractions;
 using Newtonsoft.Json;
 using Polly;
 using RabbitMQ.Client;
@@ -14,10 +11,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
-namespace YiDian.EventBusMQ
+namespace YiDian.EventBus.MQ
 {
 
     public class TopicEventBusMQ : ITopicEventBus, IDisposable
@@ -371,7 +367,7 @@ namespace YiDian.EventBusMQ
                 }
             });
         }
-        List<Task<bool>> DoSubManagerEvents(string eventName, string message, IEventBusSubEventHandler subhandler)
+        List<Task<bool>> DoSubManagerEvents(string eventName, string message, ISubHandler subhandler)
         {
             var lst = subhandler.GetHandlersForEvent(eventName);
             if (!subhandler.HasSubscriptionsForEvent(eventName)) return new List<Task<bool>>();
@@ -384,7 +380,7 @@ namespace YiDian.EventBusMQ
             {
                 if (subscription.IsDynamic)
                 {
-                    hanlerCacheMgr.GetDynamicHandler(subscription.HandlerType, out IDynamicIntegrationEventHandler handler, out ILifetimeScope scope);
+                    hanlerCacheMgr.GetDynamicHandler(subscription.HandlerType, out IDynamicBytesHandler handler, out ILifetimeScope scope);
                     tasks.Add(handler.Handle(message)
                     .ContinueWith(e =>
                     {
@@ -435,7 +431,7 @@ namespace YiDian.EventBusMQ
             _subK.Sub(keyname, typeof(T).FullName);
         }
         public void Subscribe<TH>(string keyname)
-             where TH : IDynamicIntegrationEventHandler
+             where TH : IDynamicBytesHandler
         {
             _subK.SubManager.AddDynamicSubscription<TH>(keyname);
             if (keyname.ToLower() == "ml_topic_all_event")
@@ -482,7 +478,7 @@ namespace YiDian.EventBusMQ
             _subK.SubManager.RemoveSubscription<T, TH>();
         }
 
-        public void Unsubscribe<TH>(string eventName) where TH : IDynamicIntegrationEventHandler
+        public void Unsubscribe<TH>(string eventName) where TH : IDynamicBytesHandler
         {
             _subK.SubManager.RemoveDynamicSubscription<TH>(eventName);
         }

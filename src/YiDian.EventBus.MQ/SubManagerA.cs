@@ -1,12 +1,10 @@
-﻿using YiDian.EventBus.Abstractions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using static YiDian.EventBus.FastInvoke;
 
 namespace YiDian.EventBus
 {
-    public class SubManagerA : IEventBusSubEventHandler
+    public class SubManagerA : ISubHandler
     {
         public bool IsEmpty => !_keyTypes.Any();
 

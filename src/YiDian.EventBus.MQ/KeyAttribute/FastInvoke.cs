@@ -8,9 +8,6 @@ namespace YiDian.EventBus.MQ.KeyAttribute
 {
     public class FastInvoke
     {
-        public delegate object FastInvokeHandler(object target, object[] paramters);
-        public delegate void SetValueDelegate(object target, object arg);
-        private delegate void VoidMethodExecutor(object target, object[] parameters);
 
         static object InvokeMethod(FastInvokeHandler invoke, object target, params object[] paramters)
         {

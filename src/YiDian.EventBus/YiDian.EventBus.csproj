@@ -14,7 +14,4 @@
     <PackageId>YiDian.EventBus</PackageId>
   </PropertyGroup>
 
-  <ItemGroup>
-  </ItemGroup>
-
 </Project>

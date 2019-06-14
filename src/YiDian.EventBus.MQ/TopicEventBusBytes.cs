@@ -1,8 +1,5 @@
 ﻿using Autofac;
 using Microsoft.Extensions.Logging;
-using YiDian.EventBus;
-using YiDian.EventBus.Abstractions;
-using YiDian.EventBus.Abstractions;
 using Polly;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -14,7 +11,7 @@ using System.Linq.Expressions;
 using System.Net.Sockets;
 using System.Text;
 
-namespace YiDian.EventBusMQ
+namespace YiDian.EventBus.MQ
 {
     public class TopicEventBusBytes : ITopicEventBusBbytes, IDisposable
     {

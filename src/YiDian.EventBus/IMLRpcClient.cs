@@ -1,7 +1,7 @@
 ﻿
 using System;
 
-namespace YiDian.EventBus.Abstractions
+namespace YiDian.EventBus
 {
     /// <summary>
     /// 美林MQ RPC客户端

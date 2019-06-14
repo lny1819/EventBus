@@ -1,7 +1,7 @@
 ﻿
 using System.Threading.Tasks;
 
-namespace YiDian.EventBus.Abstractions
+namespace YiDian.EventBus
 {
     public interface IIntegrationEventHandler<in TIntegrationEvent> : IIntegrationEventHandler 
         where TIntegrationEvent: IntegrationMQEvent

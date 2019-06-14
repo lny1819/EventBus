@@ -1,5 +1,4 @@
 ﻿using System;
-using static YiDian.EventBus.FastInvoke;
 
 namespace YiDian.EventBus
 {
@@ -16,9 +15,9 @@ namespace YiDian.EventBus
             Handler = handler;
         }
 
-        public static SubscriptionInfo Dynamic(Type handlerType)
+        public static SubscriptionInfo Dynamic(Type handlerType, FastInvokeHandler handler)
         {
-            return new SubscriptionInfo(true, handlerType, null);
+            return new SubscriptionInfo(true, handlerType, handler);
         }
         public static SubscriptionInfo Typed(Type handlerType, FastInvokeHandler handler)
         {

@@ -1,7 +1,5 @@
 ﻿using Autofac;
 using Microsoft.Extensions.Logging;
-using YiDian.EventBus;
-using YiDian.EventBus.Abstractions;
 using Newtonsoft.Json;
 using Polly;
 using RabbitMQ.Client;
@@ -13,40 +11,77 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
-using YiDian.EventBus.Abstractions;
+using System.Collections.Concurrent;
+using System.Threading;
 
-namespace YiDian.EventBusMQ
+namespace YiDian.EventBus.MQ
 {
-    public class EventBusRabbitMQ : IEventBus, IDisposable
+    public class DirectEventBus : IEventBus, IDisposable
     {
-        const string BROKER_NAME = "ml_trade_event_bus";
-        const string AUTOFAC_SCOPE_NAME = "ml_trade_event_bus";
+        protected string BROKER_NAME = "amq.direct";
+        protected string AUTOFAC_SCOPE_NAME = "DirectEventBus";
 
         private readonly IRabbitMQPersistentConnection _persistentConnection;
-        private readonly ILogger _logger;
         private readonly IEventBusSubscriptionsManager _subsManager;
-        private readonly int _retryCount;
-
-        private IModel _consumerChannel;
-        IModel _pubChannel;
-        private string _queueName;
-        private bool _autoAck;
         private readonly EventHanlerCacheMgr hanlerCacheMgr;
+        IModel _pubChannel;
         readonly IQpsCounter _counter;
+        readonly int _retryCount;
+        readonly ILogger<DirectEventBus> _logger;
+        readonly List<ConsumerConfig> consumerInfos;
+        readonly ConcurrentQueue<BasicDeliverEventArgs> __processQueue;
 
-        public event Action<AggregateException> ProcessException;
-
-        public EventBusRabbitMQ(IRabbitMQPersistentConnection persistentConnection, ILogger logger, ILifetimeScope autofac, IEventBusSubscriptionsManager subsManager, IQpsCounter counter, int retryCount = 5)
+        public DirectEventBus(IRabbitMQPersistentConnection persistentConnection, ILogger<DirectEventBus> logger, ILifetimeScope autofac, IEventBusSubscriptionsManager subsManager, IQpsCounter counter, int retryCount = 5, int cacheCount = 100)
         {
             _persistentConnection = persistentConnection ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
+            _persistentConnection.OnConnectRecovery += _persistentConnection_OnConnectRecovery;
             _logger = logger ?? throw new ArgumentNullException(nameof(ILogger));
+
+            __processQueue = new ConcurrentQueue<BasicDeliverEventArgs>();
             _subsManager = subsManager ?? new InMemoryEventBusSubscriptionsManager();
-            _counter = counter ?? throw new ArgumentNullException(nameof(IQpsCounter));
-            hanlerCacheMgr = new EventHanlerCacheMgr(100, autofac, AUTOFAC_SCOPE_NAME);
-            _retryCount = retryCount;
             _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
+            consumerInfos = new List<ConsumerConfig>();
+            _counter = counter ?? throw new ArgumentNullException(nameof(IQpsCounter));
+            hanlerCacheMgr = new EventHanlerCacheMgr(cacheCount, autofac, AUTOFAC_SCOPE_NAME);
+            _retryCount = retryCount;
             CreatePublishChannel();
         }
+
+        private void _persistentConnection_OnConnectRecovery(object sender, EventArgs e)
+        {
+            foreach (var consumerinfo in consumerInfos)
+            {
+                BeginConsumer(consumerinfo);
+            }
+        }
+        private void BeginConsumer(ConsumerConfig config)
+        {
+            if (!config.TryOpen()) return;
+            var consumer = new EventingBasicConsumer(config.Channel);
+            consumer.Received += (model, ea) =>
+            {
+                __processQueue.Enqueue(ea);
+                CheckQueue("processQueue");
+            };
+            config.Channel.BasicConsume(queue: config.Name, autoAck: config.AutoAck, consumer: consumer);
+        }
+
+        private void CheckQueue(string queue)
+        {
+            if (__processQueue.Count > 10000)
+                Thread.Sleep(30);
+            else if (__processQueue.Count > 20000)
+            {
+                Thread.Sleep(1000);
+                _logger.LogWarning($"queue:{queue} length bigger then {20000}");
+            }
+            else if (__processQueue.Count > 30000)
+            {
+                Thread.Sleep(5000);
+                _logger.LogWarning($"queue:{queue} length bigger then {30000}");
+            }
+        }
+
         public void EnableHandlerCache(int cacheLength)
         {
             hanlerCacheMgr.CacheLength = cacheLength;
@@ -57,13 +92,18 @@ namespace YiDian.EventBusMQ
             {
                 _persistentConnection.TryConnect();
             }
-
+            var queueName = GetEventConsumerQueue(eventName);
             using (var channel = _persistentConnection.CreateModel())
             {
-                channel.QueueUnbind(queue: _queueName,
+                channel.QueueUnbind(queue: queueName,
                     exchange: BROKER_NAME,
                     routingKey: eventName);
             }
+        }
+
+        private string GetEventConsumerQueue(string eventName)
+        {
+            throw new NotImplementedException();
         }
 
         void CreatePublishChannel()
@@ -76,7 +116,6 @@ namespace YiDian.EventBusMQ
                 }
                 //_pubChannel.ConfirmSelect();
                 _pubChannel = _persistentConnection.CreateModel();
-                _pubChannel.ExchangeDeclare(exchange: BROKER_NAME, type: "direct", durable: true, autoDelete: false);
                 _pubChannel.CallbackException += (sender, ea) =>
                 {
                     _pubChannel.Dispose();
@@ -85,27 +124,15 @@ namespace YiDian.EventBusMQ
                 };
             }
         }
-        public void Publish<T>(T @event) where T : IntegrationMQEvent
+        public void Publish<T>(T @event, bool enableTx) where T : IntegrationMQEvent
         {
-            ThreadChannels<IntegrationMQEvent>.Current.QueueWorkItemInternal((e) =>
-            {
-                var policy = Policy.Handle<BrokerUnreachableException>()
-                    .Or<SocketException>()
-                    .WaitAndRetry(_retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
-                    {
-                        _logger.LogWarning($"Publish error {ex.Message} , now  try publish again");
-                    });
-                var eventName = e.GetType().FullName.ToLower();
-                var message = JsonConvert.SerializeObject(e);
-                var body = Encoding.UTF8.GetBytes(message);
-                policy.Execute(() =>
-                {
-                    _pubChannel.BasicPublish(exchange: BROKER_NAME, routingKey: eventName, basicProperties: null, body: body);
-                });
-            }, @event);
+            var eventName = _subsManager.GetEventKey<T>();
+            var message = JsonConvert.SerializeObject(@event);
+            var body = Encoding.UTF8.GetBytes(message);
+            _pubChannel.BasicPublish(exchange: BROKER_NAME, routingKey: eventName, basicProperties: null, body: body);
         }
         public void SubscribeDynamic<TH>(string eventName)
-            where TH : IDynamicIntegrationEventHandler
+            where TH : IDynamicBytesHandler
         {
             DoInternalSubscription(eventName);
             _subsManager.AddDynamicSubscription<TH>(eventName);
@@ -145,7 +172,7 @@ namespace YiDian.EventBusMQ
         }
 
         public void UnsubscribeDynamic<TH>(string eventName)
-            where TH : IDynamicIntegrationEventHandler
+            where TH : IDynamicBytesHandler
         {
             _subsManager.RemoveDynamicSubscription<TH>(eventName);
         }
@@ -191,19 +218,6 @@ namespace YiDian.EventBusMQ
             _consumerChannel = channel;
             if (!isInit) BeginConsumer();
         }
-
-        private void BeginConsumer()
-        {
-            var consumer = new EventingBasicConsumer(_consumerChannel);
-            consumer.Received += (model, ea) =>
-            {
-                ThreadChannels<BasicDeliverEventArgs>.Current.QueueWorkItemInternal((e) =>
-                {
-                    ProcessEvent(e);
-                }, ea);
-            };
-            _consumerChannel.BasicConsume(queue: _queueName, autoAck: _autoAck, consumer: consumer);
-        }
         private void ProcessEvent(BasicDeliverEventArgs ea)
         {
             var eventName = ea.RoutingKey;
@@ -219,7 +233,7 @@ namespace YiDian.EventBusMQ
             {
                 if (subscription.IsDynamic)
                 {
-                    hanlerCacheMgr.GetDynamicHandler(subscription.HandlerType, out IDynamicIntegrationEventHandler handler, out ILifetimeScope scope);
+                    hanlerCacheMgr.GetDynamicHandler(subscription.HandlerType, out IDynamicBytesHandler handler, out ILifetimeScope scope);
                     tasks.Add(handler.Handle(message).ContinueWith(e =>
                     {
                         var flag = ProcessExceptionHandler(e);
@@ -260,6 +274,8 @@ namespace YiDian.EventBusMQ
         }
         public void StartConsumer(string queueName, Action<IEventBus> action, ushort fetchCount, int queueLength, bool autodel, bool durable, bool autoAck)
         {
+            var config = consumerInfos.Find(x => x.Name == queueName);
+            if (config != null) return;
             if (!string.IsNullOrEmpty(queueName))
             {
                 _autoAck = autoAck;

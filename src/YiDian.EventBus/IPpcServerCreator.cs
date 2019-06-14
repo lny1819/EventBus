@@ -1,7 +1,6 @@
-﻿using YiDian.EventBus.Abstractions;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
-namespace YiDian.EventBus.Abstractions
+namespace YiDian.EventBus
 {
     public interface IPpcServerCreator
     {

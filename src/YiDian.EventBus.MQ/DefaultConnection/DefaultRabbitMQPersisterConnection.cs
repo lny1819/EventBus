@@ -7,7 +7,7 @@ using System;
 using System.IO;
 using System.Net.Sockets;
 
-namespace YiDian.EventBusMQ.DefaultConnection
+namespace YiDian.EventBus.MQ.DefaultConnection
 {
     public class DefaultRabbitMQPersistentConnection
        : IRabbitMQPersistentConnection
@@ -103,7 +103,7 @@ namespace YiDian.EventBusMQ.DefaultConnection
 
         private void _connection_ConnectionRecoveryError(object sender, ConnectionRecoveryErrorEventArgs e)
         {
-            _logger.LogInformation("A RabbitMQ Connection RecoveryError");
+            _logger.LogWarning("A RabbitMQ Connection RecoveryError");
         }
 
         private void _connection_RecoverySucceeded(object sender, EventArgs e)
@@ -115,7 +115,6 @@ namespace YiDian.EventBusMQ.DefaultConnection
         private void OnConnectionBlocked(object sender, ConnectionBlockedEventArgs e)
         {
             if (_disposed) return;
-
             _logger.LogWarning("A RabbitMQ connection is shutdown. Trying to re-connect...");
 
         }

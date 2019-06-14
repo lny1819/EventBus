@@ -1,11 +1,9 @@
-﻿using YiDian.EventBus.Abstractions;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Text;
-using YiDian.EventBus;
 using System.Runtime.CompilerServices;
 
-namespace YiDian.EventBusMQ
+namespace YiDian.EventBus.MQ
 {
     public class MLRpcClient : IMLRpcClient
     {

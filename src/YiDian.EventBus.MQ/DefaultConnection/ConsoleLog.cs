@@ -1,25 +1,25 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 
-namespace YiDian.EventBusMQ.DefaultConnection
+namespace YiDian.EventBus.MQ.DefaultConnection
 {
-    public class ConsoleLog : ILogger, IDisposable
+    internal class ConsoleLog : ILogger, IDisposable
     {
-        private string format<T>(T msg, Exception ex)
+        private string __format<T>(T msg, Exception ex)
         {
             return msg.ToString() + ex.ToString();
         }
         public void LogWarning(string msg)
         {
-            Log(LogLevel.Warning, new EventId(), msg, null, format);
+            Log(LogLevel.Warning, new EventId(), msg, null, __format);
         }
         public void LogCritical(string msg)
         {
-            Log(LogLevel.Critical, new EventId(), msg, null, format);
+            Log(LogLevel.Critical, new EventId(), msg, null, __format);
         }
         public void LogInformation(string msg)
         {
-            Log(LogLevel.Information, new EventId(), msg, null, format);
+            Log(LogLevel.Information, new EventId(), msg, null, __format);
         }
         string _tag = "{0}: ";
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)

@@ -1,11 +1,8 @@
-﻿
-using YiDian.EventBus;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using static YiDian.EventBus.FastInvoke;
 
-namespace YiDian.EventBusMQ
+namespace YiDian.EventBus.MQ
 {
     public class TypeEventBusMetas
     {

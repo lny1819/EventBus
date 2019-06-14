@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace YiDian.EventBus.Abstractions
+namespace YiDian.EventBus
 {
     public class RpcServerConfig
     {

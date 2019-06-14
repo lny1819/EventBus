@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace YiDian.EventBusMQ
+namespace YiDian.EventBus.MQ
 {
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = true, Inherited = true)]
     public class KeyIndexAttribute : Attribute

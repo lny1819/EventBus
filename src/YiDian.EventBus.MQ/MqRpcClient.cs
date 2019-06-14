@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using YiDian.EventBus.Abstractions;
-using YiDian.EventBus.Abstractions;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
@@ -8,7 +6,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace YiDian.EventBusMQ
+namespace YiDian.EventBus.MQ
 {
     public class MqRpcClient : IRpcClient
     {

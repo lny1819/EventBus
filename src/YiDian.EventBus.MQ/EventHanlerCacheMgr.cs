@@ -1,10 +1,8 @@
 ﻿using Autofac;
-using YiDian.EventBus.Abstractions;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 
-namespace YiDian.EventBusMQ
+namespace YiDian.EventBus.MQ
 {
     internal class EventHanlerCacheMgr
     {
@@ -16,7 +14,7 @@ namespace YiDian.EventBusMQ
             _lifeName = lifeName;
             CacheLength = length;
         }
-        readonly ConcurrentDictionary<Type, ConcurrentStack<IDynamicIntegrationEventHandler>> dynamicDics = new ConcurrentDictionary<Type, ConcurrentStack<IDynamicIntegrationEventHandler>>();
+        readonly ConcurrentDictionary<Type, ConcurrentStack<IDynamicBytesHandler>> dynamicDics = new ConcurrentDictionary<Type, ConcurrentStack<IDynamicBytesHandler>>();
         readonly ConcurrentDictionary<Type, ConcurrentStack<IIntegrationEventHandler>> typeDics = new ConcurrentDictionary<Type, ConcurrentStack<IIntegrationEventHandler>>();
 
         public int CacheLength { get; set; }
@@ -28,20 +26,20 @@ namespace YiDian.EventBusMQ
         /// <param name="handler"></param>
         /// <param name="scope"></param>
         /// <returns>是否是从缓存中获取</returns>
-        public bool GetDynamicHandler(Type type, out IDynamicIntegrationEventHandler handler, out ILifetimeScope scope)
+        public bool GetDynamicHandler(Type type, out IDynamicBytesHandler handler, out ILifetimeScope scope)
         {
             scope = null;
             if (CacheLength == 0)
             {
                 scope = _autofac.BeginLifetimeScope(_lifeName);
-                handler = scope.ResolveOptional(type) as IDynamicIntegrationEventHandler;
+                handler = scope.ResolveOptional(type) as IDynamicBytesHandler;
                 return false;
             }
             if (!dynamicDics.ContainsKey(type))
             {
                 lock (dynamicDics)
                 {
-                    if (!dynamicDics.ContainsKey(type)) dynamicDics.TryAdd(type, new ConcurrentStack<IDynamicIntegrationEventHandler>());
+                    if (!dynamicDics.ContainsKey(type)) dynamicDics.TryAdd(type, new ConcurrentStack<IDynamicBytesHandler>());
                 }
             }
             var stack = dynamicDics[type];
@@ -49,11 +47,11 @@ namespace YiDian.EventBusMQ
             if (!flag)
             {
                 scope = _autofac.BeginLifetimeScope(_lifeName);
-                handler = scope.ResolveOptional(type) as IDynamicIntegrationEventHandler;
+                handler = scope.ResolveOptional(type) as IDynamicBytesHandler;
             }
             return flag;
         }
-        public void ResteDymaicHandler(IDynamicIntegrationEventHandler handler, Type type, ILifetimeScope scope)
+        public void ResteDymaicHandler(IDynamicBytesHandler handler, Type type, ILifetimeScope scope)
         {
             if (CacheLength == 0)
             {

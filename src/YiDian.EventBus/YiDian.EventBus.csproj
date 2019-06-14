@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <RootNamespace>YiDian.EventBus</RootNamespace>
+    <AssemblyName>YiDian.EventBus</AssemblyName>
+    <Version>2.1.5.9</Version>
+    <Company></Company>
+    <Product>YiDian.EventBus</Product>
+    <Copyright></Copyright>
+    <Description></Description>
+    <Authors>yidianer</Authors>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>YiDian.EventBus</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+  </ItemGroup>
+
+</Project>

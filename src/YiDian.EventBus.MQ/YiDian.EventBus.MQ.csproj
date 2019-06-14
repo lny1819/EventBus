@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <RootNamespace>YiDian.EventBus.MQ</RootNamespace>
+    <AssemblyName>YiDian.EventBus.MQ</AssemblyName>
+    <Version>2.1.5.15</Version>
+    <Company>郑州高信达软件开发有限公司</Company>
+    <Product>消息总线</Product>
+    <Copyright>@郑州高信达</Copyright>
+    <Description>消息总线MQ实现</Description>
+    <Authors>yidianer</Authors>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageReleaseNotes>元数据读取修改</PackageReleaseNotes>
+    <AssemblyVersion>2.1.5.11</AssemblyVersion>
+    <FileVersion>2.1.5.11</FileVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <LangVersion>7.1</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <LangVersion>7.1</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autofac" Version="4.9.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.2.0" />
+    <PackageReference Include="RabbitMQ.Client" Version="5.1.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Include="Polly" Version="7.1.0" />
+    <PackageReference Include="System.Reflection.Emit.ILGeneration" Version="4.3.0" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
+    <PackageReference Include="System.Threading.Channels" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\YiDian.EventBus\YiDian.EventBus.csproj" />
+  </ItemGroup>
+
+</Project>

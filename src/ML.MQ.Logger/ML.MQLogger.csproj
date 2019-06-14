@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+
+    <Version>2.1.5.3</Version>
+    <Company>郑州高信达软件开发有限公司</Company>
+    <Product>消息总线</Product>
+    <Copyright>@郑州高信达</Copyright>
+    <Description>基于MQ的日志系统</Description>
+    <Authors>yidianer</Authors>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autofac" Version="4.8.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Logmodel\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ML.MQ.PersisterConnection\ML.MQ.PersisterConnection.csproj" />
+  </ItemGroup>
+
+</Project>

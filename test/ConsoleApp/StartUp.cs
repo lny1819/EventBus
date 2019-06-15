@@ -41,7 +41,7 @@ namespace ConsoleApp
                         direct.Publish(a);
                         qps.Add("i");
                     }
-                    Thread.Sleep(300);
+                    Thread.Sleep(150);
                 }
             });
         }
@@ -54,16 +54,11 @@ namespace ConsoleApp
     public class MyHandler : IIntegrationEventHandler<MqA>
     {
         public IQpsCounter Counter { get; set; }
-        public ValueTask<bool> Handle(MqA @event)
+        public Task<bool> Handle(MqA @event)
         {
             Counter.Add("m");
-            //return new ValueTask<bool>(true);
-            var t = Task.Run(() =>
-             {
-                 Thread.Sleep(1);
-                 return true;
-             });
-            return new ValueTask<bool>(t);
+            return Task.Run(() => true);
+            //return Task.FromResult(true);
         }
     }
     public class MyAwait : ICriticalNotifyCompletion, IAsyncResult

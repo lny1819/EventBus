@@ -279,9 +279,9 @@ namespace YiDian.EventBus.MQ
                 {
                     var integrationEvent = DeserializeObject(ea.Body, subinfo.EventType);
                     hanlerCacheMgr.GetIIntegrationEventHandler(subinfo.HandlerType, out IIntegrationEventHandler handler, out ILifetimeScope scope);
-                    var task = (ValueTask<bool>)subinfo.Handler(handler, new object[] { integrationEvent });
+                    var task = (Task<bool>)subinfo.Handler(handler, new object[] { integrationEvent });
                     if (!task.IsCompleted)
-                        await task.AsTask().ContinueWith(x =>
+                        await task.ContinueWith(x =>
                         {
                             hanlerCacheMgr.ResteTypeHandler(handler, subinfo.HandlerType, scope);
                             if (x.Status == TaskStatus.Faulted) _logger.LogError(x.Exception.ToString());

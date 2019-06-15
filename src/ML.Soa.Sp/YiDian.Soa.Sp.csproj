@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <AssemblyName>YiDian.Soa.Sp</AssemblyName>
+    <RootNamespace>YiDian.Soa.Sp</RootNamespace>
+    <Version>2.1.5.28</Version>
+    <Company>郑州高信达软件开发有限公司</Company>
+    <Product>SOA集成框架</Product>
+    <Copyright>@郑州高信达</Copyright>
+    <Description>SOA集成框架</Description>
+    <Authors>yidianer</Authors>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <AssemblyVersion>2.1.5.26</AssemblyVersion>
+    <FileVersion>2.1.5.26</FileVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\YiDian.EventBus.MQ\YiDian.EventBus.MQ.csproj" />
+  </ItemGroup>
+
+</Project>

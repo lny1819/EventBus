@@ -3,10 +3,7 @@ using System;
 
 namespace YiDian.EventBus
 {
-    /// <summary>
-    /// 美林MQ RPC客户端
-    /// </summary>
-    public interface IMLRpcClient
+    public interface IMQRpcClient
     {
         string ServerName { get; }
         ResponseBase<TOut> Call<TOut, Tin>(string uri, Tin data);

@@ -1,7 +1,7 @@
 ﻿namespace YiDian.EventBus
 {
-    public interface IMLRpcClientFactory
+    public interface IMqRpcClientFactory
     {
-        IMLRpcClient Create(string serverId);
+        IMQRpcClient Create(string serverId);
     }
 }

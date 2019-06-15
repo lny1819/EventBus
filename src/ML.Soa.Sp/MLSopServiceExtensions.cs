@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
-using ML.EventBus.Abstractions;
 using System;
+using YiDian.EventBus;
 
-namespace ML.Soa.Sp
+namespace YiDian.Soa.Sp
 {
     public static class MLSopServiceBuilderExtensions
     {

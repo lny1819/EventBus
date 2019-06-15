@@ -29,7 +29,7 @@ namespace YiDian.EventBus.MQ
         readonly List<ConsumerConfig<IDirectEventBus, DirectSubscriber>> consumerInfos;
         readonly ConcurrentQueue<QueueItem<IDirectEventBus, DirectSubscriber>> __processQueue;
 
-        public DirectEventBus(IRabbitMQPersistentConnection persistentConnection, ILogger<IEventBus> logger, ILifetimeScope autofac, IEventBusSubscriptionsManagerFactory factory, int retryCount = 5, int cacheCount = 100)
+        public DirectEventBus(ILogger<IEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection = null, IEventBusSubscriptionsManagerFactory factory = null, int retryCount = 5, int cacheCount = 100)
         {
             _persistentConnection = persistentConnection ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
             _persistentConnection.OnConnectRecovery += _persistentConnection_OnConnectRecovery;

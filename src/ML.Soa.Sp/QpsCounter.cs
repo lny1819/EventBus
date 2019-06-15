@@ -1,13 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
-using ML.Fulturetrade.EventBus.Abstractions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using YiDian.EventBus;
 
-namespace ML.Soa.Sp
+namespace YiDian.Soa.Sp
 {
     /// <summary>
     /// 最多支持14个计数的计数器

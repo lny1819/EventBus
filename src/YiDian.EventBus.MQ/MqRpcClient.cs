@@ -1,150 +1,77 @@
-﻿using Microsoft.Extensions.Logging;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
+﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Threading;
+using System.Text;
+using System.Runtime.CompilerServices;
 
 namespace YiDian.EventBus.MQ
 {
-    public class MqRpcClient : IRpcClient
+    public class MQRpcClient : IMQRpcClient
     {
-        public const string BROKER_NAME = "ml_rpc_event_bus";
-        readonly IRabbitMQPersistentConnection _persistentConnection;
-        readonly ConcurrentDictionary<long, CallMeta> methodPoll;
-        readonly string _clientName;
-        readonly IQpsCounter _qps;
-
-        IModel _consumerchannel;
-        public MqRpcClient(IRabbitMQPersistentConnection rabbitMQPersistentConnection, string clientName, ILogger logger, IQpsCounter counter, int timeOut = 10)
+        IRpcClient mqRpc;
+        public string ServerName { get; }
+        public MQRpcClient(string serverName, IRpcClient client)
         {
-            TimeOut = timeOut;
-            _clientName = clientName ?? throw new ArgumentNullException(nameof(clientName));
-            _qps = counter ?? throw new ArgumentNullException(nameof(IQpsCounter));
-            _persistentConnection = rabbitMQPersistentConnection ?? throw new ArgumentNullException(nameof(rabbitMQPersistentConnection));
-            methodPoll = new ConcurrentDictionary<long, CallMeta>();
-            CreateConsumerChannel();
+            mqRpc = client;
+            ServerName = serverName.ToLower();
+            Encode = Encoding.UTF8;
+            //Hand();
         }
-        public int TimeOut { get; }
-        private string CreateServerKey(string serverName)
+        public event Action ConnectionError;
+        public Encoding Encode { get; set; }
+        public bool IsConnect { get; set; }
+        public ResponseBase<TOut> Call<TOut, Tin>(string uri, Tin data)
         {
-            if (serverName.IndexOf(".") > -1)
+            var bytes = Encode.GetBytes(ToJson(data));
+            return Call<TOut>(uri, bytes);
+        }
+        static DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long ToUnixTimestamp(DateTime dateTime)
+        {
+            return Convert.ToInt64((dateTime.ToUniversalTime() - start).TotalSeconds);
+        }
+        public string ToJson(object o)
+        {
+            if (o == null) return "";
+            string value;
+            var type = o.GetType();
+            if (type == typeof(String))
             {
-                serverName.Replace('.', '_');
+                value = o.ToString();
             }
-            return serverName + ".";
+            else if (type.IsEnum) value = ((int)o).ToString();
+            else if (type.IsValueType) value = o.ToString();
+            else value = JsonConvert.SerializeObject(o);
+            return value;
         }
-
-        private void CreateConsumerChannel()
+        public ResponseBase<T> Call<T>(string uri)
         {
-            if (_consumerchannel != null && !_consumerchannel.IsClosed) return;
-            if (!_persistentConnection.IsConnected)
+            return Call<T>(uri, new byte[0]);
+        }
+        private ResponseBase<T> Call<T>(string uri, byte[] data)
+        {
+            var now = BitConverter.GetBytes(ToUnixTimestamp(DateTime.Now));
+            var newdata = new byte[data.Length + now.Length];
+            Buffer.BlockCopy(now, 0, newdata, 0, now.Length);
+            Buffer.BlockCopy(data, 0, newdata, now.Length, data.Length);
+            var d = mqRpc.Request(ServerName, uri, newdata);
+            if (d == null)
             {
-                _persistentConnection.TryConnect();
+                //Hand();
+                return new ResponseBase<T>() { ServerState = -1, ServerMsg = "请求已超时" };
             }
-            var dic = new Dictionary<string, object>
-            {
-                //消费队列最大消息数量
-                ["x-max-length"] = 20000
-            };
-            var channel = _persistentConnection.CreateModel();
-            channel.QueueDeclare(_clientName, false, true, true, dic);
-            channel.BasicQos(0, 200, false);
-            channel.CallbackException += (sender, ea) =>
-            {
-                _consumerchannel.Dispose();
-                _consumerchannel = null;
-                CreateConsumerChannel();
-            };
-            _consumerchannel = channel;
-            StartConsumer();
-        }
-        private void StartConsumer()
-        {
-            var consumer = new EventingBasicConsumer(_consumerchannel);
-            consumer.Received += (e, o) =>
-            {
-                if (long.TryParse(o.BasicProperties.CorrelationId, out long id))
-                {
-                    var flag = methodPoll.TryGetValue(id, out CallMeta meta);
-                    if (flag)
-                    {
-                        meta.Result = o.Body;
-                        meta.Reset();
-                    }
-                }
-            };
-            _consumerchannel.BasicConsume(_clientName, true, consumer);
-        }
-        public byte[] Request(string serverId, string uri, byte[] data)
-        {
-            var id = CreateServerKey(serverId).ToLower();
-            var callmeta = new CallMeta();
-            AddToMethodPool(callmeta);
-            var props = _consumerchannel.CreateBasicProperties();
-            props.CorrelationId = callmeta.MethodId.ToString();
-            props.ReplyTo = _clientName;
-            _consumerchannel.BasicPublish(BROKER_NAME, routingKey: id + uri, basicProperties: props, body: data);
-            callmeta.Wait(TimeOut);
-            return GetMethodResult(callmeta.MethodId);
+            var res = JsonConvert.DeserializeObject(Encode.GetString(d), typeof(ResponseBase<T>));
+            return res as ResponseBase<T>;
         }
 
-        private void AddToMethodPool(CallMeta callmeta)
+        private void Hand()
         {
-            methodPoll.AddOrUpdate(callmeta.MethodId, callmeta, (x, y) => callmeta);
-        }
-
-        private byte[] GetMethodResult(long methodid)
-        {
-            var flag = methodPoll.TryRemove(methodid, out CallMeta meta);
-            if (!flag) return null;
-            var span = DateTime.Now - meta.InTime;
-            if (span.TotalSeconds > TimeOut) return null;
-            return meta.Result;
-        }
-
-        private class CallMeta : IDisposable
-        {
-            static long callid = 0;
-            object async = new object();
-            private AutoResetEvent autoEvent;
-            public CallMeta()
+            if (Call<string>("_hand", new byte[0]).ServerState != 0)
             {
-                autoEvent = new AutoResetEvent(false);
-                MethodId = Interlocked.Increment(ref callid);
-                InTime = DateTime.Now;
+                ConnectionError?.Invoke();
+                IsConnect = false;
             }
-            public long MethodId { get; }
-            public DateTime InTime { get; }
-            public byte[] Result { get; set; }
-            public void Dispose()
-            {
-                if (autoEvent != null) autoEvent.Dispose();
-                autoEvent = null;
-            }
-
-            public void Reset()
-            {
-                lock (async)
-                {
-                    if (autoEvent != null)
-                    {
-                        autoEvent.Set();
-                        autoEvent.Dispose();
-                    }
-                    autoEvent = null;
-                }
-            }
-
-            internal void Wait(int timeOut)
-            {
-                lock (async)
-                {
-                    if (autoEvent == null) return;
-                }
-                autoEvent.WaitOne(timeOut * 1000);
-            }
+            else IsConnect = true;
         }
     }
 }

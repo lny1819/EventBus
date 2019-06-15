@@ -1,13 +1,11 @@
 ﻿using Autofac;
 using Microsoft.Extensions.Logging;
-using ML.EventBus;
-using ML.EventBus.Abstractions;
-using ML.EventBusMQ;
-using ML.Fulturetrade.EventBus.Abstractions;
 using System;
 using System.Threading.Tasks;
+using YiDian.EventBus;
+using YiDian.EventBus.MQ;
 
-namespace ML.Soa.Sp
+namespace YiDian.Soa.Sp
 {
     public class RpcServerCreator
     {

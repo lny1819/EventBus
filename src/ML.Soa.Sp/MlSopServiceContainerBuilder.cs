@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ML.Soa.Sp
+namespace YiDian.Soa.Sp
 {
 
     public class MlSopServiceContainerBuilder : ISoaServiceContainerBuilder

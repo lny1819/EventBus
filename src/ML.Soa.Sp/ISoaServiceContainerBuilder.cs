@@ -1,4 +1,4 @@
-﻿namespace ML.Soa.Sp
+﻿namespace YiDian.Soa.Sp
 {
 
     public interface ISoaServiceContainerBuilder

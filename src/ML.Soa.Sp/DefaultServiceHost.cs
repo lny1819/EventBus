@@ -3,20 +3,18 @@ using Autofac.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using ML.EventBusMQ;
-using ML.EventBus;
-using ML.EventBus.Abstractions;
 using RabbitMQ.Client;
 using System;
 using System.Text;
 using System.Threading.Tasks;
-using ML.Fulturetrade.EventBus.Abstractions;
 using System.Threading;
 using System.Diagnostics;
+using YiDian.EventBus.MQ;
+using YiDian.EventBus;
+using YiDian.EventBus.MQ.DefaultConnection;
 
-namespace ML.Soa.Sp
+namespace YiDian.Soa.Sp
 {
-
     internal class DefaultServiceHost : ISoaServiceHost
     {
         IServiceCollection service;
@@ -160,7 +158,7 @@ namespace ML.Soa.Sp
             });
             var mqstr = builder.GetSettings(SoaContent.MqConnStr);
             if (string.IsNullOrEmpty(mqstr)) return;
-            service.AddMQLogger();
+            //service.AddMQLogger();
         }
         private void RegisterMqConnection(ISoaServiceContainerBuilder builder)
         {
@@ -178,15 +176,15 @@ namespace ML.Soa.Sp
         {
             var busloggername = builder.GetSettings(SoaContent.UseDirect);
             if (string.IsNullOrEmpty(busloggername)) return;
-            service.AddSingleton<IEventBus, EventBusRabbitMQ>(sp =>
+            service.AddSingleton<IEventBus, DirectEventBus>(sp =>
             {
-                var rabbitMQPersistentConnection = sp.GetRequiredService<IRabbitMQPersistentConnection>();
+                var conn = sp.GetService<IRabbitMQPersistentConnection>();
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                 var loggerfact = sp.GetService<ILoggerFactory>();
-                var logger = loggerfact.CreateLogger(busloggername);
+                var logger = sp.GetService<ILogger<DirectEventBus>>();
                 var eventBusSubcriptionsManager = sp.GetRequiredService<IEventBusSubscriptionsManager>();
                 var counter = sp.GetService<IQpsCounter>();
-                var eventbus = new EventBusRabbitMQ(rabbitMQPersistentConnection, logger, iLifetimeScope, eventBusSubcriptionsManager, counter);
+                var eventbus = new DirectEventBus(logger, iLifetimeScope, conn);
                 return eventbus;
             });
         }
@@ -196,12 +194,12 @@ namespace ML.Soa.Sp
             if (!string.IsNullOrEmpty(topicbusname))
                 service.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
                 {
-                    var rabbitMQPersistentConnection = sp.GetService<IRabbitMQPersistentConnection>();
+                    var conn = sp.GetService<IRabbitMQPersistentConnection>();
                     var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                     var loggerfact = sp.GetService<ILoggerFactory>();
-                    var logger = loggerfact.CreateLogger(topicbusname);
+                    var logger = sp.GetService<ILogger<ITopicEventBus>>();
                     var counter = sp.GetService<IQpsCounter>();
-                    return new TopicEventBusMQ(rabbitMQPersistentConnection, logger, iLifetimeScope, counter);
+                    return new TopicEventBusMQ(logger, iLifetimeScope, conn);
                 });
         }
         private void RegisterRpcServerFactory(ISoaServiceContainerBuilder builder)
@@ -223,19 +221,6 @@ namespace ML.Soa.Sp
         {
             ThreadPool.SetMinThreads(1000, 1000);
             var settings = builder.Get<ThreadPoolSettings>();
-            if (settings == null) settings = new ThreadPoolSettings() { TaskLimit = 100, PubMode = false };
-            else
-            {
-                if (settings.TaskLimit == 0) settings.TaskLimit = 100;
-            }
-            service.AddSingleton(e =>
-            {
-                TaskScheduler scheduler;
-                var counter = e.GetService<IQpsCounter>();
-                var logger = e.GetService<ILogger<LimitedTaskSchedulerByThreadPool>>();
-                scheduler = new LimitedTaskSchedulerByThreadPool(settings.TaskLimit, counter, logger, settings.PubMode);
-                return new TaskFactory(scheduler);
-            });
         }
         private void RegisterRpcClient(ISoaServiceContainerBuilder builder)
         {
@@ -243,14 +228,14 @@ namespace ML.Soa.Sp
             if (string.IsNullOrEmpty(clientName)) return;
             var now = DateTime.Now.ToString("MMddHHmmss");
             clientName = "rpcC-" + now + "-" + clientName;
-            service.AddSingleton<IMLRpcClientFactory, RpcClientFactory>(sp =>
+            service.AddSingleton<IMqRpcClientFactory, RpcClientFactory>(sp =>
             {
                 var rabbitMQPersistentConnection = sp.GetService<IRabbitMQPersistentConnection>();
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                 var loggerfact = sp.GetService<ILoggerFactory>();
                 var qps = sp.GetService<IQpsCounter>();
                 var logger = sp.GetService<ILogger<DefaultServiceHost>>();
-                var rpc = new MqRpcClient(rabbitMQPersistentConnection, clientName, logger, qps);
+                var rpc = new RpcClient(rabbitMQPersistentConnection, clientName, logger, qps);
                 return new RpcClientFactory(rpc);
             });
         }

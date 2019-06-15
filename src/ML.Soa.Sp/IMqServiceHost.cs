@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
 
-namespace ML.Soa.Sp
+namespace YiDian.Soa.Sp
 {
     public interface ISoaServiceHost
     {

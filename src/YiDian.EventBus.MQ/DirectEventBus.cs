@@ -24,7 +24,6 @@ namespace YiDian.EventBus.MQ
         private readonly IEventBusSubscriptionsManagerFactory _subsFactory;
         private readonly EventHanlerCacheMgr hanlerCacheMgr;
         IModel _pubChannel;
-        readonly IQpsCounter _counter;
         readonly int _retryCount;
         readonly ILogger<IEventBus> _logger;
         readonly List<ConsumerConfig<IDirectEventBus, DirectSubscriber>> consumerInfos;

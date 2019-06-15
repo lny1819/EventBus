@@ -7,14 +7,14 @@ namespace YiDian.EventBus
         void EnableHandlerCache(int cacheLength);
         void DeleteQueue(string queuename, bool force);
         void Publish<T>(T @event, bool enableTransaction = false) where T : IntegrationMQEvent;
-        void SubscribeDynamic<TH>(string eventName)
+        void Subscribe<TH>(string queueName, string eventName)
             where TH : IDynamicBytesHandler;
-        void UnsubscribeDynamic<TH>(string eventName)
+        void Unsubscribe<TH>(string queueName, string eventNamee)
             where TH : IDynamicBytesHandler;
-        void Subscribe<T, TH>()
+        void Subscribe<T, TH>(string queueName)
             where T : IntegrationMQEvent
             where TH : IIntegrationEventHandler<T>;
-        void Unsubscribe<T, TH>()
+        void Unsubscribe<T, TH>(string queueName)
             where TH : IIntegrationEventHandler<T>
             where T : IntegrationMQEvent;
     }

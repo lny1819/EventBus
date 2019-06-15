@@ -30,8 +30,8 @@ namespace YiDian.EventBus.MQ.KeyAttribute
                 if (value.Count > 0) return value;
                 type.GetProperties().ToList().ForEach(e =>
                 {
-                    var setter = CreatePropertySetter(e);
-                    var getter = EmitGetter(e);
+                    var setter = FastInvoke.CreatePropertySetter(e);
+                    var getter = FastInvoke.EmitGetter(e);
                     value.TryAdd(e.Name, new Tuple<Func<object, object>, SetValueDelegate>(getter, setter));
                 });
             }

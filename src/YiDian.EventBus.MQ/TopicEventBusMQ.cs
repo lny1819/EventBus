@@ -6,12 +6,15 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using YiDian.EventBus.MQ.KeyAttribute;
 
 namespace YiDian.EventBus.MQ
 {
@@ -19,81 +22,42 @@ namespace YiDian.EventBus.MQ
     public class TopicEventBusMQ : ITopicEventBus, IDisposable
     {
 
-        const string BROKER_NAME = "ml_topic_event_bus";
-        const string AUTOFAC_SCOPE_NAME = "ml_topic_event_bus";
+        const string BROKER_NAME = "amq.topic";
+        const string AUTOFAC_SCOPE_NAME = "TopicEventBus";
 
+        const int ProcessStop = 0;
+        const int ProcessStart = 1;
+
+        private int process_state = ProcessStop;
         private readonly IRabbitMQPersistentConnection _persistentConnection;
-        private readonly ILogger _logger;
-        private readonly SubManagerD _subD;
-        private readonly SubManagerK _subK;
-        private readonly SubManagerA _subA;
-        private readonly IQpsCounter _counter;
-        private IModel _consumerChannel;
-        private ConsumerArgu _consumerArgu;
-        Func<string, byte[], bool> pre_handler = null;
-        IModel _pubChannel;
-        private int _retryCount;
+        private readonly IEventBusSubscriptionsManagerFactory _subsFactory;
         private readonly EventHanlerCacheMgr hanlerCacheMgr;
+        IModel _pubChannel;
+        readonly IQpsCounter _counter;
+        readonly int _retryCount;
+        readonly ILogger<IEventBus> _logger;
+        readonly List<ConsumerConfig<ITopicEventBus, TopicSubscriber>> consumerInfos;
+        readonly ConcurrentQueue<QueueItem<IDirectEventBus, DirectSubscriber>> __processQueue;
 
-        public event Action<Exception> ProcessException;
-        /// <summary>
-        /// Topic类型EventBus
-        /// </summary>
-        /// <param name="persistentConnection">MQ连接</param>
-        /// <param name="logger">日志</param>
-        /// <param name="autofac">autofac 容器</param>
-        /// <param name="retryCount">发布重试次数</param>
-        public TopicEventBusMQ(IRabbitMQPersistentConnection persistentConnection, ILogger logger, ILifetimeScope autofac, IQpsCounter counter, int retryCount = 5)
+        public TopicEventBusMQ(IRabbitMQPersistentConnection persistentConnection, ILogger<IEventBus> logger, ILifetimeScope autofac, IEventBusSubscriptionsManagerFactory factory, int retryCount = 5, int cacheCount = 100)
         {
-            hanlerCacheMgr = new EventHanlerCacheMgr(100, autofac, AUTOFAC_SCOPE_NAME);
             _persistentConnection = persistentConnection ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
-            persistentConnection.OnConnectRecovery += PersistentConnection_OnConnectRecovery;
+            _persistentConnection.OnConnectRecovery += _persistentConnection_OnConnectRecovery;
             _logger = logger ?? throw new ArgumentNullException(nameof(ILogger));
-            _counter = counter ?? throw new ArgumentNullException(nameof(IQpsCounter));
-            _subD = new SubManagerD(DoInternalUnSub, DoInternalSubscription);
-            _subK = new SubManagerK(DoInternalUnSub, DoInternalSubscription);
-            _subA = new SubManagerA();
+            __processQueue = new ConcurrentQueue<QueueItem<IDirectEventBus, DirectSubscriber>>();
+            _subsFactory = factory ?? new InMemorySubFactory();
+            consumerInfos = new List<ConsumerConfig<ITopicEventBus, TopicSubscriber>>();
+            hanlerCacheMgr = new EventHanlerCacheMgr(cacheCount, autofac, AUTOFAC_SCOPE_NAME);
             _retryCount = retryCount;
             CreatePublishChannel();
         }
-
-        private void PersistentConnection_OnConnectRecovery(object sender, EventArgs e)
+        private void _persistentConnection_OnConnectRecovery(object sender, EventArgs e)
         {
-
+            //foreach (var consumerinfo in consumerInfos)
+            //{
+            //    CreateConsumerChannel(consumerinfo);
+            //}
         }
-
-        public void EnableHandlerCache(int cacheLength)
-        {
-            hanlerCacheMgr.CacheLength = cacheLength;
-        }
-        private void DoInternalSubscription(string eventName)
-        {
-            if (!_persistentConnection.IsConnected)
-            {
-                _persistentConnection.TryConnect();
-            }
-            using (var channel = _persistentConnection.CreateModel())
-            {
-                channel.QueueBind(queue: _consumerArgu.QueueName,
-                                  exchange: BROKER_NAME,
-                                  routingKey: eventName);
-            }
-        }
-        private void DoInternalUnSub(string eventName)
-        {
-            if (!_persistentConnection.IsConnected)
-            {
-                _persistentConnection.TryConnect();
-            }
-
-            using (var channel = _persistentConnection.CreateModel())
-            {
-                channel.QueueUnbind(queue: _consumerArgu.QueueName,
-                    exchange: BROKER_NAME,
-                    routingKey: eventName);
-            }
-        }
-
         void CreatePublishChannel()
         {
             if (_pubChannel == null || _pubChannel.IsClosed)
@@ -102,25 +66,75 @@ namespace YiDian.EventBus.MQ
                 {
                     _persistentConnection.TryConnect();
                 }
+                //_pubChannel.ConfirmSelect();
                 _pubChannel = _persistentConnection.CreateModel();
-                _pubChannel.ExchangeDeclare(exchange: BROKER_NAME, type: "topic", durable: true, autoDelete: false);
                 _pubChannel.CallbackException += (sender, ea) =>
                 {
-                    _logger.LogError($"the pubChannel has been shut down");
                     _pubChannel.Dispose();
                     _pubChannel = null;
                     CreatePublishChannel();
                 };
             }
         }
-        string GetPubKey<T>(T @event) where T : IntegrationMQEvent
+
+        #region Sub And UnSub
+        private void DoInternalSubscription(IEventBusSubscriptionsManager mgr, string eventName)
+        {
+            var containsKey = mgr.HasSubscriptionsForEvent(eventName);
+            if (!containsKey)
+            {
+                if (!_persistentConnection.IsConnected)
+                {
+                    _persistentConnection.TryConnect();
+                }
+
+                using (var channel = _persistentConnection.CreateModel())
+                {
+                    channel.QueueBind(queue: mgr.QueueName,
+                                      exchange: BROKER_NAME,
+                                      routingKey: eventName.ToLower());
+                }
+            }
+        }
+
+        private void SubsManager_OnEventRemoved(object sender, string eventName)
+        {
+            var mgr = (IEventBusSubscriptionsManager)sender;
+            var queueName = mgr.QueueName;
+            DoInternalUnSub(queueName, eventName);
+        }
+        private void DoInternalUnSub(string queueName, string eventName)
+        {
+            if (!_persistentConnection.IsConnected)
+            {
+                _persistentConnection.TryConnect();
+            }
+            using (var channel = _persistentConnection.CreateModel())
+            {
+                channel.QueueUnbind(queue: queueName,
+                    exchange: BROKER_NAME,
+                    routingKey: eventName.ToLower());
+            }
+        }
+        #endregion
+
+        string GetPubKey<T>(T @event, string prefix = "") where T : IntegrationMQEvent
         {
             var type = typeof(T);
-            var fullname = type.FullName.ToLower();
+            var eventKey = _subsFactory.GetOrCreateByQueue("publish").GetEventKey<T>();
             var props = TypeEventBusMetas.GetKeys(type, out string keyname);
-            if (props == null) return fullname;
-            var sb = new StringBuilder(keyname);
-            if (!string.IsNullOrEmpty(keyname)) sb.Append('.');
+            if (props == null && string.IsNullOrEmpty(prefix)) return eventKey;
+            var sb = new StringBuilder();
+            if (!string.IsNullOrEmpty(prefix))
+            {
+                sb.Append(prefix);
+                sb.Append('.');
+            }
+            if (!string.IsNullOrEmpty(keyname))
+            {
+                sb.Append(keyname);
+                sb.Append('.');
+            }
             var values = props.Values.ToList().OrderBy(e => e.Index);
             foreach (var p in values)
             {
@@ -132,21 +146,17 @@ namespace YiDian.EventBus.MQ
             sb.Replace('-', '_');
             sb.Append('-');
             sb.Append('.');
-            sb.Append(fullname);
+            sb.Append(eventKey);
             var key = sb.ToString();
-            return key.ToLower();
+            return key;
         }
         string GetSubKey<T>() where T : IntegrationMQEvent
         {
-            var type = typeof(T);
-            var fullname = type.FullName.ToLower();
-            var props = TypeEventBusMetas.GetKeys(type, out string keyname);
-            if (props == null) return fullname;
-            var sb = new StringBuilder(keyname);
-            if (!string.IsNullOrEmpty(keyname)) sb.Append('.');
-            if (props.Count > 0) sb.Append("#.");
-            sb.Append(fullname);
-            return sb.ToString().ToLower();
+            var eventKey = _subsFactory.GetOrCreateByQueue("publish").GetEventKey<T>();
+            var sb = new StringBuilder("#.");
+            sb.Append(eventKey);
+            var key = sb.ToString();
+            return key;
         }
         string GetSubKey<T>(Expression<Func<T, bool>> where) where T : IntegrationMQEvent
         {
@@ -172,29 +182,6 @@ namespace YiDian.EventBus.MQ
             sb.Append('-');
             sb.Append('.');
             sb.Append(fullname);
-            return sb.ToString().ToLower();
-        }
-        string GetSubKey<T>(Expression<Func<T, bool>> where, string key) where T : IntegrationMQEvent
-        {
-            var type = typeof(T);
-            var dic = new Dictionary<string, string>();
-            var props = TypeEventBusMetas.GetKeys(type, out string keyname);
-            if (props == null) return type.FullName.ToLower();
-            var body = where.Body as BinaryExpression;
-            GetMembers(body, dic);
-            var sb = new StringBuilder(key);
-            if (!string.IsNullOrEmpty(key)) sb.Append('.');
-            var lst = props.OrderBy(e => e.Value.Index).ToList();
-            lst.ForEach(e =>
-            {
-                if (dic.ContainsKey(e.Key))
-                {
-                    sb.Append(dic[e.Key]);
-                    sb.Append('.');
-                }
-                else sb.Append("*.");
-            });
-            sb.Append('#');
             return sb.ToString().ToLower();
         }
         void GetMembers(BinaryExpression body, Dictionary<string, string> dic)
@@ -223,287 +210,229 @@ namespace YiDian.EventBus.MQ
                 if (right != null) GetMembers(right, dic);
             }
         }
-        public void Publish(string key, byte[] datas)
+        public void Publish<T>(T @event, bool enableTransaction = false) where T : IntegrationMQEvent
         {
+            Publish(@event, "", enableTransaction);
+        }
+        public void Publish<T>(T @event, string prefix, bool enableTransaction = false) where T : IntegrationMQEvent
+        {
+            var eventName = GetPubKey(@event, prefix);
+            var message = JsonConvert.SerializeObject(@event);
+            var body = Encoding.UTF8.GetBytes(message);
             _pubChannel.BasicPublish(exchange: BROKER_NAME,
-                                     routingKey: key,
-                                     basicProperties: null,
-                                     body: datas);
+                             routingKey: eventName,
+                             basicProperties: null,
+                             body: body);
         }
-        public void Publish<T>(T @event) where T : IntegrationMQEvent
+        private void Config_OnReceive(object sender, BasicDeliverEventArgs e)
         {
-            ThreadChannels<T>.Current.QueueWorkItemInternal((o) =>
-            {
-                var eventName = GetPubKey(o);
-                var policy = Policy.Handle<BrokerUnreachableException>()
-                    .Or<SocketException>()
-                    .WaitAndRetry(_retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
-                    {
-                        _logger.LogWarning($"Publish error {ex.Message},now  try publish again");
-                    });
-
-                var message = JsonConvert.SerializeObject(o);
-                var body = Encoding.UTF8.GetBytes(message);
-
-                policy.Execute(() =>
-                {
-                    _pubChannel.BasicPublish(exchange: BROKER_NAME,
-                                     routingKey: eventName,
-                                     basicProperties: null,
-                                     body: body);
-                });
-            }, @event);
+            var config = (ConsumerConfig<IDirectEventBus, DirectSubscriber>)sender;
+            __processQueue.Enqueue(new QueueItem<IDirectEventBus, DirectSubscriber>(config, e));
+            StartProcess();
+            CheckQueue();
         }
-        private string ReplaceKey(string key)
-        {
-            if (key[key.Length - 1] != '.') key += '.';
-            if (key.IndexOf('-') == -1) return key;
-            key = key.Replace('-', '_');
-            return key;
-        }
-
-        public void Dispose()
-        {
-            if (_consumerChannel != null)
-            {
-                _consumerChannel.Dispose();
-            }
-            if (_pubChannel != null)
-            {
-                _pubChannel.Dispose();
-            }
-        }
-
-        private void CreateConsumerChannel(bool isInit)
+        private void CreateConsumerChannel(ConsumerConfig<ITopicEventBus, TopicSubscriber> config)
         {
             if (!_persistentConnection.IsConnected)
             {
                 _persistentConnection.TryConnect();
             }
-            var channel = _persistentConnection.CreateModel();
             var dic = new Dictionary<string, object>
             {
-                //消费队列最大消息数量
-                ["x-max-length"] = _consumerArgu.QueueMsgLength
+                ["x-max-length"] = config.MaxLength
             };
-            channel.BasicQos(0, _consumerArgu.Fetchout, false);
-            channel.QueueDeclare(queue: _consumerArgu.QueueName,
-                                 durable: _consumerArgu.Durable,
+            var channel = _persistentConnection.CreateModel();
+            channel.QueueDeclare(queue: config.Name,
+                                 durable: config.Durable,
                                  exclusive: false,
-                                 autoDelete: _consumerArgu.AutoDelete,
+                                 autoDelete: config.AutoDel,
                                  arguments: dic);
-             
+            channel.BasicQos(0, config.FetchCount, false);
             channel.CallbackException += (sender, ea) =>
             {
-                _logger.LogError($"the consumer on {_consumerArgu.QueueName} has been shut down");
-                _consumerChannel.Dispose();
-                _consumerChannel = null;
-                CreateConsumerChannel(false);
+                CreateConsumerChannel(config);
             };
-            channel.ModelShutdown += Channel_ModelShutdown;
-            channel.BasicRecoverOk += Channel_BasicRecoverOk;
-            _consumerChannel = channel;
-            if (!isInit) BeginConsumer();
+            config.Start(channel);
         }
-
-        private void Channel_ModelShutdown(object sender, ShutdownEventArgs e)
+        private void CheckQueue()
         {
-            _logger.LogInformation("ConsumerChannel_Shutdown");
-        }
-
-        private void Channel_BasicRecoverOk(object sender, EventArgs e)
-        {
-            _logger.LogInformation("ConsumerChannel_BasicRecoverOk");
-        }
-
-        private void BeginConsumer()
-        {
-            var consumer = new EventingBasicConsumer(_consumerChannel);
-            consumer.Received += (model, ea) =>
+            if (__processQueue.Count > 10000)
+                Thread.Sleep(30);
+            else if (__processQueue.Count > 20000)
             {
-                ThreadChannels<BasicDeliverEventArgs>.Current.QueueWorkItemInternal((o) => ProcessEvent(o), ea);
-            };
-            var policy = Policy.Handle<BrokerUnreachableException>()
-                .Or<SocketException>()
-                .WaitAndRetry(_retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
-                {
-                    _logger.LogWarning($"Publish error {ex.Message},now  try publish again");
-                });
-            policy.Execute(() =>
-            {
-                _consumerChannel.BasicConsume(queue: _consumerArgu.QueueName,
-                                     autoAck: _consumerArgu.AutoAck,
-                                     consumer: consumer);
-            });
-        }
-        private void ProcessEvent(BasicDeliverEventArgs ea)
-        {
-            var f = pre_handler?.Invoke(ea.RoutingKey, ea.Body);
-            if (f.HasValue && f.Value)
-            {
-                if (!_consumerArgu.AutoAck) _consumerChannel.BasicAck(ea.DeliveryTag, false);
-                return;
+                Thread.Sleep(1000);
             }
-            var eventName = ea.RoutingKey;
-            if (eventName.IndexOf('-') > -1) eventName = eventName.Substring(eventName.IndexOf('-') + 2);
-            var message = Encoding.UTF8.GetString(ea.Body);
-            var a = DoSubManagerEvents(eventName, message, _subA);
-            var b = DoSubManagerEvents(eventName, message, _subK.SubManager);
-            var c = DoSubManagerEvents(eventName, message, _subD.SubManager);
-            if (a.Count + b.Count + c.Count == 0)
+            else if (__processQueue.Count > 30000)
             {
-                _logger.LogInformation($"定义了消费队列，但是部分数据未消费，{eventName} 数据：{message}");
-                if (!_consumerArgu.AutoAck) _consumerChannel.BasicAck(ea.DeliveryTag, false);
-                return;
+                Thread.Sleep(5000);
             }
-            Task.Factory.ContinueWhenAll(a.Concat(b).Concat(c).ToArray(), e =>
+        }
+        private void StartProcess()
+        {
+            if (Interlocked.CompareExchange(ref process_state, ProcessStart, ProcessStop) != ProcessStop) return;
+            Task.Run(() =>
             {
-                bool flag = false;
-                e.ToList().ForEach(x => flag = flag | x.Result);
-                if (!_consumerArgu.AutoAck)
+                for (; ; )
                 {
-                    if (flag) _consumerChannel.BasicAck(ea.DeliveryTag, false);
-                    else _consumerChannel.BasicNack(ea.DeliveryTag, false, true);
+                    var flag = __processQueue.TryDequeue(out QueueItem<IDirectEventBus, DirectSubscriber> item);
+                    if (!flag)
+                    {
+                        Interlocked.Exchange(ref process_state, ProcessStop);
+                        break;
+                    }
+                    var eventName = item.Event.RoutingKey;
+                    var consumer = item.ConsumerConfig;
+                    var mgr = consumer.GetSubMgr();
+                    var handlers = mgr.GetHandlersForEvent(eventName);
+                    if (handlers == null) continue;
+                    ProcessEvent(handlers, item);
                 }
             });
         }
-        List<Task<bool>> DoSubManagerEvents(string eventName, string message, ISubHandler subhandler)
+        private async void ProcessEvent(IEnumerable<SubscriptionInfo> subInfos, QueueItem<IDirectEventBus, DirectSubscriber> msg)
         {
-            var lst = subhandler.GetHandlersForEvent(eventName);
-            if (!subhandler.HasSubscriptionsForEvent(eventName)) return new List<Task<bool>>();
-            object integrationEvent = null;
-            var eventType = subhandler.GetEventTypeByName(eventName);
-            if (eventType != null && eventType.IsSubclassOf(typeof(IntegrationMQEvent)))
-                integrationEvent = JsonConvert.DeserializeObject(message, eventType);
-            var tasks = new List<Task<bool>>(lst.Count());
-            foreach (var subscription in lst)
+            var ea = msg.Event;
+            var config = msg.ConsumerConfig;
+            foreach (var subinfo in subInfos)
             {
-                if (subscription.IsDynamic)
+                if (subinfo.IsDynamic)
                 {
-                    hanlerCacheMgr.GetDynamicHandler(subscription.HandlerType, out IDynamicBytesHandler handler, out ILifetimeScope scope);
-                    tasks.Add(handler.Handle(message)
-                    .ContinueWith(e =>
-                    {
-                        var haserr = ProcessExceptionHandler(e);
-                        hanlerCacheMgr.ResteDymaicHandler(handler, subscription.HandlerType, scope);
-                        return haserr;
-                    }));
+                    hanlerCacheMgr.GetDynamicHandler(subinfo.HandlerType, out IDynamicBytesHandler handler, out ILifetimeScope scope);
+                    await handler.Handle(ea.RoutingKey, ea.Body)
+                       .ContinueWith(x =>
+                       {
+                           hanlerCacheMgr.ResteDymaicHandler(handler, subinfo.HandlerType, scope);
+                           if (x.Status == TaskStatus.Faulted) _logger.LogError(x.Exception.ToString());
+                           if (!config.AutoAck)
+                           {
+                               if (x.IsCompletedSuccessfully && x.Result) config.GetChannel().BasicAck(ea.DeliveryTag, false);
+                               else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
+                           }
+                       })
+                       .ConfigureAwait(false);
                 }
                 else
                 {
-                    hanlerCacheMgr.GetIIntegrationEventHandler(subscription.HandlerType, out IIntegrationEventHandler handler, out ILifetimeScope scope);
-                    tasks.Add(((Task)subscription.Handler(handler, new object[] { integrationEvent }))
-                    .ContinueWith(e =>
+                    var integrationEvent = DeserializeObject(ea.Body, subinfo.EventType);
+                    hanlerCacheMgr.GetIIntegrationEventHandler(subinfo.HandlerType, out IIntegrationEventHandler handler, out ILifetimeScope scope);
+                    var task = (Task<bool>)subinfo.Handler(handler, new object[] { integrationEvent });
+                    await task.ContinueWith(x =>
                     {
-                        var haserr = ProcessExceptionHandler(e);
-                        hanlerCacheMgr.ResteTypeHandler(handler, subscription.HandlerType, scope);
-                        return haserr;
-                    }));
+                        hanlerCacheMgr.ResteTypeHandler(handler, subinfo.HandlerType, scope);
+                        if (x.Status == TaskStatus.Faulted) _logger.LogError(x.Exception.ToString());
+                        if (!config.AutoAck)
+                        {
+                            if (x.IsCompletedSuccessfully && x.Result) config.GetChannel().BasicAck(ea.DeliveryTag, false);
+                            else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
+                        }
+                    })
+                    .ConfigureAwait(false);
                 }
             }
-            return tasks;
         }
-
-        bool ProcessExceptionHandler(Task task)
+        private object DeserializeObject(byte[] body, Type type)
         {
-            if (task.Status == TaskStatus.Faulted)
-            {
-                if (ProcessException == null) _logger?.LogError(task.Exception.ToString());
-                else ProcessException(task.Exception);
-                return false;
-            }
-            return true;
+            return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(body), type);
         }
-        public void Subscribe<T, TH>()
+        public void StartConsumer(string queueName, Action<TopicSubscriber> action, ushort fetchCount, int queueLength, bool autodel, bool durable, bool autoAck)
+        {
+            if (string.IsNullOrEmpty(queueName)) return;
+            var config = consumerInfos.Find(x => x.Name == queueName);
+            if (config != null) return;
+            var scriber = new TopicSubscriber(this, queueName);
+            var submgr = _subsFactory.GetOrCreateByQueue(queueName);
+            submgr.OnEventRemoved += SubsManager_OnEventRemoved;
+            config = new ConsumerConfig<ITopicEventBus, TopicSubscriber>(scriber, submgr)
+            {
+                AutoAck = autoAck,
+                MaxLength = queueLength,
+                Durable = durable,
+                AutoDel = autodel,
+                FetchCount = fetchCount,
+                Name = queueName,
+                SubAction = action
+            };
+            config.OnReceive += Config_OnReceive;
+            consumerInfos.Add(config);
+            CreateConsumerChannel(config);
+        }
+        public void Subscribe<T, TH>(string queueName)
                     where T : IntegrationMQEvent
                    where TH : IIntegrationEventHandler<T>
         {
             var keyname = GetSubKey<T>();
-            _subD.SubManager.AddSubscription<T, TH>();
-            _subD.Sub(keyname, typeof(T).FullName);
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    mgr.AddSubscription<T, TH>();
+                    DoInternalSubscription(mgr, keyname);
+                }
+            }
         }
-        public void Subscribe<T, TH>(Expression<Func<T, bool>> where)
+        public void Subscribe<T, TH>(string queueName, Expression<Func<T, bool>> where)
              where T : IntegrationMQEvent
              where TH : IIntegrationEventHandler<T>
         {
-            var keyname = GetSubKey(where);
-            _subK.SubManager.AddSubscription<T, TH>();
-            _subK.Sub(keyname, typeof(T).FullName);
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    mgr.AddSubscription<T, TH>();
+                    var keyname = GetSubKey(where);
+                    DoInternalSubscription(mgr, keyname);
+                }
+            }
         }
-        public void Subscribe<TH>(string keyname)
+        public void Subscribe<TH>(string queueName, string eventName)
              where TH : IDynamicBytesHandler
         {
-            _subK.SubManager.AddDynamicSubscription<TH>(keyname);
-            if (keyname.ToLower() == "ml_topic_all_event")
-                _subK.Sub("#", keyname);
-            else _subK.Sub(keyname, keyname);
-        }
-        public void SetSubscribeBytesHandler(Func<string, byte[], bool> pre_handler)
-        {
-            this.pre_handler = pre_handler;
-        }
-        public void SubscribeBytes(string key)
-        {
-            DoInternalSubscription(key);
-        }
-        public void UnSubscribeBytes(string key)
-        {
-            DoInternalUnSub(key);
-        }
-        public void Subscribe<T>(Expression<Func<T, bool>> where, string key, Action<KeySubHandler<T>> addHandler)
-            where T : IntegrationMQEvent
-        {
-            var subkey = GetSubKey(where, key);
-            addHandler(new KeySubHandler<T>(subkey, _subA));
-            DoInternalSubscription(subkey);
-        }
-        public void Unsubscribe<T>(Expression<Func<T, bool>> where, string key)
-            where T : IntegrationMQEvent
-        {
-            var subkey = GetSubKey(where, key);
-            new KeySubHandler<T>(subkey, _subA).RemoveHandler();
-            DoInternalUnSub(subkey);
-        }
-        public void Unsubscribe<T, TH>()
-            where T : IntegrationMQEvent
-            where TH : IIntegrationEventHandler<T>
-        {
-            _subD.SubManager.RemoveSubscription<T, TH>();
-        }
-
-        public void Unsubscribe<T, TH>(Expression<Func<T, bool>> where)
-            where T : IntegrationMQEvent
-            where TH : IIntegrationEventHandler<T>
-        {
-            _subK.SubManager.RemoveSubscription<T, TH>();
-        }
-
-        public void Unsubscribe<TH>(string eventName) where TH : IDynamicBytesHandler
-        {
-            _subK.SubManager.RemoveDynamicSubscription<TH>(eventName);
-        }
-
-        public void StartConsumer(string queueName, Action<ITopicEventBus> action, ushort fetchcount, int length, bool autodelete, bool durable, bool autoAck)
-        {
-            if (string.IsNullOrEmpty(queueName)) return;
-            if (string.IsNullOrEmpty(_consumerArgu.QueueName))
+            foreach (var item in consumerInfos)
             {
-                _consumerArgu = new ConsumerArgu()
+                if (item.Name == queueName)
                 {
-                    AutoAck = autoAck,
-                    AutoDelete = autodelete,
-                    Durable = durable,
-                    Fetchout = fetchcount,
-                    QueueMsgLength = length,
-                    QueueName = queueName.ToLower()
-                };
-                CreateConsumerChannel(true);
-                action?.Invoke(this);
-                BeginConsumer();
-                return;
+                    var mgr = item.GetSubMgr();
+                    eventName = mgr.GetEventKey(eventName);
+                    if (string.IsNullOrEmpty(eventName))
+                    {
+                        _logger.LogError($"can not find consumer handlers by {eventName}");
+                        return;
+                    }
+                    mgr.AddSubscription<TH>(eventName);
+                    DoInternalSubscription(mgr, eventName);
+                    break;
+                }
             }
-            if (!string.Equals(queueName, _consumerArgu.QueueName, StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException("has been declare on consumer with name " + _consumerArgu.QueueName);
+        }
+        public void Unsubscribe<T, TH>(string queueName)
+            where T : IntegrationMQEvent
+            where TH : IIntegrationEventHandler<T>
+        {
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    item.Unsubscribe<T, TH>();
+                    break;
+                }
+            }
+        }
+
+        public void Unsubscribe<T, TH>(string queueName, Expression<Func<T, bool>> where)
+            where T : IntegrationMQEvent
+            where TH : IIntegrationEventHandler<T>
+        {
+            var keyname = GetSubKey(where);
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    item.Unsubscribe<T, TH>(keyname);
+                    break;
+                }
+            }
         }
 
         public void DeleteQueue(string queuename, bool force)
@@ -520,14 +449,60 @@ namespace YiDian.EventBus.MQ
             channel.Close();
         }
 
-        struct ConsumerArgu
+        public void Subscribe(string queueName, string prifix)
         {
-            public string QueueName { get; set; }
-            public ushort Fetchout { get; set; }
-            public int QueueMsgLength { get; set; }
-            public bool AutoDelete { get; set; }
-            public bool Durable { get; set; }
-            public bool AutoAck { get; set; }
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    var eventName = prifix + ".#";
+                    DoInternalSubscription(mgr, eventName);
+                    break;
+                }
+            }
+        }
+
+        public void Unsubscribe(string queueName, string prifix)
+        {
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    var eventName = prifix + ".#";
+                    DoInternalUnSub(queueName, eventName);
+                    break;
+                }
+            }
+        }
+
+        public void Unsubscribe<TH>(string queueName, string eventName) where TH : IDynamicBytesHandler
+        {
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    item.Unsubscribe<TH>(eventName);
+                    break;
+                }
+            }
+        }
+
+        public void EnableHandlerCache(int cacheLength)
+        {
+            hanlerCacheMgr.CacheLength = cacheLength;
+        }
+
+        public void Dispose()
+        {
+            foreach (var item in consumerInfos)
+            {
+                item.Dispose();
+            }
+            consumerInfos.Clear();
+            _pubChannel.Dispose();
+            _persistentConnection.Dispose();
         }
     }
 }

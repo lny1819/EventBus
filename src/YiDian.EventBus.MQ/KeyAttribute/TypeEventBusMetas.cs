@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace YiDian.EventBus.MQ
+namespace YiDian.EventBus.MQ.KeyAttribute
 {
     public class TypeEventBusMetas
     {
@@ -42,7 +42,7 @@ namespace YiDian.EventBus.MQ
                     {
                         if (hash.Contains(att.Index)) throw new ArgumentException("索引重复" + nameof(Index));
                         hash.Add(att.Index);
-                        AddKeyIndex(type, p.Name, new TypeEventBusMetas() { Index = att.Index, Property = EmitGetter(p) });
+                        AddKeyIndex(type, p.Name, new TypeEventBusMetas() { Index = att.Index, Property = FastInvoke.EmitGetter(p) });
                     }
                 }
             }

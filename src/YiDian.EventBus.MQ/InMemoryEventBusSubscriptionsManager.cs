@@ -6,26 +6,45 @@ using YiDian.EventBus.MQ.KeyAttribute;
 
 namespace YiDian.EventBus.MQ
 {
+    public class InMemorySubFactory : IEventBusSubscriptionsManagerFactory
+    {
+        readonly List<InMemoryEventBusSubscriptionsManager> __containers = new List<InMemoryEventBusSubscriptionsManager>();
+        public IEventBusSubscriptionsManager GetOrCreateByQueue(string queueName)
+        {
+            var mgr = __containers.FirstOrDefault(x => x.QueueName == queueName);
+            if (mgr != null) return mgr;
+            lock (__containers)
+            {
+                mgr = __containers.FirstOrDefault(x => x.QueueName == queueName);
+                if (mgr != null) return mgr;
+                mgr = new InMemoryEventBusSubscriptionsManager(queueName);
+                __containers.Add(mgr);
+                return mgr;
+            }
+        }
+    }
     public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManager
     {
         private readonly ConcurrentDictionary<string, List<SubscriptionInfo>> _handlers;
 
         public event EventHandler<string> OnEventRemoved;
 
-        public InMemoryEventBusSubscriptionsManager()
+        public InMemoryEventBusSubscriptionsManager(string name)
         {
+            QueueName = name;
             _handlers = new ConcurrentDictionary<string, List<SubscriptionInfo>>(StringComparer.OrdinalIgnoreCase);
         }
 
         public bool IsEmpty => !_handlers.Keys.Any();
 
-        public void AddDynamicSubscription<TH>(string eventName)
+        public string QueueName { get; }
+
+        public void AddSubscription<TH>(string eventName)
             where TH : IDynamicBytesHandler
         {
-            eventName = GetEventKey(eventName);
             var method = typeof(TH).GetMethod("Handle");
             var handler = FastInvoke.GetMethodInvoker(method);
-            DoAddSubscription(typeof(TH), null, eventName, isDynamic: true);
+            DoAddSubscription(typeof(TH), typeof(byte), handler, eventName, isDynamic: true);
         }
 
         public void AddSubscription<T, TH>()
@@ -35,10 +54,10 @@ namespace YiDian.EventBus.MQ
             var eventName = GetEventKey<T>();
             var method = typeof(TH).GetMethod("Handle", new Type[] { typeof(T) });
             var handler = FastInvoke.GetMethodInvoker(method);
-            DoAddSubscription(typeof(TH), handler, eventName, isDynamic: false);
+            DoAddSubscription(typeof(TH), typeof(T), handler, eventName, isDynamic: false);
         }
 
-        private void DoAddSubscription(Type handlerType, FastInvokeHandler handler, string eventName, bool isDynamic)
+        private void DoAddSubscription(Type handlerType, Type eventType, FastInvokeHandler handler, string eventName, bool isDynamic)
         {
             if (!_handlers.TryGetValue(eventName, out List<SubscriptionInfo> items))
             {
@@ -52,13 +71,12 @@ namespace YiDian.EventBus.MQ
                 }
             }
             if (isDynamic) items.Add(SubscriptionInfo.Dynamic(handlerType, handler));
-            else items.Add(SubscriptionInfo.Typed(handlerType, handler));
+            else items.Add(SubscriptionInfo.Typed(handlerType, eventType, handler));
         }
 
-        public void RemoveDynamicSubscription<TH>(string eventName)
+        public void RemoveSubscription<TH>(string eventName)
             where TH : IDynamicBytesHandler
         {
-            eventName = GetEventKey(eventName);
             DoRemoveHandler(eventName, typeof(TH));
         }
 
@@ -69,8 +87,12 @@ namespace YiDian.EventBus.MQ
             var eventName = GetEventKey<T>();
             DoRemoveHandler(eventName, typeof(TH));
         }
-
-
+        public void RemoveSubscription<T, TH>(string eventName)
+            where TH : IIntegrationEventHandler<T>
+            where T : IntegrationMQEvent
+        {
+            DoRemoveHandler(eventName, typeof(TH));
+        }
         private void DoRemoveHandler(string eventName, Type HandlerType)
         {
             if (!_handlers.TryGetValue(eventName, out List<SubscriptionInfo> items))
@@ -87,7 +109,7 @@ namespace YiDian.EventBus.MQ
         {
             var flag = _handlers.TryGetValue(eventName, out List<SubscriptionInfo> res);
             if (flag) return res;
-            else return new List<SubscriptionInfo>();
+            else return null;
         }
 
         private void RaiseOnEventRemoved(string eventName)
@@ -100,13 +122,14 @@ namespace YiDian.EventBus.MQ
         }
         public bool HasSubscriptionsForEvent(string eventName) => _handlers.ContainsKey(eventName);
 
+        public string GetEventKey(string eventName)
+        {
+            return eventName;
+        }
+
         public string GetEventKey<T>() where T : IntegrationMQEvent
         {
             return typeof(T).FullName;
-        }
-        public string GetEventKey(string key)
-        {
-            return key;
         }
     }
 }

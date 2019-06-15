@@ -5,6 +5,6 @@ namespace YiDian.EventBus
 {
     public interface IDynamicBytesHandler
     {
-        Task Handle(string routingKey, MemoryStream datas);
+        Task<bool> Handle(string routingKey, byte[] datas);
     }
 }

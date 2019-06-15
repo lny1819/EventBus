@@ -6,7 +6,7 @@ namespace YiDian.EventBus
     public interface IIntegrationEventHandler<in TIntegrationEvent> : IIntegrationEventHandler 
         where TIntegrationEvent: IntegrationMQEvent
     {
-        Task Handle(TIntegrationEvent @event);
+        Task<bool> Handle(TIntegrationEvent @event);
     }
 
     public interface IIntegrationEventHandler

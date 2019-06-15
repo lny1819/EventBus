@@ -19,23 +19,22 @@ namespace YiDian.EventBus
         /// <param name="durable">是否持久化</param>
         /// <param name="autoAck">是否自动响应</param>
         void StartConsumer(string queuename, Action<TopicSubscriber> action, ushort fetchcount = 200, int length = 200000, bool autodelete = false, bool durable = true, bool autoAck = false);
-        ///// <summary>
-        ///// 订阅数据
-        ///// </summary>
-        ///// <typeparam name="T"></typeparam>
-        ///// <param name="where"></param>
-        ///// <param name="key"></param>
-        ///// <param name="addHandler"></param>
-        //void Subscribe<T>(Expression<Func<T, bool>> where, string key, Action<KeySubHandler<T>> addHandler)
-        //    where T : IntegrationMQEvent;
-        void Subscribe<T, TH>(Expression<Func<T, bool>> where)
+   
+        /// <summary>
+        /// 订阅消息
+        /// </summary>
+        /// <typeparam name="T">消息体</typeparam>
+        /// <typeparam name="TH">消息回调</typeparam>
+        /// <param name="queueName">队列名称</param>
+        /// <param name="where">消息条件</param>
+        void Subscribe<T, TH>(string queueName, Expression<Func<T, bool>> where)
              where T : IntegrationMQEvent
              where TH : IIntegrationEventHandler<T>;
-        void Unsubscribe<T, TH>(Expression<Func<T, bool>> where)
+        void Unsubscribe<T, TH>(string queueName, Expression<Func<T, bool>> where)
              where T : IntegrationMQEvent
              where TH : IIntegrationEventHandler<T>;
-        void Publish<T>(T @event, string prifix) where T : IntegrationMQEvent;
-        void Subscribe(string prifix, Action<KeySubHandler> action);
-        void Unsubscribe(string prifix);
+        void Publish<T>(T @event, string prifix, bool enableTransaction = false) where T : IntegrationMQEvent;
+        void Subscribe(string name, string prifix);
+        void Unsubscribe(string name, string prifix);
     }
 }

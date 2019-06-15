@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Threading;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -10,16 +8,17 @@ namespace YiDian.EventBus.MQ
         where TEventBus : IEventBus
         where TSub : Subscriber<TEventBus>
     {
-        private readonly ConcurrentQueue<BasicDeliverEventArgs> _queue;
         private readonly TSub _subscriber;
+        private readonly IEventBusSubscriptionsManager __manager;
         private IModel _model;
 
-        public ConsumerConfig(TSub subscriber, ConcurrentQueue<BasicDeliverEventArgs> queue)
-        {
-            _subscriber = subscriber;
-            _queue = queue;
-        }
+        public event EventHandler<BasicDeliverEventArgs> OnReceive;
 
+        public ConsumerConfig(TSub subscriber, IEventBusSubscriptionsManager mgr)
+        {
+            __manager = mgr;
+            _subscriber = subscriber;
+        }
         public string Name { get; internal set; }
         public bool AutoAck { get; internal set; }
         public int MaxLength { get; internal set; }
@@ -39,25 +38,61 @@ namespace YiDian.EventBus.MQ
             var consumer = new EventingBasicConsumer(channel);
             consumer.Received += (model, ea) =>
             {
-                _queue.Enqueue(ea);
-                CheckQueue();
+                OnReceive(this, ea);
             };
             SubAction.Invoke(_subscriber);
             _model.BasicConsume(queue: Name, autoAck: AutoAck, consumer: consumer);
         }
-
-        private void CheckQueue()
+        internal IModel GetChannel()
         {
-            if (_queue.Count > 10000)
-                Thread.Sleep(30);
-            else if (_queue.Count > 20000)
-            {
-                Thread.Sleep(1000);
-            }
-            else if (_queue.Count > 30000)
-            {
-                Thread.Sleep(5000);
-            }
+            var old = _model;
+            return old;
         }
+        internal void Unsubscribe<T, TH>()
+            where T : IntegrationMQEvent
+            where TH : IIntegrationEventHandler<T>
+        {
+            __manager.RemoveSubscription<T, TH>();
+        }
+        internal void Unsubscribe<T, TH>(string eventName)
+           where T : IntegrationMQEvent
+           where TH : IIntegrationEventHandler<T>
+        {
+            __manager.RemoveSubscription<T, TH>(eventName);
+        }
+        internal void Unsubscribe<TH>(string eventName) where TH : IDynamicBytesHandler
+        {
+            __manager.RemoveSubscription<TH>(eventName);
+        }
+
+        internal IEventBusSubscriptionsManager GetSubMgr()
+        {
+            return __manager;
+        }
+
+        internal void Dispose()
+        {
+            var channel = GetChannel();
+            _model = null;
+            if (channel == null) return;
+            channel.Dispose();
+        }
+    }
+
+
+
+    struct QueueItem<TEventBus, TSub>
+        where TEventBus : IEventBus
+        where TSub : Subscriber<TEventBus>
+    {
+
+        public QueueItem(ConsumerConfig<TEventBus, TSub> config, BasicDeliverEventArgs e) : this()
+        {
+            this.ConsumerConfig = config;
+            this.Event = e;
+        }
+
+        public ConsumerConfig<TEventBus, TSub> ConsumerConfig { get; }
+        public BasicDeliverEventArgs Event { get; }
     }
 }

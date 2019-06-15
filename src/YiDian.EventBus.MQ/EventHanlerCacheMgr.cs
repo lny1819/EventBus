@@ -26,14 +26,14 @@ namespace YiDian.EventBus.MQ
         /// <param name="handler"></param>
         /// <param name="scope"></param>
         /// <returns>是否是从缓存中获取</returns>
-        public bool GetDynamicHandler(Type type, out IDynamicBytesHandler handler, out ILifetimeScope scope)
+        public void GetDynamicHandler(Type type, out IDynamicBytesHandler handler, out ILifetimeScope scope)
         {
             scope = null;
             if (CacheLength == 0)
             {
                 scope = _autofac.BeginLifetimeScope(_lifeName);
                 handler = scope.ResolveOptional(type) as IDynamicBytesHandler;
-                return false;
+                return;
             }
             if (!dynamicDics.ContainsKey(type))
             {
@@ -49,7 +49,6 @@ namespace YiDian.EventBus.MQ
                 scope = _autofac.BeginLifetimeScope(_lifeName);
                 handler = scope.ResolveOptional(type) as IDynamicBytesHandler;
             }
-            return flag;
         }
         public void ResteDymaicHandler(IDynamicBytesHandler handler, Type type, ILifetimeScope scope)
         {
@@ -62,14 +61,14 @@ namespace YiDian.EventBus.MQ
             if (stack.Count < CacheLength) stack.Push(handler);
             else scope?.Dispose();
         }
-        public bool GetIIntegrationEventHandler(Type type, out IIntegrationEventHandler handler, out ILifetimeScope scope)
+        public void GetIIntegrationEventHandler(Type type, out IIntegrationEventHandler handler, out ILifetimeScope scope)
         {
             scope = null;
             if (CacheLength == 0)
             {
                 scope = _autofac.BeginLifetimeScope(_lifeName);
                 handler = scope.ResolveOptional(type) as IIntegrationEventHandler;
-                return false;
+                return;
             }
             if (!typeDics.ContainsKey(type))
             {
@@ -85,7 +84,6 @@ namespace YiDian.EventBus.MQ
                 scope = _autofac.BeginLifetimeScope(_lifeName);
                 handler = scope.ResolveOptional(type) as IIntegrationEventHandler;
             }
-            return flag;
         }
         public void ResteTypeHandler(IIntegrationEventHandler handler, Type type, ILifetimeScope scope)
         {

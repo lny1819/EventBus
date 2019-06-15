@@ -3,18 +3,22 @@ using System.Linq.Expressions;
 
 namespace YiDian.EventBus
 {
-    public class KeySubHandler
+    public class TopicSubscriber : Subscriber<ITopicEventBus>
     {
-        readonly ITopicEventBus _eventBus;
-        public KeySubHandler(ITopicEventBus eventBus)
+        public TopicSubscriber(ITopicEventBus eventBus) : base(eventBus)
         {
-            _eventBus = eventBus;
         }
         public void Subscribe<T, TH>(Expression<Func<T, bool>> where)
              where T : IntegrationMQEvent
              where TH : IIntegrationEventHandler<T>
         {
             _eventBus.Subscribe<T, TH>(where);
+        }
+    }
+    public class DirectSubscriber : Subscriber<IEventBus>
+    {
+        public DirectSubscriber(IEventBus eventBus) : base(eventBus)
+        {
         }
 
         public void Subscribe<T, TH>()
@@ -27,6 +31,14 @@ namespace YiDian.EventBus
             where TH : IDynamicBytesHandler
         {
             _eventBus.SubscribeDynamic<TH>(eventName);
+        }
+    }
+    public abstract class Subscriber<TEventBus> where TEventBus : IEventBus
+    {
+        readonly protected TEventBus _eventBus;
+        public Subscriber(TEventBus eventBus)
+        {
+            _eventBus = eventBus;
         }
     }
 }

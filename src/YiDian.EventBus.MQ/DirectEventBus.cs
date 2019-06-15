@@ -16,7 +16,7 @@ using System.Threading;
 
 namespace YiDian.EventBus.MQ
 {
-    public class DirectEventBus : IEventBus, IDisposable
+    public class DirectEventBus : IDirectEventBus, IDisposable
     {
         protected string BROKER_NAME = "amq.direct";
         protected string AUTOFAC_SCOPE_NAME = "DirectEventBus";
@@ -31,7 +31,7 @@ namespace YiDian.EventBus.MQ
         readonly List<ConsumerConfig> consumerInfos;
         readonly ConcurrentQueue<BasicDeliverEventArgs> __processQueue;
 
-        public DirectEventBus(IRabbitMQPersistentConnection persistentConnection, ILogger<DirectEventBus> logger, ILifetimeScope autofac, IEventBusSubscriptionsManager subsManager, IQpsCounter counter, int retryCount = 5, int cacheCount = 100)
+        public DirectEventBus(IRabbitMQPersistentConnection persistentConnection, ILogger<DirectEventBus> logger, ILifetimeScope autofac, IEventBusSubscriptionsManager subsManager, int retryCount = 5, int cacheCount = 100)
         {
             _persistentConnection = persistentConnection ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
             _persistentConnection.OnConnectRecovery += _persistentConnection_OnConnectRecovery;
@@ -41,7 +41,6 @@ namespace YiDian.EventBus.MQ
             _subsManager = subsManager ?? new InMemoryEventBusSubscriptionsManager();
             _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
             consumerInfos = new List<ConsumerConfig>();
-            _counter = counter ?? throw new ArgumentNullException(nameof(IQpsCounter));
             hanlerCacheMgr = new EventHanlerCacheMgr(cacheCount, autofac, AUTOFAC_SCOPE_NAME);
             _retryCount = retryCount;
             CreatePublishChannel();
@@ -51,34 +50,7 @@ namespace YiDian.EventBus.MQ
         {
             foreach (var consumerinfo in consumerInfos)
             {
-                BeginConsumer(consumerinfo);
-            }
-        }
-        private void BeginConsumer(ConsumerConfig config)
-        {
-            if (!config.TryOpen()) return;
-            var consumer = new EventingBasicConsumer(config.Channel);
-            consumer.Received += (model, ea) =>
-            {
-                __processQueue.Enqueue(ea);
-                CheckQueue("processQueue");
-            };
-            config.Channel.BasicConsume(queue: config.Name, autoAck: config.AutoAck, consumer: consumer);
-        }
-
-        private void CheckQueue(string queue)
-        {
-            if (__processQueue.Count > 10000)
-                Thread.Sleep(30);
-            else if (__processQueue.Count > 20000)
-            {
-                Thread.Sleep(1000);
-                _logger.LogWarning($"queue:{queue} length bigger then {20000}");
-            }
-            else if (__processQueue.Count > 30000)
-            {
-                Thread.Sleep(5000);
-                _logger.LogWarning($"queue:{queue} length bigger then {30000}");
+                CreateConsumerChannel(false, consumerinfo);
             }
         }
 
@@ -134,8 +106,14 @@ namespace YiDian.EventBus.MQ
         public void SubscribeDynamic<TH>(string eventName)
             where TH : IDynamicBytesHandler
         {
-            DoInternalSubscription(eventName);
+            eventName = _subsManager.GetEventKey(eventName);
+            if (string.IsNullOrEmpty(eventName))
+            {
+                _logger.LogError($"can not find consumer handlers by {eventName}");
+                return;
+            }
             _subsManager.AddDynamicSubscription<TH>(eventName);
+            DoInternalSubscription(eventName);
         }
         public void Subscribe<T, TH>()
             where T : IntegrationMQEvent
@@ -190,7 +168,7 @@ namespace YiDian.EventBus.MQ
             _subsManager.Clear();
         }
 
-        private void CreateConsumerChannel(bool isInit, ushort fetchcount, int queueLength, bool autodel, bool durable)
+        private void CreateConsumerChannel(ConsumerConfig config)
         {
             if (!_persistentConnection.IsConnected)
             {
@@ -198,25 +176,20 @@ namespace YiDian.EventBus.MQ
             }
             var dic = new Dictionary<string, object>
             {
-                //消费队列最大消息数量
-                ["x-max-length"] = queueLength
+                ["x-max-length"] = config.MaxLength
             };
             var channel = _persistentConnection.CreateModel();
-            channel.QueueDeclare(queue: _queueName,
-                                 durable: durable,
+            channel.QueueDeclare(queue: config.Name,
+                                 durable: config.Durable,
                                  exclusive: false,
-                                 autoDelete: autodel,
+                                 autoDelete: config.AutoDel,
                                  arguments: dic);
-
-            channel.BasicQos(0, fetchcount, false);
+            channel.BasicQos(0, config.FetchCount, false);
             channel.CallbackException += (sender, ea) =>
             {
-                _consumerChannel.Dispose();
-                _consumerChannel = null;
-                CreateConsumerChannel(false, fetchcount, queueLength, autodel, durable);
+                CreateConsumerChannel(config);
             };
-            _consumerChannel = channel;
-            if (!isInit) BeginConsumer();
+            config.Start(channel);
         }
         private void ProcessEvent(BasicDeliverEventArgs ea)
         {
@@ -272,18 +245,23 @@ namespace YiDian.EventBus.MQ
             }
             return true;
         }
-        public void StartConsumer(string queueName, Action<IEventBus> action, ushort fetchCount, int queueLength, bool autodel, bool durable, bool autoAck)
+        public void StartConsumer(string queueName, Action<DirectSubscriber> action, ushort fetchCount, int queueLength, bool autodel, bool durable, bool autoAck)
         {
+            if (string.IsNullOrEmpty(queueName)) return;
             var config = consumerInfos.Find(x => x.Name == queueName);
             if (config != null) return;
-            if (!string.IsNullOrEmpty(queueName))
+            config = new ConsumerConfig<DirectSubscriber>(this, __processQueue)
             {
-                _autoAck = autoAck;
-                _queueName = queueName.ToLower();
-                CreateConsumerChannel(true, fetchCount, queueLength, autodel, durable);
-                action.Invoke(this);
-                BeginConsumer();
-            }
+                AutoAck = autoAck,
+                MaxLength = queueLength,
+                Durable = durable,
+                AutoDel = autodel,
+                FetchCount = fetchCount,
+                Name = queueName,
+                SubAction = action
+            };
+            consumerInfos.Add(config);
+            CreateConsumerChannel(config);
         }
 
         public void DeleteQueue(string queuename, bool force)

@@ -18,7 +18,7 @@ namespace YiDian.EventBus
         /// <param name="autodelete">在无消费者时是否自动删除队列</param>
         /// <param name="durable">是否持久化</param>
         /// <param name="autoAck">是否自动响应</param>
-        void StartConsumer(string queuename, Action<ITopicEventBus> action, ushort fetchcount = 200, int length = 200000, bool autodelete = false, bool durable = true, bool autoAck = false);
+        void StartConsumer(string queuename, Action<TopicSubscriber> action, ushort fetchcount = 200, int length = 200000, bool autodelete = false, bool durable = true, bool autoAck = false);
         ///// <summary>
         ///// 订阅数据
         ///// </summary>

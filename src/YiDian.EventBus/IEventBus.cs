@@ -20,6 +20,6 @@ namespace YiDian.EventBus
     }
     public interface IDirectEventBus : IEventBus
     {
-        void StartConsumer(string queuename, Action<IEventBus> action, ushort fetchCount = 200, int queueLength = 100000, bool autodel = false, bool durable = true, bool autoAck = false);
+        void StartConsumer(string queuename, Action<DirectSubscriber> action, ushort fetchCount = 200, int queueLength = 100000, bool autodel = false, bool durable = true, bool autoAck = false);
     }
 }

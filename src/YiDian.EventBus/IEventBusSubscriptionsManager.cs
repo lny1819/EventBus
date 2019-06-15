@@ -19,7 +19,7 @@ namespace YiDian.EventBus
         void RemoveSubscription<T, TH>(string eventName)
              where TH : IIntegrationEventHandler<T>
              where T : IntegrationMQEvent;
-        bool HasSubscriptionsForEvent(string eventName);
+        bool SubscriptionsForEvent(string eventName);
         IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventName);
         string GetEventKey(string eventName);
         string GetEventKey<T>() where T : IntegrationMQEvent;

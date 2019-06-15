@@ -25,6 +25,7 @@ namespace YiDian.EventBus.MQ
     }
     public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManager
     {
+        readonly List<string> __subs = new List<string>();
         private readonly ConcurrentDictionary<string, List<SubscriptionInfo>> _handlers;
 
         public event EventHandler<string> OnEventRemoved;
@@ -117,10 +118,16 @@ namespace YiDian.EventBus.MQ
             var handler = OnEventRemoved;
             if (handler != null)
             {
+                __subs.Remove(eventName);
                 OnEventRemoved(this, eventName);
             }
         }
-        public bool HasSubscriptionsForEvent(string eventName) => _handlers.ContainsKey(eventName);
+        public bool SubscriptionsForEvent(string eventName)
+        {
+            var flag = __subs.Contains(eventName);
+            if (!flag) __subs.Add(eventName);
+            return flag;
+        }
 
         public string GetEventKey(string eventName)
         {

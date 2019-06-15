@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using System;
+using YiDian.Soa.Sp;
 
 namespace ConsoleApp
 {
@@ -6,7 +8,14 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            MqServiceHost.CreateBuilder()
+               .ConfigApp(e => e.AddJsonFile("appsettings.json"))
+               .RegisterMqConnection(e => e["mqconnstr"])
+               .UseEventbus<StartUp>()
+               .UseTopicEventBus<StartUp>()
+               .UserStartUp<StartUp>()
+               .Build(args)
+               .Run(e => e["sysname"]);
         }
     }
 }

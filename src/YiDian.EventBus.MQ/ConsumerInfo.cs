@@ -33,7 +33,7 @@ namespace YiDian.EventBus.MQ
             var old = _model;
             _model = channel;
             if (old != null && old != channel)
-                _model.Dispose();
+                old.Dispose();
             if (old == _model) return;
             var consumer = new EventingBasicConsumer(channel);
             consumer.Received += (model, ea) =>

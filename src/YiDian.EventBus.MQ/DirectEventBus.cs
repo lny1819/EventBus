@@ -64,7 +64,7 @@ namespace YiDian.EventBus.MQ
 
         private void DoInternalSubscription(IEventBusSubscriptionsManager mgr, string eventName)
         {
-            var containsKey = mgr.HasSubscriptionsForEvent(eventName);
+            var containsKey = mgr.SubscriptionsForEvent(eventName);
             if (!containsKey)
             {
                 if (!_persistentConnection.IsConnected)
@@ -232,6 +232,7 @@ namespace YiDian.EventBus.MQ
         private void StartProcess()
         {
             if (Interlocked.CompareExchange(ref process_state, ProcessStart, ProcessStop) != ProcessStop) return;
+
             Task.Run(() =>
             {
                 for (; ; )
@@ -278,18 +279,28 @@ namespace YiDian.EventBus.MQ
                 {
                     var integrationEvent = DeserializeObject(ea.Body, subinfo.EventType);
                     hanlerCacheMgr.GetIIntegrationEventHandler(subinfo.HandlerType, out IIntegrationEventHandler handler, out ILifetimeScope scope);
-                    var task = (Task<bool>)subinfo.Handler(handler, new object[] { integrationEvent });
-                    await task.ContinueWith(x =>
+                    var task = (ValueTask<bool>)subinfo.Handler(handler, new object[] { integrationEvent });
+                    if (!task.IsCompleted)
+                        await task.AsTask().ContinueWith(x =>
+                        {
+                            hanlerCacheMgr.ResteTypeHandler(handler, subinfo.HandlerType, scope);
+                            if (x.Status == TaskStatus.Faulted) _logger.LogError(x.Exception.ToString());
+                            if (!config.AutoAck)
+                            {
+                                if (x.IsCompletedSuccessfully && x.Result) config.GetChannel().BasicAck(ea.DeliveryTag, false);
+                                else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
+                            }
+                        })
+                        .ConfigureAwait(false);
+                    else
                     {
                         hanlerCacheMgr.ResteTypeHandler(handler, subinfo.HandlerType, scope);
-                        if (x.Status == TaskStatus.Faulted) _logger.LogError(x.Exception.ToString());
                         if (!config.AutoAck)
                         {
-                            if (x.IsCompletedSuccessfully && x.Result) config.GetChannel().BasicAck(ea.DeliveryTag, false);
+                            if (task.IsCompletedSuccessfully && task.Result) config.GetChannel().BasicAck(ea.DeliveryTag, false);
                             else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
                         }
-                    })
-                    .ConfigureAwait(false);
+                    }
                 }
             }
         }

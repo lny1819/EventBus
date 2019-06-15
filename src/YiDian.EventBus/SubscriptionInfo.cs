@@ -22,7 +22,7 @@ namespace YiDian.EventBus
         }
         public static SubscriptionInfo Typed(Type handlerType, Type eventType, FastInvokeHandler handler)
         {
-            return new SubscriptionInfo(false, eventType, handlerType, handler);
+            return new SubscriptionInfo(false, handlerType, eventType, handler);
         }
     }
 }

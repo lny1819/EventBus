@@ -79,7 +79,7 @@ namespace YiDian.EventBus.MQ
         #region Sub And UnSub
         private void DoInternalSubscription(IEventBusSubscriptionsManager mgr, string eventName)
         {
-            var containsKey = mgr.HasSubscriptionsForEvent(eventName);
+            var containsKey = mgr.SubscriptionsForEvent(eventName);
             if (!containsKey)
             {
                 if (!_persistentConnection.IsConnected)

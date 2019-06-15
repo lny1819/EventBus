@@ -73,8 +73,6 @@ namespace YiDian.Soa.Sp
 
             RegisterFactory(builder);
 
-            RegisterMqConnection(builder);
-
             RegisterRpcServerFactory(builder);
 
             RegisterEventBus(builder);
@@ -87,14 +85,12 @@ namespace YiDian.Soa.Sp
 
         private void RegisterBase(ISoaServiceContainerBuilder builder)
         {
-            var mqstr = builder.GetSettings(SoaContent.MqConnStr);
-            var s_enable = Configuration["Logging:Counter:Enabled"];
-            bool enabled = true;
-            if (s_enable != null && s_enable.ToLower() == "false") enabled = false;
+            RegisterMqConnection(builder);
+
             service.AddSingleton<IQpsCounter>(e =>
             {
                 var logger = e.GetService<ILogger<QpsCounter>>();
-                var counter = new QpsCounter(logger, enabled);
+                var counter = new QpsCounter(logger, true);
                 return counter;
             });
         }
@@ -176,14 +172,11 @@ namespace YiDian.Soa.Sp
         {
             var busloggername = builder.GetSettings(SoaContent.UseDirect);
             if (string.IsNullOrEmpty(busloggername)) return;
-            service.AddSingleton<IEventBus, DirectEventBus>(sp =>
+            service.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
             {
                 var conn = sp.GetService<IRabbitMQPersistentConnection>();
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
-                var loggerfact = sp.GetService<ILoggerFactory>();
                 var logger = sp.GetService<ILogger<DirectEventBus>>();
-                var eventBusSubcriptionsManager = sp.GetRequiredService<IEventBusSubscriptionsManager>();
-                var counter = sp.GetService<IQpsCounter>();
                 var eventbus = new DirectEventBus(logger, iLifetimeScope, conn);
                 return eventbus;
             });
@@ -196,9 +189,7 @@ namespace YiDian.Soa.Sp
                 {
                     var conn = sp.GetService<IRabbitMQPersistentConnection>();
                     var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
-                    var loggerfact = sp.GetService<ILoggerFactory>();
                     var logger = sp.GetService<ILogger<ITopicEventBus>>();
-                    var counter = sp.GetService<IQpsCounter>();
                     return new TopicEventBusMQ(logger, iLifetimeScope, conn);
                 });
         }
@@ -219,7 +210,7 @@ namespace YiDian.Soa.Sp
         }
         private void RegisterFactory(ISoaServiceContainerBuilder builder)
         {
-            ThreadPool.SetMinThreads(1000, 1000);
+            ThreadPool.SetMinThreads(100, 100);
             var settings = builder.Get<ThreadPoolSettings>();
         }
         private void RegisterRpcClient(ISoaServiceContainerBuilder builder)

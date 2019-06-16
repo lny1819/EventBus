@@ -157,11 +157,11 @@ namespace YiDian.EventBus.MQ
 
         public int GetInWork()
         {
+            var y = _state;
             int z = 0;
             for (var i = 0; i < _limit; i++)
             {
                 var x = 1 << i;
-                var y = _state;
                 var r = y | x;
                 if (r == y) z++;
             }

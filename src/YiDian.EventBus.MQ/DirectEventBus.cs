@@ -237,7 +237,7 @@ namespace YiDian.EventBus.MQ
             var mgr = consumer.GetSubMgr();
             var handlers = mgr.GetHandlersForEvent(eventName);
             if (handlers == null) return;
-             ProcessEvent(handlers, item);
+            ProcessEvent(handlers, item);
         }
         private void AckChannel(object obj)
         {
@@ -252,7 +252,7 @@ namespace YiDian.EventBus.MQ
             config.GetChannel().BasicAck(ea.DeliveryTag, false);
         }
 
-        private async void ProcessEvent(IEnumerable<SubscriptionInfo> subInfos, QueueItem<IDirectEventBus, DirectSubscriber> msg)
+        private void ProcessEvent(IEnumerable<SubscriptionInfo> subInfos, QueueItem<IDirectEventBus, DirectSubscriber> msg)
         {
             var ea = msg.Event;
             var config = msg.ConsumerConfig;
@@ -262,34 +262,36 @@ namespace YiDian.EventBus.MQ
                 {
                     hanlerCacheMgr.GetDynamicHandler(subinfo.HandlerType, out IDynamicBytesHandler handler, out ILifetimeScope scope);
                     var res = handler.Handle(ea.RoutingKey, ea.Body).ConfigureAwait(false);
-                    await res;
-                    hanlerCacheMgr.ResteDymaicHandler(handler, subinfo.HandlerType, scope);
-                    var x = res.GetAwaiter();
-                    // if (x.Status == TaskStatus.Faulted) _logger.LogError(x.Exception.ToString());
-                    if (!config.AutoAck)
+                    var waiter = res.GetAwaiter();
+                    waiter.OnCompleted(() =>
                     {
-                        if (x.IsCompleted && x.GetResult()) config.GetChannel().BasicAck(ea.DeliveryTag, false);
-                        else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
-                    }
-                    //.ConfigureAwait(false);
+                        hanlerCacheMgr.ResteDymaicHandler(handler, subinfo.HandlerType, scope);
+                        if (!config.AutoAck)
+                        {
+                            if (waiter.IsCompleted && waiter.GetResult()) config.GetChannel().BasicAck(ea.DeliveryTag, false);
+                            else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
+                        }
+                    });
                 }
                 else
                 {
                     var integrationEvent = DeserializeObject(ea.Body, subinfo.EventType);
                     hanlerCacheMgr.GetIIntegrationEventHandler(subinfo.HandlerType, out IIntegrationEventHandler handler, out ILifetimeScope scope);
                     var res = ((Task<bool>)subinfo.Handler(handler, new object[] { integrationEvent })).ConfigureAwait(false);
-                    await res;
-                    hanlerCacheMgr.ResteTypeHandler(handler, subinfo.HandlerType, scope);
-                    var x = res.GetAwaiter();
-                    if (!config.AutoAck)
+                    var waiter = res.GetAwaiter();
+                    waiter.OnCompleted(() =>
                     {
-                        if (x.IsCompleted && x.GetResult()) config.GetChannel().BasicAck(ea.DeliveryTag, false);
-                        else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
-                    }
+                        hanlerCacheMgr.ResteTypeHandler(handler, subinfo.HandlerType, scope);
+                        if (!config.AutoAck)
+                        {
+                            if (waiter.IsCompleted && waiter.GetResult()) config.GetChannel().BasicAck(ea.DeliveryTag, false);
+                            else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
+                        }
+                    });
                 }
             }
         }
-        [MethodImpl(methodImplOptions:MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(methodImplOptions: MethodImplOptions.AggressiveInlining)]
         private object DeserializeObject(byte[] body, Type type)
         {
             return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(body), type);

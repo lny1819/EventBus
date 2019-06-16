@@ -48,13 +48,13 @@ namespace Consumer
             direct.StartConsumer("test-direct", x =>
             {
                 x.Subscribe<MqA, MyHandler>();
-            });
+            }, queueLength: 10000000, durable: false);
         }
     }
     public class MyHandler : IIntegrationEventHandler<MqA>
     {
         public SleepTaskResult TaskResult { get; set; }
-        public Task<bool> Handle(MqA @event)
+        public  Task<bool> Handle(MqA @event)
         {
             var cts = TaskSource.Create<bool>(@event);
             var task = cts.Task;
@@ -69,7 +69,8 @@ namespace Consumer
         readonly IQpsCounter counter;
         public SleepTaskResult(IQpsCounter counter)
         {
-            channels = ThreadChannels.Create(12);
+            //channels = ThreadChannels.Create(8);
+            channels = ThreadChannels.Default;
             this.counter = counter;
         }
         public void Push(TaskCompletionSource<bool> tcs)
@@ -79,7 +80,6 @@ namespace Consumer
         private void DoWork(object obj)
         {
             var item = (TaskCompletionSource<bool>)obj;
-            //Thread.Sleep(1);
             item.TrySetResult(true);
             counter.Add("c");
         }

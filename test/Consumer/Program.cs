@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using YiDian.Soa.Sp;
 
-namespace ConsoleApp
+namespace Consumer
 {
     class Program
     {

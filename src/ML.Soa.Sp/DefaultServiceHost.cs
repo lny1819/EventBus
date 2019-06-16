@@ -111,7 +111,7 @@ namespace YiDian.Soa.Sp
                     waitExit.Reset();
                     waitExit.WaitOne();
                 }
-                Task.Run(() =>
+                Task.Delay(1000).ContinueWith((x) =>
                 {
                     var process = Process.GetCurrentProcess();
                     process.Kill();

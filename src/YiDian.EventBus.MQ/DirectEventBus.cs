@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Threading;
+using System.Runtime.CompilerServices;
 
 namespace YiDian.EventBus.MQ
 {
@@ -16,10 +17,6 @@ namespace YiDian.EventBus.MQ
     {
         const string BROKER_NAME = "amq.direct";
         const string AUTOFAC_SCOPE_NAME = "DirectEventBus";
-        const int ProcessStop = 0;
-        const int ProcessStart = 1;
-
-        private int process_state = ProcessStop;
         private readonly IRabbitMQPersistentConnection _persistentConnection;
         private readonly IEventBusSubscriptionsManagerFactory _subsFactory;
         private readonly EventHanlerCacheMgr hanlerCacheMgr;
@@ -27,14 +24,15 @@ namespace YiDian.EventBus.MQ
         readonly int _retryCount;
         readonly ILogger<IEventBus> _logger;
         readonly List<ConsumerConfig<IDirectEventBus, DirectSubscriber>> consumerInfos;
-        readonly ConcurrentQueue<QueueItem<IDirectEventBus, DirectSubscriber>> __processQueue;
+        readonly ThreadChannels channels = ThreadChannels.Default;
+        //readonly ConcurrentQueue<QueueItem<IDirectEventBus, DirectSubscriber>> __processQueue;
 
         public DirectEventBus(ILogger<IEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection = null, IEventBusSubscriptionsManagerFactory factory = null, int retryCount = 5, int cacheCount = 100)
         {
             _persistentConnection = persistentConnection ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
             _persistentConnection.OnConnectRecovery += _persistentConnection_OnConnectRecovery;
             _logger = logger ?? throw new ArgumentNullException(nameof(ILogger));
-            __processQueue = new ConcurrentQueue<QueueItem<IDirectEventBus, DirectSubscriber>>();
+            //__processQueue = new ConcurrentQueue<QueueItem<IDirectEventBus, DirectSubscriber>>();
             _subsFactory = factory ?? new InMemorySubFactory();
             consumerInfos = new List<ConsumerConfig<IDirectEventBus, DirectSubscriber>>();
             hanlerCacheMgr = new EventHanlerCacheMgr(cacheCount, autofac, AUTOFAC_SCOPE_NAME);
@@ -188,9 +186,11 @@ namespace YiDian.EventBus.MQ
         private void Config_OnReceive(object sender, BasicDeliverEventArgs e)
         {
             var config = (ConsumerConfig<IDirectEventBus, DirectSubscriber>)sender;
-            __processQueue.Enqueue(new QueueItem<IDirectEventBus, DirectSubscriber>(config, e));
-            StartProcess();
-            CheckQueue();
+            var item = new QueueItem<IDirectEventBus, DirectSubscriber>(config, e);
+            channels.QueueWorkItemInternal(StartProcess, item);
+            //__processQueue.Enqueue(new QueueItem<IDirectEventBus, DirectSubscriber>(config, e));
+            //StartProcess();
+            //CheckQueue();
         }
         private void CreateConsumerChannel(ConsumerConfig<IDirectEventBus, DirectSubscriber> config)
         {
@@ -216,41 +216,40 @@ namespace YiDian.EventBus.MQ
             config.Start(channel);
         }
 
-        private void CheckQueue()
+        //private void CheckQueue()
+        //{
+        //    if (__processQueue.Count > 10000)
+        //        Thread.Sleep(30);
+        //    else if (__processQueue.Count > 20000)
+        //    {
+        //        Thread.Sleep(1000);
+        //    }
+        //    else if (__processQueue.Count > 30000)
+        //    {
+        //        Thread.Sleep(5000);
+        //    }
+        //}
+        private void StartProcess(object obj)
         {
-            if (__processQueue.Count > 10000)
-                Thread.Sleep(30);
-            else if (__processQueue.Count > 20000)
-            {
-                Thread.Sleep(1000);
-            }
-            else if (__processQueue.Count > 30000)
-            {
-                Thread.Sleep(5000);
-            }
+            var item = (QueueItem<IDirectEventBus, DirectSubscriber>)obj;
+            var eventName = item.Event.RoutingKey;
+            var consumer = item.ConsumerConfig;
+            var mgr = consumer.GetSubMgr();
+            var handlers = mgr.GetHandlersForEvent(eventName);
+            if (handlers == null) return;
+             ProcessEvent(handlers, item);
         }
-        private void StartProcess()
+        private void AckChannel(object obj)
         {
-            if (Interlocked.CompareExchange(ref process_state, ProcessStart, ProcessStop) != ProcessStop) return;
-
-            Task.Run(() =>
-            {
-                for (; ; )
-                {
-                    var flag = __processQueue.TryDequeue(out QueueItem<IDirectEventBus, DirectSubscriber> item);
-                    if (!flag)
-                    {
-                        Interlocked.Exchange(ref process_state, ProcessStop);
-                        break;
-                    }
-                    var eventName = item.Event.RoutingKey;
-                    var consumer = item.ConsumerConfig;
-                    var mgr = consumer.GetSubMgr();
-                    var handlers = mgr.GetHandlersForEvent(eventName);
-                    if (handlers == null) continue;
-                    ProcessEvent(handlers, item);
-                }
-            });
+            var item = (QueueItem<IDirectEventBus, DirectSubscriber>)obj;
+            var eventName = item.Event.RoutingKey;
+            var consumer = item.ConsumerConfig;
+            var mgr = consumer.GetSubMgr();
+            var handlers = mgr.GetHandlersForEvent(eventName);
+            if (handlers == null) return;
+            var ea = item.Event;
+            var config = item.ConsumerConfig;
+            config.GetChannel().BasicAck(ea.DeliveryTag, false);
         }
 
         private async void ProcessEvent(IEnumerable<SubscriptionInfo> subInfos, QueueItem<IDirectEventBus, DirectSubscriber> msg)
@@ -262,48 +261,35 @@ namespace YiDian.EventBus.MQ
                 if (subinfo.IsDynamic)
                 {
                     hanlerCacheMgr.GetDynamicHandler(subinfo.HandlerType, out IDynamicBytesHandler handler, out ILifetimeScope scope);
-                    await handler.Handle(ea.RoutingKey, ea.Body)
-                       .ContinueWith(x =>
-                       {
-                           hanlerCacheMgr.ResteDymaicHandler(handler, subinfo.HandlerType, scope);
-                           if (x.Status == TaskStatus.Faulted) _logger.LogError(x.Exception.ToString());
-                           if (!config.AutoAck)
-                           {
-                               if (x.IsCompletedSuccessfully && x.Result) config.GetChannel().BasicAck(ea.DeliveryTag, false);
-                               else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
-                           }
-                       })
-                       .ConfigureAwait(false);
+                    var res = handler.Handle(ea.RoutingKey, ea.Body).ConfigureAwait(false);
+                    await res;
+                    hanlerCacheMgr.ResteDymaicHandler(handler, subinfo.HandlerType, scope);
+                    var x = res.GetAwaiter();
+                    // if (x.Status == TaskStatus.Faulted) _logger.LogError(x.Exception.ToString());
+                    if (!config.AutoAck)
+                    {
+                        if (x.IsCompleted && x.GetResult()) config.GetChannel().BasicAck(ea.DeliveryTag, false);
+                        else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
+                    }
+                    //.ConfigureAwait(false);
                 }
                 else
                 {
                     var integrationEvent = DeserializeObject(ea.Body, subinfo.EventType);
                     hanlerCacheMgr.GetIIntegrationEventHandler(subinfo.HandlerType, out IIntegrationEventHandler handler, out ILifetimeScope scope);
-                    var task = (Task<bool>)subinfo.Handler(handler, new object[] { integrationEvent });
-                    if (!task.IsCompleted)
-                        await task.ContinueWith(x =>
-                        {
-                            hanlerCacheMgr.ResteTypeHandler(handler, subinfo.HandlerType, scope);
-                            if (x.Status == TaskStatus.Faulted) _logger.LogError(x.Exception.ToString());
-                            if (!config.AutoAck)
-                            {
-                                if (x.IsCompletedSuccessfully && x.Result) config.GetChannel().BasicAck(ea.DeliveryTag, false);
-                                else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
-                            }
-                        })
-                        .ConfigureAwait(false);
-                    else
+                    var res = ((Task<bool>)subinfo.Handler(handler, new object[] { integrationEvent })).ConfigureAwait(false);
+                    await res;
+                    hanlerCacheMgr.ResteTypeHandler(handler, subinfo.HandlerType, scope);
+                    var x = res.GetAwaiter();
+                    if (!config.AutoAck)
                     {
-                        hanlerCacheMgr.ResteTypeHandler(handler, subinfo.HandlerType, scope);
-                        if (!config.AutoAck)
-                        {
-                            if (task.IsCompletedSuccessfully && task.Result) config.GetChannel().BasicAck(ea.DeliveryTag, false);
-                            else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
-                        }
+                        if (x.IsCompleted && x.GetResult()) config.GetChannel().BasicAck(ea.DeliveryTag, false);
+                        else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
                     }
                 }
             }
         }
+        [MethodImpl(methodImplOptions:MethodImplOptions.AggressiveInlining)]
         private object DeserializeObject(byte[] body, Type type)
         {
             return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(body), type);

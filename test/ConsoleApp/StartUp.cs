@@ -26,11 +26,13 @@ namespace ConsoleApp
             var a = new MqA() { A = "a", B = "b" };
             var direct = sp.GetService<IDirectEventBus>();
             var qps = sp.GetService<IQpsCounter>();
+            var ps = int.Parse(Configuration["ps"]);
+            var sleep= int.Parse(Configuration["sleep"]);
             Task.Run(() =>
             {
                 for (; ; )
                 {
-                    var i = 6000;
+                    var i = ps;
                     for (var j = 0; j < i; j++)
                     {
                         qps.Add("i");
@@ -38,7 +40,7 @@ namespace ConsoleApp
                         StartProcess(direct);
                         CheckQueue();
                     }
-                    Thread.Sleep(300);
+                    Thread.Sleep(sleep);
                 }
             });
         }

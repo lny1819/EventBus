@@ -25,6 +25,9 @@ namespace YiDian.EventBus.MQ
         readonly ILogger<IEventBus> _logger;
         readonly List<ConsumerConfig<IDirectEventBus, DirectSubscriber>> consumerInfos;
         readonly ThreadChannels channels = ThreadChannels.Default;
+
+        public event EventHandler<Exception> OnUncatchException;
+
         //readonly ConcurrentQueue<QueueItem<IDirectEventBus, DirectSubscriber>> __processQueue;
 
         public DirectEventBus(ILogger<IEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection = null, IEventBusSubscriptionsManagerFactory factory = null, int retryCount = 5, int cacheCount = 100)

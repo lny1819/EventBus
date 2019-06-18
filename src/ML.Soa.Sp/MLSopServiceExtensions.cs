@@ -34,11 +34,6 @@ namespace YiDian.Soa.Sp
             builder.SetSettings(SoaContent.MqConnStr, connstr);
             return builder;
         }
-        public static ISoaServiceContainerBuilder UseRpcServer(this ISoaServiceContainerBuilder builder, IPpcServerCreator serverCreator)
-        {
-            builder.Add(serverCreator);
-            return builder;
-        }
         public static ISoaServiceContainerBuilder UseEventbus<T>(this ISoaServiceContainerBuilder builder)
         {
             builder.SetSettings(SoaContent.UseDirect, typeof(T).FullName);

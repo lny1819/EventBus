@@ -73,11 +73,7 @@ namespace YiDian.Soa.Sp
 
             RegisterFactory(builder);
 
-            RegisterRpcServerFactory(builder);
-
             RegisterEventBus(builder);
-
-            RegisterRpcClient(builder);
 
             RegisterTopicEventBus(builder);
 
@@ -177,7 +173,8 @@ namespace YiDian.Soa.Sp
                 var conn = sp.GetService<IRabbitMQPersistentConnection>();
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                 var logger = sp.GetService<ILogger<DirectEventBus>>();
-                var eventbus = new DirectEventBus(logger, iLifetimeScope, conn);
+                var seralize = new SeralizeTest();
+                var eventbus = new DirectEventBus(logger, iLifetimeScope, conn, seralize: seralize);
                 return eventbus;
             });
         }
@@ -190,45 +187,14 @@ namespace YiDian.Soa.Sp
                     var conn = sp.GetService<IRabbitMQPersistentConnection>();
                     var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                     var logger = sp.GetService<ILogger<ITopicEventBus>>();
-                    return new TopicEventBusMQ(logger, iLifetimeScope, conn);
+                    var seralize = new SeralizeTest();
+                    return new TopicEventBusMQ(logger, iLifetimeScope, conn, seralize: seralize);
                 });
-        }
-        private void RegisterRpcServerFactory(ISoaServiceContainerBuilder builder)
-        {
-            var mqstr = builder.GetSettings(SoaContent.MqConnStr);
-            if (string.IsNullOrEmpty(mqstr)) return;
-            service.AddSingleton(sp =>
-            {
-                var creator = builder.Get<IPpcServerCreator>();
-                var rabbitMQPersistentConnection = sp.GetService<IRabbitMQPersistentConnection>();
-                var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
-                var counter = sp.GetService<IQpsCounter>();
-                var factory = sp.GetService<TaskFactory>();
-                var internalCreator = new RpcServerCreator(rabbitMQPersistentConnection, iLifetimeScope, counter, factory, creator);
-                return internalCreator;
-            });
         }
         private void RegisterFactory(ISoaServiceContainerBuilder builder)
         {
             ThreadPool.SetMinThreads(100, 100);
             var settings = builder.Get<ThreadPoolSettings>();
-        }
-        private void RegisterRpcClient(ISoaServiceContainerBuilder builder)
-        {
-            var clientName = Configuration["sysname"].ToString();
-            if (string.IsNullOrEmpty(clientName)) return;
-            var now = DateTime.Now.ToString("MMddHHmmss");
-            clientName = "rpcC-" + now + "-" + clientName;
-            service.AddSingleton<IMqRpcClientFactory, RpcClientFactory>(sp =>
-            {
-                var rabbitMQPersistentConnection = sp.GetService<IRabbitMQPersistentConnection>();
-                var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
-                var loggerfact = sp.GetService<ILoggerFactory>();
-                var qps = sp.GetService<IQpsCounter>();
-                var logger = sp.GetService<ILogger<DefaultServiceHost>>();
-                var rpc = new RpcClient(rabbitMQPersistentConnection, clientName, logger, qps);
-                return new RpcClientFactory(rpc);
-            });
         }
         private ConnectionFactory CreateConnect(string connstr)
         {
@@ -268,6 +234,19 @@ namespace YiDian.Soa.Sp
                 VirtualHost = vhost
             };
             return factory;
+        }
+    }
+
+    public class SeralizeTest : ISeralize
+    {
+        public object DeserializeObject(string v, Type type)
+        {
+            return "hello";
+        }
+
+        public string SerializeObject<T>(T @event) where T : IntegrationMQEvent
+        {
+            return "hello";
         }
     }
 }

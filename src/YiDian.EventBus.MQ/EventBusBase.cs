@@ -34,9 +34,11 @@ namespace YiDian.EventBus.MQ
             _subsFactory = factory ?? new InMemorySubFactory();
             consumerInfos = new List<ConsumerConfig<TEventBus, TSub>>();
             hanlerCacheMgr = new EventHanlerCacheMgr(cacheCount, autofac, AUTOFAC_SCOPE_NAME);
+            channels.UnCatchedException += LogError;
             _retryCount = retryCount;
             CreatePublishChannel();
         }
+
         protected IEventBusSubscriptionsManager GetSubscriber(string queueName)
         {
             var submgr = _subsFactory.GetOrCreateByQueue(queueName);
@@ -199,7 +201,9 @@ namespace YiDian.EventBus.MQ
 
         private void LogError(Exception ex)
         {
-            _logger.LogError(ex.ToString());
+            if (OnUncatchException != null)
+                OnUncatchException(this, ex);
+            else _logger.LogError(ex.ToString());
         }
         private void _persistentConnection_OnConnectRecovery(object sender, EventArgs e)
         {

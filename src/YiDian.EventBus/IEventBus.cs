@@ -4,6 +4,7 @@ namespace YiDian.EventBus
 {
     public interface IEventBus
     {
+        event EventHandler<Exception> OnUncatchException;
         void EnableHandlerCache(int cacheLength);
         void DeleteQueue(string queuename, bool force);
         void Publish<T>(T @event, bool enableTransaction = false) where T : IntegrationMQEvent;

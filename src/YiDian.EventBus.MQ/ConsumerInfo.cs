@@ -4,15 +4,13 @@ using RabbitMQ.Client.Events;
 
 namespace YiDian.EventBus.MQ
 {
-    internal class ConsumerConfig<TEventBus, TSub>
+    public class ConsumerConfig<TEventBus, TSub>
         where TEventBus : IEventBus
         where TSub : Subscriber<TEventBus>
     {
         private readonly TSub _subscriber;
         private readonly IEventBusSubscriptionsManager __manager;
         private IModel _model;
-
-        public event EventHandler<BasicDeliverEventArgs> OnReceive;
 
         public ConsumerConfig(TSub subscriber, IEventBusSubscriptionsManager mgr)
         {
@@ -28,7 +26,7 @@ namespace YiDian.EventBus.MQ
         public Action<TSub> SubAction { get; internal set; }
 
 
-        internal void Start(IModel channel)
+        internal void Start(IModel channel, Action<ConsumerConfig<TEventBus, TSub>, BasicDeliverEventArgs> config_OnReceive)
         {
             var old = _model;
             _model = channel;
@@ -38,7 +36,7 @@ namespace YiDian.EventBus.MQ
             var consumer = new EventingBasicConsumer(channel);
             consumer.Received += (model, ea) =>
             {
-                OnReceive(this, ea);
+                config_OnReceive(this, ea);
             };
             SubAction.Invoke(_subscriber);
             _model.BasicConsume(queue: Name, autoAck: AutoAck, consumer: consumer);
@@ -85,7 +83,6 @@ namespace YiDian.EventBus.MQ
         where TEventBus : IEventBus
         where TSub : Subscriber<TEventBus>
     {
-
         public QueueItem(ConsumerConfig<TEventBus, TSub> config, BasicDeliverEventArgs e) : this()
         {
             this.ConsumerConfig = config;

@@ -3,14 +3,12 @@ using ConsoleApp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
-using YiDian.Soa.Sp;
 
 namespace ConsoleApp
 {

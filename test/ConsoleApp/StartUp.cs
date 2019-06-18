@@ -27,7 +27,8 @@ namespace ConsoleApp
             var direct = sp.GetService<IDirectEventBus>();
             var qps = sp.GetService<IQpsCounter>();
             var ps = int.Parse(Configuration["ps"]);
-            var sleep= int.Parse(Configuration["sleep"]);
+            var sleep = int.Parse(Configuration["sleep"]);
+            var channel = ThreadChannels.Default;
             Task.Run(() =>
             {
                 for (; ; )
@@ -36,9 +37,10 @@ namespace ConsoleApp
                     for (var j = 0; j < i; j++)
                     {
                         qps.Add("i");
-                        __processQueue.Enqueue(a);
-                        StartProcess(direct);
-                        CheckQueue();
+                        channel.QueueWorkItemInternal(x => direct.Publish(a));
+                        //__processQueue.Enqueue(a);
+                        //StartProcess(direct);
+                        //CheckQueue();
                     }
                     Thread.Sleep(sleep);
                 }
@@ -62,8 +64,8 @@ namespace ConsoleApp
         const int ProcessStop = 0;
         const int ProcessStart = 1;
 
-        private  int process_state = ProcessStop;
-        private  void StartProcess(IDirectEventBus direct)
+        private int process_state = ProcessStop;
+        private void StartProcess(IDirectEventBus direct)
         {
             if (Interlocked.CompareExchange(ref process_state, ProcessStart, ProcessStop) != ProcessStop) return;
 

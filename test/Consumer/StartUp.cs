@@ -49,12 +49,16 @@ namespace Consumer
             {
                 x.Subscribe<MqA, MyHandler>();
             }, queueLength: 10000000, durable: false);
+            direct.StartConsumer("test-direct-2", x =>
+            {
+                x.Subscribe<MqA, My2Handler>();
+            }, queueLength: 10000000, durable: false);
         }
     }
     public class MyHandler : IIntegrationEventHandler<MqA>
     {
         public SleepTaskResult TaskResult { get; set; }
-        public  Task<bool> Handle(MqA @event)
+        public Task<bool> Handle(MqA @event)
         {
             var cts = TaskSource.Create<bool>(@event);
             var task = cts.Task;
@@ -62,7 +66,17 @@ namespace Consumer
             return task;
         }
     }
-
+    public class My2Handler : IIntegrationEventHandler<MqA>
+    {
+        public SleepTaskResult TaskResult { get; set; }
+        public Task<bool> Handle(MqA @event)
+        {
+            var cts = TaskSource.Create<bool>(@event);
+            var task = cts.Task;
+            TaskResult.Push(cts);
+            return task;
+        }
+    }
     public class SleepTaskResult
     {
         readonly ThreadChannels channels;
@@ -79,9 +93,11 @@ namespace Consumer
         }
         private void DoWork(object obj)
         {
+            var i = channels.GetInWork();
             var item = (TaskCompletionSource<bool>)obj;
             item.TrySetResult(true);
             counter.Add("c");
+            counter.Set("w", i);
         }
     }
     internal static class TaskSource

@@ -1,22 +1,23 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 
 namespace YiDian.Soa.Sp
 {
     public static class MLSopServiceBuilderExtensions
     {
-        public static ISoaServiceContainerBuilder UserStartUp<TStartup>(this ISoaServiceContainerBuilder builder) where TStartup : class
+        public static MlSopServiceContainerBuilder UserStartUp<TStartup>(this MlSopServiceContainerBuilder builder) where TStartup : class
         {
             var t = typeof(TStartup);
-            builder.SetSettings(SoaContent.Startup, t.FullName);
+            builder.StartUp = t;
             return builder;
         }
-        public static ISoaServiceContainerBuilder ConfigApp(this ISoaServiceContainerBuilder builder, Action<IConfigurationBuilder> configaction)
+        public static MlSopServiceContainerBuilder ConfigApp(this MlSopServiceContainerBuilder builder, Action<IConfigurationBuilder> configaction)
         {
             var configbuilder = new ConfigurationBuilder();
             configaction(configbuilder);
             var config = configbuilder.Build();
-            builder.Add<IConfiguration>(config);
+            builder.Config = config;
             return builder;
         }
         /// <summary>
@@ -26,24 +27,24 @@ namespace YiDian.Soa.Sp
         /// <param name="builder"></param>
         /// <param name="getconnstr"></param>
         /// <returns></returns>
-        public static ISoaServiceContainerBuilder RegisterMqConnection(this ISoaServiceContainerBuilder builder, Func<IConfiguration, string> getconnstr)
+        public static MlSopServiceContainerBuilder RegisterMqConnection(this MlSopServiceContainerBuilder builder, Func<IConfiguration, string> getconnstr)
         {
             var config = builder.Get<IConfiguration>();
             var connstr = getconnstr(config);
             builder.SetSettings(SoaContent.MqConnStr, connstr);
             return builder;
         }
-        public static ISoaServiceContainerBuilder UseEventbus<T>(this ISoaServiceContainerBuilder builder)
+        public static MlSopServiceContainerBuilder UseEventbus<T>(this MlSopServiceContainerBuilder builder)
         {
             builder.SetSettings(SoaContent.UseDirect, typeof(T).FullName);
             return builder;
         }
-        public static ISoaServiceContainerBuilder UseTopicEventBus<T>(this ISoaServiceContainerBuilder builder)
+        public static MlSopServiceContainerBuilder UseTopicEventBus<T>(this MlSopServiceContainerBuilder builder)
         {
             builder.SetSettings(SoaContent.UseTopic, typeof(T).FullName);
             return builder;
         }
-        public static ISoaServiceContainerBuilder UseConcurrencyFactory(this ISoaServiceContainerBuilder builder, Func<IConfiguration, int> concurrency)
+        public static MlSopServiceContainerBuilder UseConcurrencyFactory(this MlSopServiceContainerBuilder builder, Func<IConfiguration, int> concurrency)
         {
             var config = builder.Get<IConfiguration>();
             var i = concurrency(config);
@@ -52,7 +53,7 @@ namespace YiDian.Soa.Sp
             return builder;
         }
 
-        public static ISoaServiceContainerBuilder UseConcurrencyFactory(this ISoaServiceContainerBuilder builder, Func<IConfiguration, ThreadPoolSettings> concurrency)
+        public static MlSopServiceContainerBuilder UseConcurrencyFactory(this MlSopServiceContainerBuilder builder, Func<IConfiguration, ThreadPoolSettings> concurrency)
         {
             var config = builder.Get<IConfiguration>();
             var settings = concurrency(config);

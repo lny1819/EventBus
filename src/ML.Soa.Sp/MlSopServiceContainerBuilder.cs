@@ -1,44 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace YiDian.Soa.Sp
 {
 
-    public class MlSopServiceContainerBuilder : ISoaServiceContainerBuilder
+    public class MlSopServiceContainerBuilder
     {
-        Dictionary<Type, object> dic;
-        Dictionary<string, string> settings;
-        public MlSopServiceContainerBuilder()
+        public MlSopServiceContainerBuilder(IServiceCollection services)
         {
-            dic = new Dictionary<Type, object>();
-            settings = new Dictionary<string, string>();
-        }
-        public void Add<T>(T t) where T : class
-        {
-            dic[typeof(T)] = t;
+            Services = services ?? new ServiceCollection();
         }
 
-        public ISoaServiceHost Build(string[] args)
+        public IServiceCollection Services { get; }
+        internal IConfigurationRoot Config { get; set; }
+        internal Type StartUp { get; set; }
+
+        public ISoaServiceHost Build(string[] args = null)
         {
             var host = new DefaultServiceHost(this, args);
             return host;
-        }
-        public T Get<T>() where T : class
-        {
-            var flag = dic.TryGetValue(typeof(T), out object value);
-            if (flag) return value as T;
-            else return default(T);
-        }
-
-        public string GetSettings(string key)
-        {
-            settings.TryGetValue(key, out string value);
-            return value;
-        }
-
-        public void SetSettings(string key, string fullName)
-        {
-            settings[key] = fullName;
         }
     }
 }

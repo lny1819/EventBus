@@ -136,7 +136,7 @@ namespace YiDian.EventBus.MQ
             var handler = OnEventAdd;
             if (handler != null)
             {
-                OnEventRemoved(this, eventName);
+                OnEventAdd(this, eventName);
             }
         }
 

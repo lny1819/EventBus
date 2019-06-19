@@ -34,7 +34,11 @@ namespace YiDian.EventBus
              where T : IntegrationMQEvent
              where TH : IIntegrationEventHandler<T>;
         void Publish<T>(T @event, string prifix, bool enableTransaction = false) where T : IntegrationMQEvent;
-        void Subscribe(string name, string prifix);
-        void Unsubscribe(string name, string prifix);
+        void Subscribe<T, TH>(string queueName, string prifix)
+             where T : IntegrationMQEvent
+            where TH : IIntegrationEventHandler<T>;
+        void Unsubscribe<T, TH>(string queueName, string prifix)
+              where T : IntegrationMQEvent
+              where TH : IIntegrationEventHandler<T>;
     }
 }

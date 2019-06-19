@@ -1,15 +1,10 @@
 ﻿using Autofac;
 using Microsoft.Extensions.Logging;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using YiDian.EventBus.MQ.KeyAttribute;
 
 namespace YiDian.EventBus.MQ
@@ -25,18 +20,24 @@ namespace YiDian.EventBus.MQ
 
         public override string AUTOFAC_SCOPE_NAME => "TopicEventBus";
 
-        string GetPubKey<T>(T @event, string prefix = "") where T : IntegrationMQEvent
+        public override void Publish<T>(T @event, bool enableTransaction = false)
+        {
+            var name = GetPubKey(@event);
+            base.Publish(@event, name, enableTransaction);
+        }
+        public override string GetEventKey(string routingKey)
+        {
+            if (routingKey.IndexOf('-') > -1) routingKey = routingKey.Substring(routingKey.IndexOf('-') + 2);
+            return routingKey;
+        }
+
+        string GetPubKey<T>(T @event) where T : IntegrationMQEvent
         {
             var type = typeof(T);
             var eventKey = GetSubscriber("publish").GetEventKey<T>();
             var props = TypeEventBusMetas.GetKeys(type, out string keyname);
-            if (props == null && string.IsNullOrEmpty(prefix)) return eventKey;
+            if (props == null) return eventKey;
             var sb = new StringBuilder();
-            if (!string.IsNullOrEmpty(prefix))
-            {
-                sb.Append(prefix);
-                sb.Append('.');
-            }
             if (!string.IsNullOrEmpty(keyname))
             {
                 sb.Append(keyname);
@@ -53,14 +54,6 @@ namespace YiDian.EventBus.MQ
             sb.Replace('-', '_');
             sb.Append('-');
             sb.Append('.');
-            sb.Append(eventKey);
-            var key = sb.ToString();
-            return key;
-        }
-        string GetSubKey<T>() where T : IntegrationMQEvent
-        {
-            var eventKey = GetSubscriber("publish").GetEventKey<T>();
-            var sb = new StringBuilder("#.");
             sb.Append(eventKey);
             var key = sb.ToString();
             return key;
@@ -117,12 +110,20 @@ namespace YiDian.EventBus.MQ
                 if (right != null) GetMembers(right, dic);
             }
         }
-        public void Publish<T>(T @event, string prefix, bool enableTransaction = false) where T : IntegrationMQEvent
+        public override void Publish<T>(T @event, string prefix, bool enableTransaction = false)
         {
-            var eventName = GetPubKey(@event, prefix);
-            var message = __seralize.SerializeObject(@event);
-            var body = Encoding.UTF8.GetBytes(message);
-            PublishBase(eventName, body);
+            if (string.IsNullOrEmpty(prefix)) Publish(@event, enableTransaction);
+            else
+            {
+                var name = GetSubscriber("publish").GetEventKey<T>();
+                var sb = new StringBuilder(prefix);
+                sb.Append('.');
+                sb.Append('-');
+                sb.Append('.');
+                sb.Append(name);
+                name = sb.ToString();
+                base.Publish(@event, name, enableTransaction);
+            }
         }
         public void StartConsumer(string queueName, Action<TopicSubscriber> action, ushort fetchCount, int queueLength, bool autodel, bool durable, bool autoAck)
         {
@@ -153,10 +154,10 @@ namespace YiDian.EventBus.MQ
             {
                 if (item.Name == queueName)
                 {
-                    var mgr = item.GetSubMgr();
-                    mgr.AddSubscription<T, TH>();
                     var keyname = GetSubKey(where);
-                    DoInternalSubscription(mgr, keyname);
+                    var mgr = item.GetSubMgr();
+                    mgr.AddSubscription<T, TH>(keyname);
+                    break;
                 }
             }
         }
@@ -165,18 +166,20 @@ namespace YiDian.EventBus.MQ
             where T : IntegrationMQEvent
             where TH : IIntegrationEventHandler<T>
         {
-            var keyname = GetSubKey(where);
             foreach (var item in consumerInfos)
             {
                 if (item.Name == queueName)
                 {
+                    var keyname = GetSubKey(where);
                     item.Unsubscribe<T, TH>(keyname);
                     break;
                 }
             }
         }
 
-        public void Subscribe(string queueName, string prifix)
+        public void Subscribe<T, TH>(string queueName, string prifix)
+              where T : IntegrationMQEvent
+             where TH : IIntegrationEventHandler<T>
         {
             foreach (var item in consumerInfos)
             {
@@ -184,12 +187,14 @@ namespace YiDian.EventBus.MQ
                 {
                     var mgr = item.GetSubMgr();
                     var eventName = prifix + ".#";
-                    DoInternalSubscription(mgr, eventName);
+                    mgr.AddSubscription<T, TH>(eventName);
                     break;
                 }
             }
         }
-        public void Unsubscribe(string queueName, string prifix)
+        public void Unsubscribe<T, TH>(string queueName, string prifix)
+              where T : IntegrationMQEvent
+              where TH : IIntegrationEventHandler<T>
         {
             foreach (var item in consumerInfos)
             {
@@ -197,10 +202,11 @@ namespace YiDian.EventBus.MQ
                 {
                     var mgr = item.GetSubMgr();
                     var eventName = prifix + ".#";
-                    DoInternalUnSub(queueName, eventName);
+                    mgr.RemoveSubscription<T, TH>(eventName);
                     break;
                 }
             }
         }
+
     }
 }

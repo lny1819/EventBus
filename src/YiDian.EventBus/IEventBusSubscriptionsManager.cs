@@ -6,11 +6,14 @@ namespace YiDian.EventBus
     public interface IEventBusSubscriptionsManager
     {
         event EventHandler<string> OnEventRemoved;
-        bool IsEmpty { get; }
+        event EventHandler<string> OnEventAdd;
         string QueueName { get; }
         void AddSubscription<TH>(string eventName) where TH : IDynamicBytesHandler;
         void RemoveSubscription<TH>(string eventName) where TH : IDynamicBytesHandler;
         void AddSubscription<T, TH>()
+           where T : IntegrationMQEvent
+           where TH : IIntegrationEventHandler<T>;
+        void AddSubscription<T, TH>(string eventName)
            where T : IntegrationMQEvent
            where TH : IIntegrationEventHandler<T>;
         void RemoveSubscription<T, TH>()
@@ -19,7 +22,7 @@ namespace YiDian.EventBus
         void RemoveSubscription<T, TH>(string eventName)
              where TH : IIntegrationEventHandler<T>
              where T : IntegrationMQEvent;
-        bool SubscriptionsForEvent(string eventName);
+
         IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventName);
         string GetEventKey(string eventName);
         string GetEventKey<T>() where T : IntegrationMQEvent;

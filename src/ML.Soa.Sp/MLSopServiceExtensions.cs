@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
-using YiDian.EventBus;
 
 namespace YiDian.Soa.Sp
 {

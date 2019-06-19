@@ -13,7 +13,18 @@ namespace YiDian.EventBus.MQ
         public override string BROKER_NAME => "amq.direct";
 
         public override string AUTOFAC_SCOPE_NAME => "DirectEventBus";
-        
+
+        public override string GetEventKey(string routingKey)
+        {
+            return routingKey;
+        }
+
+        public override void Publish<T>(T @event, bool enableTransaction = false)
+        {
+            var name = GetSubscriber("publish").GetEventKey<T>();
+            Publish(@event, name, enableTransaction);
+        }
+
         public void StartConsumer(string queueName, Action<DirectSubscriber> action, ushort fetchCount, int queueLength, bool autodel, bool durable, bool autoAck)
         {
             if (string.IsNullOrEmpty(queueName)) return;

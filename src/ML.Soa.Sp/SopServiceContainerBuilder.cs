@@ -5,9 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 namespace YiDian.Soa.Sp
 {
 
-    public class MlSopServiceContainerBuilder
+    public class SopServiceContainerBuilder
     {
-        public MlSopServiceContainerBuilder(IServiceCollection services)
+        public SopServiceContainerBuilder(IServiceCollection services)
         {
             Services = services ?? new ServiceCollection();
         }

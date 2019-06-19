@@ -3,15 +3,11 @@ using Autofac.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RabbitMQ.Client;
 using System;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Diagnostics;
-using YiDian.EventBus.MQ;
-using YiDian.EventBus;
-using YiDian.EventBus.MQ.DefaultConnection;
 
 namespace YiDian.Soa.Sp
 {
@@ -23,7 +19,7 @@ namespace YiDian.Soa.Sp
         readonly string[] _args;
         readonly AutoResetEvent waitExit;
         int exitCode;
-        public DefaultServiceHost(MlSopServiceContainerBuilder builder, string[] args)
+        public DefaultServiceHost(SopServiceContainerBuilder builder, string[] args)
         {
             _args = args;
             waitExit = new AutoResetEvent(false);
@@ -34,14 +30,11 @@ namespace YiDian.Soa.Sp
             ConfigApps(builder);
         }
 
-        private void ConfigApps(MlSopServiceContainerBuilder builder)
+        private void ConfigApps(SopServiceContainerBuilder builder)
         {
-            var start = builder.GetSettings(SoaContent.Startup);
-            if (string.IsNullOrEmpty(start)) throw new ArgumentNullException(nameof(start));
-            var startup = System.Reflection.Assembly.GetEntryAssembly().GetType(start);
+            var startup = builder.StartUp;
 
-            System.Reflection.ConstructorInfo ci;
-            ci = startup.GetConstructor(new Type[] { typeof(IConfiguration) });
+            System.Reflection.ConstructorInfo ci = startup.GetConstructor(new Type[] { typeof(IConfiguration) });
             if (ci == null)
             {
                 ci = startup.GetConstructor(new Type[] { });
@@ -59,7 +52,7 @@ namespace YiDian.Soa.Sp
         }
 
         public event Action<Exception> UnCatchedException;
-        private void Init(MlSopServiceContainerBuilder builder)
+        private void Init(SopServiceContainerBuilder builder)
         {
             Console.OutputEncoding = Encoding.UTF8;
             var sp = builder.Services.GetServiceProvider();
@@ -79,7 +72,7 @@ namespace YiDian.Soa.Sp
 
         }
 
-        private void RegisterBase(MlSopServiceContainerBuilder builder)
+        private void RegisterBase(SopServiceContainerBuilder builder)
         {
             RegisterMqConnection(builder);
 
@@ -140,7 +133,7 @@ namespace YiDian.Soa.Sp
             }
             else UnCatchedException(ex);
         }
-        private void RegisterLogger(MlSopServiceContainerBuilder builder)
+        private void RegisterLogger(SopServiceContainerBuilder builder)
         {
             Enum.TryParse(Configuration["Logging:Console:LogLevel:Default"], out LogLevel level);
             service.AddLogging(e =>
@@ -152,7 +145,7 @@ namespace YiDian.Soa.Sp
             if (string.IsNullOrEmpty(mqstr)) return;
             //service.AddMQLogger();
         }
-        private void RegisterMqConnection(MlSopServiceContainerBuilder builder)
+        private void RegisterMqConnection(SopServiceContainerBuilder builder)
         {
             var mqstr = builder.GetSettings(SoaContent.MqConnStr);
             if (string.IsNullOrEmpty(mqstr)) return;
@@ -164,7 +157,7 @@ namespace YiDian.Soa.Sp
             .AddSingleton<IEventBusSubscriptionsManager, InMemoryEventBusSubscriptionsManager>();
         }
 
-        private void RegisterEventBus(MlSopServiceContainerBuilder builder)
+        private void RegisterEventBus(SopServiceContainerBuilder builder)
         {
             var busloggername = builder.GetSettings(SoaContent.UseDirect);
             if (string.IsNullOrEmpty(busloggername)) return;
@@ -178,7 +171,7 @@ namespace YiDian.Soa.Sp
                 return eventbus;
             });
         }
-        private void RegisterTopicEventBus(MlSopServiceContainerBuilder builder)
+        private void RegisterTopicEventBus(SopServiceContainerBuilder builder)
         {
             var topicbusname = builder.GetSettings(SoaContent.UseTopic);
             if (!string.IsNullOrEmpty(topicbusname))
@@ -191,7 +184,7 @@ namespace YiDian.Soa.Sp
                     return new TopicEventBusMQ(logger, iLifetimeScope, conn, seralize: seralize);
                 });
         }
-        private void RegisterFactory(MlSopServiceContainerBuilder builder)
+        private void RegisterFactory(SopServiceContainerBuilder builder)
         {
             ThreadPool.SetMinThreads(100, 100);
             var settings = builder.Get<ThreadPoolSettings>();

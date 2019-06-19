@@ -1,4 +1,4 @@
-﻿namespace YiDian.EventBus
+﻿namespace YiDian.Soa.Sp
 {
     public interface IQpsCounter
     {

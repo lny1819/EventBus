@@ -4,9 +4,9 @@ namespace YiDian.Soa.Sp
 {
     public static class MqServiceHost
     {
-        public static MlSopServiceContainerBuilder CreateBuilder(IServiceCollection services = null)
+        public static SopServiceContainerBuilder CreateBuilder(IServiceCollection services = null)
         {
-            var builder = new MlSopServiceContainerBuilder(services);
+            var builder = new SopServiceContainerBuilder(services);
             return builder;
         }
     }

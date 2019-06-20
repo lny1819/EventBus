@@ -112,7 +112,6 @@ namespace YiDian.Soa.Sp.Extensions
     internal class MqEventsLoalBuild : IAppRun
     {
         public string Name { get; private set; }
-
         public void Run(ISoaServiceHost host, string name, string[] args)
         {
             Name = name;
@@ -121,7 +120,8 @@ namespace YiDian.Soa.Sp.Extensions
                 if (args[i].ToLower() == "-loadevents")
                 {
                     var appnames = args[i + 1].Split(',');
-
+                    var sp = host.ServicesProvider;
+                    host.Exit(0);
                 }
             }
         }

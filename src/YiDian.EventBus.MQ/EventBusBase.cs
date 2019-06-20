@@ -125,9 +125,9 @@ namespace YiDian.EventBus.MQ
         {
             var message = __seralize.SerializeObject(@event);
             var body = Encoding.UTF8.GetBytes(message);
-            Publish(body, routingKey, enableTx);
+            PublishBytes(body, routingKey, enableTx);
         }
-        public void Publish(byte[] data, string eventName, bool enableTransaction = false)
+        public void PublishBytes(byte[] data, string eventName, bool enableTransaction = false)
         {
             if (_pubChannel == null) return;
             _pubChannel.BasicPublish(exchange: BROKER_NAME,

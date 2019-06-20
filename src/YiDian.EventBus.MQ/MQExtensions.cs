@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System;
+using System.Collections.Generic;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.DefaultConnection;
@@ -113,16 +114,43 @@ namespace YiDian.Soa.Sp.Extensions
         public string Name { get; private set; }
         public void Run(ISoaServiceHost host, string name, string[] args)
         {
+            //--loadevents -app history,userapi -path /data/his
             Name = name;
             for (var i = 0; i < args.Length; i++)
             {
-                if (args[i].ToLower() == "-loadevents")
+                var list = new List<AppMetas>();
+                if (args[i].ToLower() == "--loadevents")
                 {
-                    var appnames = args[i + 1].Split(',');
+                    string appname = "";
+                    string path = "";
+                    var n1 = args[i + 1];
+                    var n2 = args[i + 3];
+                    var v1 = args[i + 2];
+                    var v2 = args[i + 4];
+                    var arr1 = new string[] { n1, v1 };
+                    var arr2 = new string[] { n2, v2 };
+                    var arr = new string[2][] { arr1, arr2 };
+                    foreach (var n in arr)
+                    {
+                        if (n[0] == "-app") appname = n[1];
+                        else if (n[0] == "-path") path = n[1];
+                    }
                     var sp = host.ServicesProvider;
+                    var mgr = sp.GetService<IAppEventsManager>();
+                    var appnames = appname.Split(',');
+                    foreach (var app in appnames)
+                    {
+                        list.Add(mgr.GetAppEventTypes(app));
+                    }
+                    ReloadEvents(list, path);
                     host.Exit(0);
                 }
             }
+        }
+
+        private void ReloadEvents(List<AppMetas> list, string path)
+        {
+
         }
     }
 }

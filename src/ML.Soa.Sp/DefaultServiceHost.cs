@@ -110,11 +110,18 @@ namespace YiDian.Soa.Sp
         }
         private void Start()
         {
-            var appstart = sysstart.GetType().GetMethod("Start");
-            if (appstart == null) return;
-            appstartResult = appstart.Invoke(sysstart, new object[] { ServicesProvider, _args });
+            try
+            {
+                var appstart = sysstart.GetType().GetMethod("Start");
+                if (appstart == null) return;
+                appstartResult = appstart.Invoke(sysstart, new object[] { ServicesProvider, _args });
+            }
+            catch (Exception ex)
+            {
+                OnException(ex);
+            }
         }
-        public void OnException(Exception ex)
+        void OnException(Exception ex)
         {
             if (UnCatchedException == null)
             {

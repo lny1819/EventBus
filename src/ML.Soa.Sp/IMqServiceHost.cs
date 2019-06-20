@@ -9,7 +9,6 @@ namespace YiDian.Soa.Sp
         IConfiguration Configuration { get; }
         int Run(Func<IConfiguration, string> getName, bool background = false);
         event Action<Exception> UnCatchedException;
-        void OnException(Exception e);
         void Exit(int code);
     }
 }

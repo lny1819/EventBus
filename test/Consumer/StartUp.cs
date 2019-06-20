@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
+using YiDian.EventBus.MQ.KeyAttribute;
 using YiDian.Soa.Sp;
 
 namespace ConsoleApp
@@ -16,6 +17,7 @@ namespace ConsoleApp
 
     public class MqA : IntegrationMQEvent
     {
+        [KeyIndex(0)]
         public string A { get; set; }
         public string B { get; set; }
     }
@@ -44,25 +46,39 @@ namespace Consumer
         {
             var channels = ThreadChannels.Default;
             var direct = sp.GetService<IDirectEventBus>();
+            var topic = sp.GetService<ITopicEventBus>();
             direct.StartConsumer("test-direct", x =>
             {
                 x.Subscribe<MqA, MyHandler>();
+                x.SubscribeDynamic<MyHandler>("MqA");
             }, queueLength: 10000000, durable: false);
-            direct.StartConsumer("test-direct-2", x =>
+            topic.StartConsumer("test-direct-2", x =>
+             {
+                 x.Subscribe<MqA, My2Handler>(m => m.A == "a");
+             }, length: 10000000, durable: false);
+            topic.StartConsumer("test-direct-3", x =>
             {
-                x.Subscribe<MqA, My2Handler>();
-            }, queueLength: 10000000, durable: false);
+                x.Subscribe<MqA, My2Handler>("zs");
+                x.Subscribe<MyHandler>("#.MqA");
+            }, length: 10000000, durable: false);
         }
     }
-    public class MyHandler : IIntegrationEventHandler<MqA>
+    public class MyHandler : IIntegrationEventHandler<MqA>,IDynamicBytesHandler
     {
         public SleepTaskResult TaskResult { get; set; }
+        public IQpsCounter Counter { get; set; }
         public Task<bool> Handle(MqA @event)
         {
             var cts = TaskSource.Create<bool>(@event);
             var task = cts.Task;
             TaskResult.Push(cts);
             return task;
+        }
+
+        public Task<bool> Handle(string routingKey, byte[] datas)
+        {
+            Counter.Add("c2");
+            return Task.FromResult<bool>(true);
         }
     }
     public class My2Handler : IIntegrationEventHandler<MqA>
@@ -95,7 +111,7 @@ namespace Consumer
             var i = channels.GetInWork();
             var item = (TaskCompletionSource<bool>)obj;
             item.TrySetResult(true);
-            counter.Add("c");
+            counter.Add("c1");
             counter.Set("w", i);
         }
     }

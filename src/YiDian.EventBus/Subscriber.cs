@@ -21,6 +21,12 @@ namespace YiDian.EventBus
         {
             __eventBus.Subscribe<T, TH>(__name);
         }
+        public void Subscribe<T, TH>(string eventName)
+            where T : IntegrationMQEvent
+            where TH : IIntegrationEventHandler<T>
+        {
+            __eventBus.Subscribe<T, TH>(__name, eventName);
+        }
         public void Subscribe<TH>(string eventName)
             where TH : IDynamicBytesHandler
         {
@@ -49,7 +55,7 @@ namespace YiDian.EventBus
     {
         readonly protected TEventBus __eventBus;
         readonly protected string __name;
-        public Subscriber(TEventBus eventBus,string name)
+        public Subscriber(TEventBus eventBus, string name)
         {
             __name = name;
             __eventBus = eventBus;

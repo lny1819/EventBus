@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
+using YiDian.EventBus.MQ.KeyAttribute;
 using YiDian.Soa.Sp;
 
 namespace ConsoleApp
@@ -14,20 +15,23 @@ namespace ConsoleApp
     public class StartUp
     {
         public IConfiguration Configuration { get; }
-        readonly ConcurrentQueue<MqA> __processQueue = new ConcurrentQueue<MqA>();
         public StartUp(IConfiguration config)
         {
             Configuration = config;
         }
         public void ConfigService(IServiceCollection services, ContainerBuilder builder)
         {
+
         }
         public void Start(IServiceProvider sp, string[] args)
         {
-            var a = new MqA() { A = "a", B = "b" };
+            var a = new MqA() { A = "a", B = "b2" };
+            var b = new MqA() { A = "b", B = "b1" };
             var direct = sp.GetService<IDirectEventBus>();
+            var topic = sp.GetService<ITopicEventBus>();
             var qps = sp.GetService<IQpsCounter>();
             var ps = int.Parse(Configuration["ps"]);
+            var type = Configuration["type"];
             var sleep = int.Parse(Configuration["sleep"]);
             var channel = ThreadChannels.Default;
             Task.Run(() =>
@@ -38,55 +42,24 @@ namespace ConsoleApp
                     for (var j = 0; j < i; j++)
                     {
                         qps.Add("i");
-                        channel.QueueWorkItemInternal(x => direct.Publish(a));
-                        //__processQueue.Enqueue(a);
-                        //StartProcess(direct);
-                        //CheckQueue();
+                        channel.QueueWorkItemInternal(x =>
+                        {
+                            if (type == "direct")
+                                direct.Publish(a);
+                            else if (type == "top-where")
+                                topic.Publish(a);
+                            else if (type == "top-pre")
+                                topic.Publish(b, "zs");
+                        });
                     }
                     Thread.Sleep(sleep);
-                }
-            });
-        }
-
-        private void CheckQueue()
-        {
-            if (__processQueue.Count > 20000)
-                Thread.Sleep(1);
-            else if (__processQueue.Count > 30000)
-            {
-                Thread.Sleep(30);
-            }
-            else if (__processQueue.Count > 40000)
-            {
-                Thread.Sleep(1000);
-            }
-        }
-
-        const int ProcessStop = 0;
-        const int ProcessStart = 1;
-
-        private int process_state = ProcessStop;
-        private void StartProcess(IDirectEventBus direct)
-        {
-            if (Interlocked.CompareExchange(ref process_state, ProcessStart, ProcessStop) != ProcessStop) return;
-
-            Task.Run(() =>
-            {
-                for (; ; )
-                {
-                    var flag = __processQueue.TryDequeue(out MqA item);
-                    if (!flag)
-                    {
-                        Interlocked.Exchange(ref process_state, ProcessStop);
-                        break;
-                    }
-                    direct.Publish(item);
                 }
             });
         }
     }
     public class MqA : IntegrationMQEvent
     {
+        [KeyIndex(0)]
         public string A { get; set; }
         public string B { get; set; }
     }

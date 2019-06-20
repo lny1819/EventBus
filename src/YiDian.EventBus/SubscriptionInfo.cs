@@ -18,7 +18,7 @@ namespace YiDian.EventBus
         }
         public static SubscriptionInfo Dynamic(Type handlerType, FastInvokeHandler handler)
         {
-            return new SubscriptionInfo(true, null, handlerType, handler);
+            return new SubscriptionInfo(true, handlerType, null, handler);
         }
         public static SubscriptionInfo Typed(Type handlerType, Type eventType, FastInvokeHandler handler)
         {

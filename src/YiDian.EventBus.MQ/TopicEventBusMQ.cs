@@ -27,7 +27,11 @@ namespace YiDian.EventBus.MQ
         }
         public override string GetEventKey(string routingKey)
         {
-            if (routingKey.IndexOf('-') > -1) routingKey = routingKey.Substring(routingKey.IndexOf('-') + 2);
+            if (routingKey.IndexOf('~') > -1) routingKey = routingKey.Substring(0, routingKey.IndexOf('~') - 1) + ".#";
+            //else if (routingKey.IndexOf('-') > -1)
+            //{
+
+            //}
             return routingKey;
         }
 
@@ -58,13 +62,13 @@ namespace YiDian.EventBus.MQ
             var key = sb.ToString();
             return key;
         }
-        string GetSubKey<T>(Expression<Func<T, bool>> where) where T : IntegrationMQEvent
+        string GetSubKey<T>(Expression<Func<T, bool>> where, IEventBusSubscriptionsManager mgr) where T : IntegrationMQEvent
         {
             var type = typeof(T);
-            var fullname = type.FullName;
+            var fullname = mgr.GetEventKey<T>();
             var dic = new Dictionary<string, string>();
             var props = TypeEventBusMetas.GetKeys(type, out string keyname);
-            if (props == null) return fullname.ToLower();
+            if (props == null) return fullname;
             var body = where.Body as BinaryExpression;
             GetMembers(body, dic);
             var sb = new StringBuilder(keyname);
@@ -82,7 +86,7 @@ namespace YiDian.EventBus.MQ
             sb.Append('-');
             sb.Append('.');
             sb.Append(fullname);
-            return sb.ToString().ToLower();
+            return sb.ToString();
         }
         void GetMembers(BinaryExpression body, Dictionary<string, string> dic)
         {
@@ -118,7 +122,7 @@ namespace YiDian.EventBus.MQ
                 var name = GetSubscriber("publish").GetEventKey<T>();
                 var sb = new StringBuilder(prefix);
                 sb.Append('.');
-                sb.Append('-');
+                sb.Append('~');
                 sb.Append('.');
                 sb.Append(name);
                 name = sb.ToString();
@@ -154,8 +158,8 @@ namespace YiDian.EventBus.MQ
             {
                 if (item.Name == queueName)
                 {
-                    var keyname = GetSubKey(where);
                     var mgr = item.GetSubMgr();
+                    var keyname = GetSubKey(where, mgr);
                     mgr.AddSubscription<T, TH>(keyname);
                     break;
                 }
@@ -170,7 +174,8 @@ namespace YiDian.EventBus.MQ
             {
                 if (item.Name == queueName)
                 {
-                    var keyname = GetSubKey(where);
+                    var mgr = item.GetSubMgr();
+                    var keyname = GetSubKey(where, mgr);
                     item.Unsubscribe<T, TH>(keyname);
                     break;
                 }

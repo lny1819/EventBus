@@ -25,29 +25,30 @@ namespace YiDian.EventBus.MQ
     }
     public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManager
     {
-        readonly List<string> __subs = new List<string>();
+        readonly List<string> __bytes_subs = new List<string>();
         private readonly ConcurrentDictionary<string, List<SubscriptionInfo>> _handlers;
-
         public event EventHandler<string> OnEventRemoved;
         public event EventHandler<string> OnEventAdd;
-
+        SubscriptionInfo _bytesHandler = null;
         public InMemoryEventBusSubscriptionsManager(string name)
         {
             QueueName = name;
             _handlers = new ConcurrentDictionary<string, List<SubscriptionInfo>>(StringComparer.OrdinalIgnoreCase);
         }
-
         public string QueueName { get; }
-
         public void AddSubscription<TH>(string eventName)
             where TH : IDynamicBytesHandler
         {
             eventName = GetEventKey(eventName);
-            var method = typeof(TH).GetMethod("Handle");
-            var handler = FastInvoke.GetMethodInvoker(method);
-            DoAddSubscription(typeof(TH), typeof(byte), handler, eventName, isDynamic: true);
+            if (__bytes_subs.Contains(eventName)) return;
+            lock (__bytes_subs)
+            {
+                if (__bytes_subs.Contains(eventName)) return;
+                __bytes_subs.Add(eventName);
+                _bytesHandler = SubscriptionInfo.Dynamic(typeof(TH), null);
+                RaiseOnEventAdd(eventName);
+            }
         }
-
         public void AddSubscription<T, TH>()
             where T : IntegrationMQEvent
             where TH : IIntegrationEventHandler<T>
@@ -55,7 +56,7 @@ namespace YiDian.EventBus.MQ
             var eventName = GetEventKey<T>();
             var method = typeof(TH).GetMethod("Handle", new Type[] { typeof(T) });
             var handler = FastInvoke.GetMethodInvoker(method);
-            DoAddSubscription(typeof(TH), typeof(T), handler, eventName, isDynamic: false);
+            DoAddSubscription(typeof(TH), typeof(T), handler, eventName, false);
         }
         public void AddSubscription<T, TH>(string eventName)
           where T : IntegrationMQEvent
@@ -88,7 +89,13 @@ namespace YiDian.EventBus.MQ
             where TH : IDynamicBytesHandler
         {
             eventName = GetEventKey(eventName);
-            DoRemoveHandler(eventName, typeof(TH));
+            if (!__bytes_subs.Contains(eventName)) return;
+            lock (__bytes_subs)
+            {
+                if (__bytes_subs.Remove(eventName))
+                    RaiseOnEventRemoved(eventName);
+                if (__bytes_subs.Count == 0) _bytesHandler = null;
+            }
         }
         public void RemoveSubscription<T, TH>()
             where TH : IIntegrationEventHandler<T>
@@ -118,10 +125,39 @@ namespace YiDian.EventBus.MQ
         }
         public IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventName)
         {
+            bool sub_dynamic = false;
             eventName = GetEventKey(eventName);
+            foreach (var byte_key in __bytes_subs)
+            {
+                if (byte_key.StartsWith("#."))
+                {
+                    ReadOnlySpan<char> span = byte_key;
+                    ReadOnlySpan<char> key = eventName;
+                    sub_dynamic = key.Contains(span.Slice(2), StringComparison.OrdinalIgnoreCase);
+                }
+                else if (byte_key.EndsWith(".#"))
+                {
+                    ReadOnlySpan<char> span = byte_key;
+                    ReadOnlySpan<char> key = eventName;
+                    var i = span.Slice(2).CompareTo(eventName, StringComparison.OrdinalIgnoreCase);
+                    sub_dynamic = key.Contains(span.Slice(0, byte_key.Length - 2), StringComparison.OrdinalIgnoreCase);
+                }
+                else
+                {
+                    ReadOnlySpan<char> span = byte_key;
+                    ReadOnlySpan<char> key = eventName;
+                    sub_dynamic = key.Contains(span, StringComparison.OrdinalIgnoreCase);
+                }
+                if (sub_dynamic) break;
+            }
             var flag = _handlers.TryGetValue(eventName, out List<SubscriptionInfo> res);
-            if (flag) return res;
-            else return null;
+            if (!flag && !sub_dynamic) return null;
+            if (sub_dynamic)
+            {
+                if (!flag) res = new List<SubscriptionInfo>();
+                res.Add(_bytesHandler);
+            }
+            return res;
         }
         private void RaiseOnEventRemoved(string eventName)
         {
@@ -166,7 +202,7 @@ namespace YiDian.EventBus.MQ
         //        }
         //    }
         //}
-     
+
         public string GetEventKey(string eventName)
         {
             return eventName;

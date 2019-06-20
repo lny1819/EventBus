@@ -73,7 +73,7 @@ namespace YiDian.Soa.Sp.Extensions
             };
             return factory;
         }
-        public static SopServiceContainerBuilder UseDirectEventBus<T>(this SopServiceContainerBuilder builder) where T : ISeralize, new()
+        public static SopServiceContainerBuilder UseDirectEventBus<T>(this SopServiceContainerBuilder builder, int cacheLength = 0) where T : ISeralize, new()
         {
             var service = builder.Services;
             service.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
@@ -84,11 +84,12 @@ namespace YiDian.Soa.Sp.Extensions
                 var seralize = sp.GetService<T>();
                 if (seralize == null) seralize = new T();
                 var eventbus = new DirectEventBus(logger, iLifetimeScope, conn, seralize: seralize);
+                eventbus.EnableHandlerCache(cacheLength);
                 return eventbus;
             });
             return builder;
         }
-        public static SopServiceContainerBuilder UseTopicEventBus<T>(this SopServiceContainerBuilder builder) where T : ISeralize, new()
+        public static SopServiceContainerBuilder UseTopicEventBus<T>(this SopServiceContainerBuilder builder, int cacheLength = 0) where T : ISeralize, new()
         {
             var service = builder.Services;
             service.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
@@ -98,7 +99,9 @@ namespace YiDian.Soa.Sp.Extensions
                 var logger = sp.GetService<ILogger<ITopicEventBus>>();
                 var seralize = sp.GetService<T>();
                 if (seralize == null) seralize = new T();
-                return new TopicEventBusMQ(logger, iLifetimeScope, conn, seralize: seralize);
+                var eventbus = new TopicEventBusMQ(logger, iLifetimeScope, conn, seralize: seralize);
+                eventbus.EnableHandlerCache(cacheLength);
+                return eventbus;
             });
             return builder;
         }

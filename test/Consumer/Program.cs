@@ -12,8 +12,8 @@ namespace Consumer
                .ConfigApp(e => e.AddJsonFile("appsettings.json"))
                .UseRabbitMq(e => e["mqconnstr"])
                .UserStartUp<StartUp>()
-               .UseDirectEventBus<MySeralize>()
-               .UseTopicEventBus<MySeralize>()
+               .UseDirectEventBus<MySeralize>(1000)
+               .UseTopicEventBus<MySeralize>(1000)
                .Build(args)
                .Run(e => e["sysname"]);
         }

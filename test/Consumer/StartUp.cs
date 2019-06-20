@@ -11,6 +11,7 @@ using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.KeyAttribute;
 using YiDian.Soa.Sp;
+using YiDian.Soa.Sp.Extensions;
 
 namespace ConsoleApp
 {
@@ -34,6 +35,8 @@ namespace Consumer
         }
         public void ConfigService(IServiceCollection services, ContainerBuilder builder)
         {
+            services.UseDirectEventBus<MySeralize>(1000);
+            services.UseTopicEventBus<MySeralize>(1000);
             var curAssembly = Assembly.GetEntryAssembly();
             builder.RegisterAssemblyTypes(curAssembly).Where(e => e.Name.EndsWith("Handler")).PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
             services.AddSingleton((e) =>

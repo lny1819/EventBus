@@ -2,13 +2,14 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.KeyAttribute;
 using YiDian.Soa.Sp;
+using YiDian.Soa.Sp.Extensions;
 
 namespace ConsoleApp
 {
@@ -21,10 +22,14 @@ namespace ConsoleApp
         }
         public void ConfigService(IServiceCollection services, ContainerBuilder builder)
         {
-
+            services.UseDirectEventBus<MySeralize>();
+            services.UseTopicEventBus<MySeralize>();
         }
         public void Start(IServiceProvider sp, string[] args)
         {
+            var eventsMgr = sp.GetRequiredService<IAppEventsManager>();
+            var types = new List<Type>();
+            eventsMgr.RegisterEvents("mypub", "1.0", types);
             var a = new MqA() { A = "a", B = "b2" };
             var b = new MqA() { A = "b", B = "b1" };
             var direct = sp.GetService<IDirectEventBus>();

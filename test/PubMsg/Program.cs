@@ -12,8 +12,6 @@ namespace ConsoleApp
                .ConfigApp(e => e.AddJsonFile("appsettings.json"))
                .UseRabbitMq(e => e["mqconnstr"])
                .UserStartUp<StartUp>()
-               .UseDirectEventBus<MySeralize>()
-               .UseTopicEventBus<MySeralize>()
                .Build(args)
                .Run(e => e["sysname"]);
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace YiDian.EventBus
 {
@@ -19,6 +20,7 @@ namespace YiDian.EventBus
         void Unsubscribe<T, TH>(string queueName)
             where TH : IIntegrationEventHandler<T>
             where T : IntegrationMQEvent;
+        List<Type> GetAppEvents(string appname);
     }
     public interface IDirectEventBus : IEventBus
     {

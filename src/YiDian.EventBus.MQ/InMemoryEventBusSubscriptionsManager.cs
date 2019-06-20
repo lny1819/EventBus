@@ -23,6 +23,19 @@ namespace YiDian.EventBus.MQ
             }
         }
     }
+    public class InMemoryAppEventsManager : IAppEventsManager
+    {
+
+        public bool HasRegisterEvent<T>(string appName) where T : IntegrationMQEvent
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RegisterEvent<T>(string appName) where T : IntegrationMQEvent
+        {
+            throw new NotImplementedException();
+        }
+    }
     public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManager
     {
         readonly List<string> __bytes_subs = new List<string>();

@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System;
+using System.Collections.Generic;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.DefaultConnection;
@@ -25,6 +26,9 @@ namespace YiDian.Soa.Sp.Extensions
             var defaultconn = new DefaultRabbitMQPersistentConnection(factory, 5);
             var service = builder.Services;
             service.AddSingleton<IRabbitMQPersistentConnection>(defaultconn);
+            var evensMgr = new InMemoryAppEventsManager();
+            service.AddSingleton<IAppEventsManager>(evensMgr);
+            builder.RegisterRun(new MqEventsLoalBuild());
             return builder;
         }
         public static SopServiceContainerBuilder UseRabbitMq(this SopServiceContainerBuilder builder, Func<IRabbitMQPersistentConnection> getFactory)
@@ -73,9 +77,8 @@ namespace YiDian.Soa.Sp.Extensions
             };
             return factory;
         }
-        public static SopServiceContainerBuilder UseDirectEventBus<T>(this SopServiceContainerBuilder builder, int cacheLength = 0) where T : ISeralize, new()
+        public static IServiceCollection UseDirectEventBus<T>(this IServiceCollection service, int cacheLength = 0) where T : ISeralize, new()
         {
-            var service = builder.Services;
             service.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
             {
                 var conn = sp.GetService<IRabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
@@ -87,11 +90,10 @@ namespace YiDian.Soa.Sp.Extensions
                 eventbus.EnableHandlerCache(cacheLength);
                 return eventbus;
             });
-            return builder;
+            return service;
         }
-        public static SopServiceContainerBuilder UseTopicEventBus<T>(this SopServiceContainerBuilder builder, int cacheLength = 0) where T : ISeralize, new()
+        public static IServiceCollection UseTopicEventBus<T>(this IServiceCollection service, int cacheLength = 0) where T : ISeralize, new()
         {
-            var service = builder.Services;
             service.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
             {
                 var conn = sp.GetService<IRabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
@@ -103,7 +105,25 @@ namespace YiDian.Soa.Sp.Extensions
                 eventbus.EnableHandlerCache(cacheLength);
                 return eventbus;
             });
-            return builder;
+            return service;
+        }
+    }
+
+    internal class MqEventsLoalBuild : IAppRun
+    {
+        public string Name { get; private set; }
+
+        public void Run(ISoaServiceHost host, string name, string[] args)
+        {
+            Name = name;
+            for (var i = 0; i < args.Length; i++)
+            {
+                if (args[i].ToLower() == "-loadevents")
+                {
+                    var appnames = args[i + 1].Split(',');
+
+                }
+            }
         }
     }
 }

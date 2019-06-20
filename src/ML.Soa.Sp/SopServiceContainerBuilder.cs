@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -7,16 +8,21 @@ namespace YiDian.Soa.Sp
 
     public class SopServiceContainerBuilder
     {
+        readonly List<IAppRun> appRuns;
         public SopServiceContainerBuilder(IServiceCollection services)
         {
             Services = services ?? new ServiceCollection();
+            appRuns = new List<IAppRun>();
         }
-
-        public object UseRabbitMq(Func<object, object> p)
+        public void RegisterRun(IAppRun run)
         {
-            throw new NotImplementedException();
+            if (appRuns.Contains(run))
+                return;
         }
-
+        public List<IAppRun> GetAllAppRun()
+        {
+            return appRuns;
+        }
         public IServiceCollection Services { get; }
         public IConfigurationRoot Config { get; internal set; }
         internal Type StartUp { get; set; }

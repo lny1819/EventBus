@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace YiDian.Soa.Sp
 {
@@ -18,9 +19,12 @@ namespace YiDian.Soa.Sp
         object sysstart;
         readonly string[] _args;
         readonly AutoResetEvent waitExit;
-        int exitCode;
+        readonly List<IAppRun> run_list;
+        int exitCode = 0;
+        int state = 0;
         public DefaultServiceHost(SopServiceContainerBuilder builder, string[] args)
         {
+            run_list = builder.GetAllAppRun();
             _args = args;
             waitExit = new AutoResetEvent(false);
             service = builder.Services;
@@ -80,9 +84,22 @@ namespace YiDian.Soa.Sp
         public int Run(Func<IConfiguration, string> getName, bool background = false)
         {
             var appname = getName(Configuration);
+            if (appname == null) throw new ArgumentNullException("Run->GetAppName");
             var logger = ServicesProvider.GetService<ILogger<DefaultServiceHost>>();
             logger.LogWarning($"soa service start with sysname {appname} datetime {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}");
-            Start();
+            try
+            {
+                foreach (var run in run_list)
+                {
+                    run.Run(this, appname, _args);
+                }
+                if (state != 0) return exitCode;
+                Start();
+            }
+            catch (Exception ex)
+            {
+                OnException(ex);
+            }
             if (!background)
             {
                 if (exitCode == 0)
@@ -100,8 +117,11 @@ namespace YiDian.Soa.Sp
         }
         public void Exit(int code)
         {
-            exitCode = code;
-            waitExit.Set();
+            if (Interlocked.CompareExchange(ref state, 0, 1) == 0)
+            {
+                exitCode = code;
+                waitExit.Set();
+            }
         }
         static readonly DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         long ToUnixTimestamp(DateTime dateTime)
@@ -110,16 +130,9 @@ namespace YiDian.Soa.Sp
         }
         private void Start()
         {
-            try
-            {
-                var appstart = sysstart.GetType().GetMethod("Start");
-                if (appstart == null) return;
-                appstartResult = appstart.Invoke(sysstart, new object[] { ServicesProvider, _args });
-            }
-            catch (Exception ex)
-            {
-                OnException(ex);
-            }
+            var appstart = sysstart.GetType().GetMethod("Start");
+            if (appstart == null) return;
+            appstartResult = appstart.Invoke(sysstart, new object[] { ServicesProvider, _args });
         }
         void OnException(Exception ex)
         {

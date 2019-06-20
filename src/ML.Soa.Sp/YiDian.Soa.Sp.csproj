@@ -1,18 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
     <AssemblyName>YiDian.Soa.Sp</AssemblyName>
     <RootNamespace>YiDian.Soa.Sp</RootNamespace>
-    <Version>2.1.5.28</Version>
-    <Company>郑州高信达软件开发有限公司</Company>
-    <Product>SOA集成框架</Product>
-    <Copyright>@郑州高信达</Copyright>
-    <Description>SOA集成框架</Description>
-    <Authors>yidianer</Authors>
+    <Version>0.0.0.1</Version>
+    <Company>yanfeng.sun@Live.com</Company>
+    <Product>微服务集成容器</Product>
+    <Copyright>yanfeng.sun@Live.com</Copyright>
+    <Description>微服务集成容器</Description>
+    <Authors>xhero</Authors>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>2.1.5.26</AssemblyVersion>
-    <FileVersion>2.1.5.26</FileVersion>
+    <AssemblyVersion>0.0.0.1</AssemblyVersion>
+    <FileVersion>0.0.0.1</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

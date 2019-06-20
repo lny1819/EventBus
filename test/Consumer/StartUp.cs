@@ -47,23 +47,23 @@ namespace Consumer
             var channels = ThreadChannels.Default;
             var direct = sp.GetService<IDirectEventBus>();
             var topic = sp.GetService<ITopicEventBus>();
-            direct.StartConsumer("test-direct", x =>
-            {
-                x.Subscribe<MqA, MyHandler>();
-                x.SubscribeDynamic<MyHandler>("MqA");
-            }, queueLength: 10000000, durable: false);
+            //direct.StartConsumer("test-direct", x =>
+            //{
+            //    x.Subscribe<MqA, MyHandler>();
+            //    x.SubscribeDynamic<MyHandler>("MqA");
+            //}, queueLength: 10000000, durable: false, autodel: true);
             topic.StartConsumer("test-direct-2", x =>
              {
                  x.Subscribe<MqA, My2Handler>(m => m.A == "a");
-             }, length: 10000000, durable: false);
-            topic.StartConsumer("test-direct-3", x =>
-            {
-                x.Subscribe<MqA, My2Handler>("zs");
-                x.Subscribe<MyHandler>("#.MqA");
-            }, length: 10000000, durable: false);
+             }, length: 10000000, durable: false, autodelete: true);
+            //topic.StartConsumer("test-direct-3", x =>
+            //{
+            //    x.Subscribe<MqA, My2Handler>("zs");
+            //    x.Subscribe<MyHandler>("#.MqA");
+            //}, length: 10000000, durable: false, autodelete: true);
         }
     }
-    public class MyHandler : IIntegrationEventHandler<MqA>,IDynamicBytesHandler
+    public class MyHandler : IIntegrationEventHandler<MqA>, IDynamicBytesHandler
     {
         public SleepTaskResult TaskResult { get; set; }
         public IQpsCounter Counter { get; set; }

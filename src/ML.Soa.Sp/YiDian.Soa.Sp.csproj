@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
     <AssemblyName>YiDian.Soa.Sp</AssemblyName>
     <RootNamespace>YiDian.Soa.Sp</RootNamespace>
     <Version>0.0.0.1</Version>

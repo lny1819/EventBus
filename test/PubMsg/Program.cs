@@ -7,7 +7,7 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
-            MqServiceHost.CreateBuilder()
+            ServiceHost.CreateBuilder()
                .ConfigApp(e => e.AddJsonFile("appsettings.json"))
                .RegisterMqConnection(e => e["mqconnstr"])
                .UseEventbus<StartUp>()

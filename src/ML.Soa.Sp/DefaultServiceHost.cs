@@ -55,27 +55,17 @@ namespace YiDian.Soa.Sp
         private void Init(SopServiceContainerBuilder builder)
         {
             Console.OutputEncoding = Encoding.UTF8;
-            var sp = builder.Services.GetServiceProvider();
-            Configuration = builder.Services.GetService<IConfiguration>();
-            if (Configuration == null) throw new ArgumentNullException(nameof(Configuration));
-            service.AddSingleton(Configuration);
+
+            service.AddSingleton(builder.Config);
 
             RegisterBase(builder);
 
             RegisterLogger(builder);
 
-            RegisterFactory(builder);
-
-            RegisterEventBus(builder);
-
-            RegisterTopicEventBus(builder);
-
         }
 
         private void RegisterBase(SopServiceContainerBuilder builder)
         {
-            RegisterMqConnection(builder);
-
             service.AddSingleton<IQpsCounter>(e =>
             {
                 var logger = e.GetService<ILogger<QpsCounter>>();
@@ -141,92 +131,6 @@ namespace YiDian.Soa.Sp
                 e.AddFilter(m => level <= m);
                 e.AddConsole();
             });
-            var mqstr = builder.GetSettings(SoaContent.MqConnStr);
-            if (string.IsNullOrEmpty(mqstr)) return;
-            //service.AddMQLogger();
-        }
-        private void RegisterMqConnection(SopServiceContainerBuilder builder)
-        {
-            var mqstr = builder.GetSettings(SoaContent.MqConnStr);
-            if (string.IsNullOrEmpty(mqstr)) return;
-            service.AddSingleton<IRabbitMQPersistentConnection>(sp =>
-            {
-                var factory = CreateConnect(mqstr);
-                return new DefaultRabbitMQPersistentConnection(factory, 5);
-            })
-            .AddSingleton<IEventBusSubscriptionsManager, InMemoryEventBusSubscriptionsManager>();
-        }
-
-        private void RegisterEventBus(SopServiceContainerBuilder builder)
-        {
-            var busloggername = builder.GetSettings(SoaContent.UseDirect);
-            if (string.IsNullOrEmpty(busloggername)) return;
-            service.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
-            {
-                var conn = sp.GetService<IRabbitMQPersistentConnection>();
-                var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
-                var logger = sp.GetService<ILogger<DirectEventBus>>();
-                var seralize = new SeralizeTest();
-                var eventbus = new DirectEventBus(logger, iLifetimeScope, conn, seralize: seralize);
-                return eventbus;
-            });
-        }
-        private void RegisterTopicEventBus(SopServiceContainerBuilder builder)
-        {
-            var topicbusname = builder.GetSettings(SoaContent.UseTopic);
-            if (!string.IsNullOrEmpty(topicbusname))
-                service.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
-                {
-                    var conn = sp.GetService<IRabbitMQPersistentConnection>();
-                    var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
-                    var logger = sp.GetService<ILogger<ITopicEventBus>>();
-                    var seralize = new SeralizeTest();
-                    return new TopicEventBusMQ(logger, iLifetimeScope, conn, seralize: seralize);
-                });
-        }
-        private void RegisterFactory(SopServiceContainerBuilder builder)
-        {
-            ThreadPool.SetMinThreads(100, 100);
-            var settings = builder.Get<ThreadPoolSettings>();
-        }
-        private ConnectionFactory CreateConnect(string connstr)
-        {
-            string server = "";
-            int port = 0;
-            string user = "";
-            string pwd = "";
-            string vhost = "/";
-            bool isasync = false;
-            var s_arr = connstr.Split(';');
-            if (s_arr.Length < 4) throw new ArgumentException("连接字符串格式不正确");
-            foreach (var s in s_arr)
-            {
-                var kv = s.Split('=');
-                if (kv[0] == "server")
-                {
-                    var srs = kv[1].Split(':');
-                    server = srs[0];
-                    if (srs.Length > 1) port = int.Parse(srs[1]);
-                }
-                else if (kv[0] == "user") user = kv[1];
-                else if (kv[0] == "password") pwd = kv[1];
-                else if (kv[0] == "vhost") vhost = kv[1];
-                else if (kv[0] == "isasync") isasync = bool.Parse(kv[1]);
-            }
-            var factory = new ConnectionFactory()
-            {
-                AutomaticRecoveryEnabled = true,
-                NetworkRecoveryInterval = TimeSpan.FromSeconds(3),
-                DispatchConsumersAsync = isasync,
-                RequestedConnectionTimeout = 30000,
-                RequestedHeartbeat = 17,
-                HostName = server,
-                Password = pwd,
-                UserName = user,
-                Port = port == 0 ? 5672 : port,
-                VirtualHost = vhost
-            };
-            return factory;
         }
     }
 }

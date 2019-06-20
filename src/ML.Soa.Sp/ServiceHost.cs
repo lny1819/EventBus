@@ -2,7 +2,7 @@
 
 namespace YiDian.Soa.Sp
 {
-    public static class MqServiceHost
+    public static class ServiceHost
     {
         public static SopServiceContainerBuilder CreateBuilder(IServiceCollection services = null)
         {

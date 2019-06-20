@@ -25,13 +25,12 @@ namespace YiDian.EventBus.MQ
     }
     public class InMemoryAppEventsManager : IAppEventsManager
     {
-
-        public bool HasRegisterEvent<T>(string appName) where T : IntegrationMQEvent
+        public AppMetas GetAppEventTypes(string app)
         {
             throw new NotImplementedException();
         }
 
-        public void RegisterEvent<T>(string appName) where T : IntegrationMQEvent
+        public void RegisterEvents(string name, string version, List<MetaInfo> types)
         {
             throw new NotImplementedException();
         }

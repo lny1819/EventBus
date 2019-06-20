@@ -5,15 +5,13 @@
     <RootNamespace>YiDian.EventBus.MQ</RootNamespace>
     <AssemblyName>YiDian.EventBus.MQ</AssemblyName>
     <Version>0.0.0.2</Version>
-    <Company>郑州高信达软件开发有限公司</Company>
+    <Company>yanfeng.sun@Live.com</Company>
     <Product>消息总线</Product>
-    <Copyright>@郑州高信达</Copyright>
+    <Copyright></Copyright>
     <Description>消息总线MQ实现</Description>
     <Authors>yidianer</Authors>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageReleaseNotes>元数据读取修改</PackageReleaseNotes>
-    <AssemblyVersion>2.1.5.11</AssemblyVersion>
-    <FileVersion>2.1.5.11</FileVersion>
+    <PackageReleaseNotes></PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

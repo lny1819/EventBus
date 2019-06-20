@@ -7,6 +7,7 @@ namespace YiDian.EventBus
         event EventHandler<Exception> OnUncatchException;
         void EnableHandlerCache(int cacheLength);
         void DeleteQueue(string queuename, bool force);
+        void Publish(byte[] data, string eventName, bool enableTransaction = false);
         void Publish<T>(T @event, bool enableTransaction = false) where T : IntegrationMQEvent;
         void Subscribe<TH>(string queueName, string eventName)
             where TH : IDynamicBytesHandler;

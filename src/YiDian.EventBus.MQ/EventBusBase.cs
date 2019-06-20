@@ -123,13 +123,17 @@ namespace YiDian.EventBus.MQ
         }
         public virtual void Publish<T>(T @event, string routingKey, bool enableTx) where T : IntegrationMQEvent
         {
-            if (_pubChannel == null) return;
             var message = __seralize.SerializeObject(@event);
             var body = Encoding.UTF8.GetBytes(message);
+            Publish(body, routingKey, enableTx);
+        }
+        public void Publish(byte[] data, string eventName, bool enableTransaction = false)
+        {
+            if (_pubChannel == null) return;
             _pubChannel.BasicPublish(exchange: BROKER_NAME,
-                             routingKey: routingKey,
+                             routingKey: eventName,
                              basicProperties: null,
-                             body: body);
+                             body: data);
         }
         #endregion
 
@@ -335,5 +339,6 @@ namespace YiDian.EventBus.MQ
             _pubChannel.Dispose();
             _persistentConnection.Dispose();
         }
+
     }
 }

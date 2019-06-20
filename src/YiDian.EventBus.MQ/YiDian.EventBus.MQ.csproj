@@ -4,7 +4,7 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <RootNamespace>YiDian.EventBus.MQ</RootNamespace>
     <AssemblyName>YiDian.EventBus.MQ</AssemblyName>
-    <Version>0.0.0.1</Version>
+    <Version>0.0.0.2</Version>
     <Company>郑州高信达软件开发有限公司</Company>
     <Product>消息总线</Product>
     <Copyright>@郑州高信达</Copyright>

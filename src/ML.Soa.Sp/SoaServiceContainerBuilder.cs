@@ -1,4 +1,4 @@
-﻿using System;
+﻿·using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,10 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace YiDian.Soa.Sp
 {
 
-    public class SopServiceContainerBuilder
+    public class SoaServiceContainerBuilder
     {
         readonly List<IAppRun> appRuns;
-        public SopServiceContainerBuilder(IServiceCollection services)
+        public SoaServiceContainerBuilder(IServiceCollection services)
         {
             Services = services ?? new ServiceCollection();
             appRuns = new List<IAppRun>();

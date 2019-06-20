@@ -4,9 +4,9 @@ namespace YiDian.Soa.Sp
 {
     public static class ServiceHost
     {
-        public static SopServiceContainerBuilder CreateBuilder(IServiceCollection services = null)
+        public static SoaServiceContainerBuilder CreateBuilder(IServiceCollection services = null)
         {
-            var builder = new SopServiceContainerBuilder(services);
+            var builder = new SoaServiceContainerBuilder(services);
             return builder;
         }
     }

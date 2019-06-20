@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System;
-using System.Collections.Generic;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.DefaultConnection;
@@ -20,7 +19,7 @@ namespace YiDian.Soa.Sp.Extensions
         /// <param name="builder"></param>
         /// <param name="getconnstr"></param>
         /// <returns></returns>
-        public static SopServiceContainerBuilder UseRabbitMq(this SopServiceContainerBuilder builder, Func<IConfiguration, string> mqConnstr)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Func<IConfiguration, string> mqConnstr)
         {
             var factory = CreateConnect(mqConnstr(builder.Config));
             var defaultconn = new DefaultRabbitMQPersistentConnection(factory, 5);
@@ -31,7 +30,7 @@ namespace YiDian.Soa.Sp.Extensions
             builder.RegisterRun(new MqEventsLoalBuild());
             return builder;
         }
-        public static SopServiceContainerBuilder UseRabbitMq(this SopServiceContainerBuilder builder, Func<IRabbitMQPersistentConnection> getFactory)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Func<IRabbitMQPersistentConnection> getFactory)
         {
             var defaultconn = getFactory() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
             var service = builder.Services;

@@ -22,7 +22,7 @@ namespace YiDian.Soa.Sp
         readonly List<IAppRun> run_list;
         int exitCode = 0;
         int state = 0;
-        public DefaultServiceHost(SopServiceContainerBuilder builder, string[] args)
+        public DefaultServiceHost(SoaServiceContainerBuilder builder, string[] args)
         {
             run_list = builder.GetAllAppRun();
             _args = args;
@@ -34,7 +34,7 @@ namespace YiDian.Soa.Sp
             ConfigApps(builder);
         }
 
-        private void ConfigApps(SopServiceContainerBuilder builder)
+        private void ConfigApps(SoaServiceContainerBuilder builder)
         {
             var startup = builder.StartUp;
 
@@ -56,7 +56,7 @@ namespace YiDian.Soa.Sp
         }
 
         public event Action<Exception> UnCatchedException;
-        private void Init(SopServiceContainerBuilder builder)
+        private void Init(SoaServiceContainerBuilder builder)
         {
             Console.OutputEncoding = Encoding.UTF8;
 
@@ -68,7 +68,7 @@ namespace YiDian.Soa.Sp
 
         }
 
-        private void RegisterBase(SopServiceContainerBuilder builder)
+        private void RegisterBase(SoaServiceContainerBuilder builder)
         {
             service.AddSingleton<IQpsCounter>(e =>
             {
@@ -143,7 +143,7 @@ namespace YiDian.Soa.Sp
             }
             else UnCatchedException(ex);
         }
-        private void RegisterLogger(SopServiceContainerBuilder builder)
+        private void RegisterLogger(SoaServiceContainerBuilder builder)
         {
             Enum.TryParse(Configuration["Logging:Console:LogLevel:Default"], out LogLevel level);
             service.AddLogging(e =>

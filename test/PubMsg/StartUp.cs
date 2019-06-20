@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
+using YiDian.Soa.Sp;
 
 namespace ConsoleApp
 {

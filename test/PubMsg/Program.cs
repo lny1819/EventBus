@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using YiDian.Soa.Sp;
+using YiDian.Soa.Sp.Extensions;
 
 namespace ConsoleApp
 {
@@ -9,10 +10,10 @@ namespace ConsoleApp
         {
             ServiceHost.CreateBuilder()
                .ConfigApp(e => e.AddJsonFile("appsettings.json"))
-               .RegisterMqConnection(e => e["mqconnstr"])
-               .UseEventbus<StartUp>()
-               .UseTopicEventBus<StartUp>()
+               .UseRabbitMq(e => e["mqconnstr"])
                .UserStartUp<StartUp>()
+               .UseDirectEventBus<MySeralize>()
+               .UseTopicEventBus<MySeralize>()
                .Build(args)
                .Run(e => e["sysname"]);
         }

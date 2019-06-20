@@ -16,7 +16,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\ML.Soa.Sp\YiDian.Soa.Sp.csproj" />
+    <ProjectReference Include="..\..\src\YiDian.EventBus.MQ\YiDian.EventBus.MQ.csproj" />
   </ItemGroup>
 
 </Project>

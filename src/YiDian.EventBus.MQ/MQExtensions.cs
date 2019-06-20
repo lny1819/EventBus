@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
@@ -18,12 +19,12 @@ namespace YiDian.Soa.Sp.Extensions
         /// <param name="builder"></param>
         /// <param name="getconnstr"></param>
         /// <returns></returns>
-        public static SopServiceContainerBuilder UseRabbitMq(this SopServiceContainerBuilder builder, string mqConnstr)
+        public static SopServiceContainerBuilder UseRabbitMq(this SopServiceContainerBuilder builder, Func<IConfiguration, string> mqConnstr)
         {
-            var factory = CreateConnect(mqConnstr);
+            var factory = CreateConnect(mqConnstr(builder.Config));
             var defaultconn = new DefaultRabbitMQPersistentConnection(factory, 5);
             var service = builder.Services;
-            service.AddSingleton(defaultconn);
+            service.AddSingleton<IRabbitMQPersistentConnection>(defaultconn);
             return builder;
         }
         public static SopServiceContainerBuilder UseRabbitMq(this SopServiceContainerBuilder builder, Func<IRabbitMQPersistentConnection> getFactory)
@@ -72,7 +73,7 @@ namespace YiDian.Soa.Sp.Extensions
             };
             return factory;
         }
-        public static SopServiceContainerBuilder UseDirectEventBus(this SopServiceContainerBuilder builder, ISeralize seralize)
+        public static SopServiceContainerBuilder UseDirectEventBus<T>(this SopServiceContainerBuilder builder) where T : ISeralize, new()
         {
             var service = builder.Services;
             service.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
@@ -80,12 +81,14 @@ namespace YiDian.Soa.Sp.Extensions
                 var conn = sp.GetService<IRabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                 var logger = sp.GetService<ILogger<DirectEventBus>>();
+                var seralize = sp.GetService<T>();
+                if (seralize == null) seralize = new T();
                 var eventbus = new DirectEventBus(logger, iLifetimeScope, conn, seralize: seralize);
                 return eventbus;
             });
             return builder;
         }
-        public static SopServiceContainerBuilder UseTopicEventBus(this SopServiceContainerBuilder builder, ISeralize seralize)
+        public static SopServiceContainerBuilder UseTopicEventBus<T>(this SopServiceContainerBuilder builder) where T : ISeralize, new()
         {
             var service = builder.Services;
             service.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
@@ -93,6 +96,8 @@ namespace YiDian.Soa.Sp.Extensions
                 var conn = sp.GetService<IRabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                 var logger = sp.GetService<ILogger<ITopicEventBus>>();
+                var seralize = sp.GetService<T>();
+                if (seralize == null) seralize = new T();
                 return new TopicEventBusMQ(logger, iLifetimeScope, conn, seralize: seralize);
             });
             return builder;

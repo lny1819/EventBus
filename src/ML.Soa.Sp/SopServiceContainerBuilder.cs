@@ -12,8 +12,13 @@ namespace YiDian.Soa.Sp
             Services = services ?? new ServiceCollection();
         }
 
+        public object UseRabbitMq(Func<object, object> p)
+        {
+            throw new NotImplementedException();
+        }
+
         public IServiceCollection Services { get; }
-        internal IConfigurationRoot Config { get; set; }
+        public IConfigurationRoot Config { get; internal set; }
         internal Type StartUp { get; set; }
 
         public ISoaServiceHost Build(string[] args = null)

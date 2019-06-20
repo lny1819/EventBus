@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ML.Soa.Sp\YiDian.Soa.Sp.csproj" />
+    <ProjectReference Include="..\..\src\YiDian.EventBus.MQ\YiDian.EventBus.MQ.csproj" />
   </ItemGroup>
 
 </Project>

@@ -24,7 +24,7 @@ namespace YiDian.Soa.Sp
             _args = args;
             waitExit = new AutoResetEvent(false);
             service = builder.Services;
-            if (service == null) service = new ServiceCollection();
+            Configuration = builder.Config;
             service.AddSingleton<ISoaServiceHost, DefaultServiceHost>((s) => this);
             Init(builder);
             ConfigApps(builder);

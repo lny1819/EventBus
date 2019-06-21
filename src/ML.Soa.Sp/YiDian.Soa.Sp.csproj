@@ -4,7 +4,7 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <AssemblyName>YiDian.Soa.Sp</AssemblyName>
     <RootNamespace>YiDian.Soa.Sp</RootNamespace>
-    <Version>0.0.0.3</Version>
+    <Version>0.0.0.4</Version>
     <Company>yanfeng.sun@Live.com</Company>
     <Product>微服务集成容器</Product>
     <Copyright>yanfeng.sun@Live.com</Copyright>

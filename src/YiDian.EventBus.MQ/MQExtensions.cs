@@ -15,7 +15,8 @@ namespace YiDian.Soa.Sp.Extensions
     {
         /// <summary>
         /// 注册MQ连接字符串
-        /// <para>格式：server=ip:port;user=username;password=pwd;vhost=vhostname</para>
+        /// <para>格式：server=ip:port;user=username;password=pwd;vhost=vhostname;</para>
+        /// eventsmgr=inmemory
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="getconnstr"></param>

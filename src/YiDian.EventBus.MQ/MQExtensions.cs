@@ -119,7 +119,6 @@ namespace YiDian.Soa.Sp.Extensions
             Name = name;
             for (var i = 0; i < args.Length; i++)
             {
-                var list = new List<AppMetas>();
                 if (args[i].ToLower() == "--loadevents")
                 {
                     string appname = "";
@@ -141,15 +140,15 @@ namespace YiDian.Soa.Sp.Extensions
                     var appnames = appname.Split(',');
                     foreach (var app in appnames)
                     {
-                        list.Add(mgr.GetAppEventTypes(app));
+                        var list = mgr.GetAppEventTypes(app);
+                        ReloadEvents(list, app, path);
                     }
-                    ReloadEvents(list, path);
                     host.Exit(0);
                 }
             }
         }
 
-        private void ReloadEvents(List<AppMetas> list, string path)
+        private void ReloadEvents(AppMetas meta, string appname, string path)
         {
 
         }

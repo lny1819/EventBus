@@ -139,7 +139,7 @@ namespace YiDian.Soa.Sp.Extensions
                     var appnames = appname.Split(',');
                     foreach (var app in appnames)
                     {
-                        list.Add(mgr.GetAppEventTypes(app));
+                        list.Add(mgr.ListEvents(app));
                     }
                     ReloadEvents(list, path);
                     host.Exit(0);

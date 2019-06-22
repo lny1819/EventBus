@@ -7,11 +7,12 @@ namespace YiDian.EventBus
 {
     public interface IAppEventsManager
     {
-        void RegisterEvents(AppMetas metas);
         void RegisterEvent<T>(string appName, string version) where T : IntegrationMQEvent;
         CheckResult VaildityTest(string appName, string version);
-        AppMetas GetAppEventTypes(string appName, string version = "");
-        string GetEventID<T>(string appName, string version);
+        string GetVersion(string appName);
+        AppMetas ListEvents(string appName);
+        string GetEventId<T>(string appName) where T : IntegrationMQEvent;
+        List<EventId> GetEventIds(string appname);
     }
     public class CheckResult
     {
@@ -94,5 +95,10 @@ namespace YiDian.EventBus
         public List<ClassMeta> MetaInfos { get; set; }
         public string Version { get; set; }
         public string Name { get; set; }
+    }
+    public class EventId
+    {
+        public string Name { get; set; }
+        public string ID { get; set; }
     }
 }

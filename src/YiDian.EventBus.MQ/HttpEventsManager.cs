@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Security;
@@ -25,20 +26,14 @@ namespace YiDian.EventBus.MQ
             var flag = Uri.TryCreate(web_api_address, UriKind.Absolute, out web_host);
             if (!flag) throw new ArgumentException("not vaild web api address", nameof(web_api_address));
         }
-        public AppMetas GetAppEventTypes(string appName, string version = "")
-        {
-            throw new NotImplementedException();
-        }
 
-        public string GetEventID<T>(string appName, string version)
+        private void RegisterEvent(string appname, string version, ClassMeta meta)
         {
-            throw new NotImplementedException();
-        }
-
-        public void RegisterEvent<T>(string appName, string version) where T : IntegrationMQEvent
-        {
-            var type = typeof(T);
-            SendMeta(type, appName, version);
+            var uri = "reg?app=" + appname + "&version=" + version;
+            var sb = new StringBuilder();
+            meta.ToJson(sb);
+            var json = sb.ToString();
+            Req(uri, json);
         }
         private void SendMeta(Type type, string appName, string version)
         {
@@ -64,37 +59,30 @@ namespace YiDian.EventBus.MQ
             }
             RegisterEvent(appName, version, meta);
         }
-        public void RegisterEvents(AppMetas metas)
-        {
-            var app = metas.Name;
-            var version = metas.Version;
-            foreach (var meta in metas.MetaInfos)
-            {
-                RegisterEvent(app, version, meta);
-            }
-        }
-        public CheckResult VaildityTest(string appName, string version)
-        {
-            throw new NotImplementedException();
-        }
+        //public void RegisterEvents(AppMetas metas)
+        //{
+        //    var app = metas.Name;
+        //    var version = metas.Version;
+        //    foreach (var meta in metas.MetaInfos)
+        //    {
+        //        RegisterEvent(app, version, meta);
+        //    }
+        //}
 
         #region HttpApi
-        private void RegisterEvent(string appname, string version, ClassMeta meta)
+        public void RegisterEvent<T>(string appName, string version) where T : IntegrationMQEvent
         {
-            var uri = "reg?app=" + appname + "&version=" + version;
-            var sb = new StringBuilder();
-            meta.ToJson(sb);
-            var json = sb.ToString();
-            Req(uri, json);
+            var type = typeof(T);
+            SendMeta(type, appName, version);
         }
-        private bool Check(string appname, string version)
+        public CheckResult VaildityTest(string appname, string version)
         {
             var uri = "check?app=" + appname + "&version=" + version;
             var value = HttpGet(uri);
             bool.TryParse(value, out bool res);
-            return res;
+            return new CheckResult();
         }
-        private string GetVersion(string appname)
+        public string GetVersion(string appname)
         {
             var uri = "version?app=" + appname;
             var value = HttpGet(uri);
@@ -106,11 +94,33 @@ namespace YiDian.EventBus.MQ
             var value = HttpGet(uri);
             return ToMetas(value);
         }
+        public string GetEventId<T>(string appName) where T : IntegrationMQEvent
+        {
+            var typename = typeof(T).Name;
+            var uri = "eventid?app=" + appName + "&name=" + typename;
+            var value = HttpGet(uri);
+            return value;
+        }
+        public List<EventId> GetEventIds(string appname)
+        {
+            var uri = "listevent?app=" + appname;
+            var value = HttpGet(uri);
+            var obj = JsonString.Unpack(value);
+            if (obj == null || obj.GetType() != typeof(ArrayList)) throw new ArgumentException("the returns is not expected result");
+            var al = (ArrayList)obj;
+            var list = new List<EventId>();
+            foreach (var item in al)
+            {
+                var ht = (Hashtable)item;
+                list.Add(new EventId() { ID = ht["ID"].ToString(), Name = ht["Name"].ToString() });
+            }
+            return list;
+        }
         #endregion
-        public AppMetas ToMetas(string json)
+        AppMetas ToMetas(string json)
         {
             var obj = JsonString.Unpack(json);
-            if (obj == null) throw new ArgumentException("the returns is not expected result");
+            if (obj == null || obj.GetType() != typeof(Hashtable)) throw new ArgumentException("the returns is not expected result");
             var ht = (Hashtable)obj;
             var appmetas = new AppMetas
             {

@@ -14,7 +14,6 @@ namespace YiDian.Soa.Sp
 {
     internal class DefaultServiceHost : ISoaServiceHost
     {
-        IServiceCollection service;
         static object appstartResult;
         object sysstart;
         readonly string[] _args;
@@ -27,9 +26,8 @@ namespace YiDian.Soa.Sp
             run_list = builder.GetAllAppRun();
             _args = args;
             waitExit = new AutoResetEvent(false);
-            service = builder.Services;
+            var service = builder.Services;
             Configuration = builder.Config;
-            service.AddSingleton<IConfiguration>(builder.Config);
             service.AddSingleton<ISoaServiceHost, DefaultServiceHost>((s) => this);
             Init(builder);
             ConfigApps(builder);
@@ -49,9 +47,9 @@ namespace YiDian.Soa.Sp
 
             var config = startup.GetMethod("ConfigService");
             var autofac = new ContainerBuilder();
-            config.Invoke(sysstart, new object[] { service, autofac });
+            config.Invoke(sysstart, new object[] { builder, autofac });
 
-            autofac.Populate(service);
+            autofac.Populate(builder.Services);
             var container = autofac.Build();
             ServicesProvider = new AutofacServiceProvider(container);//第三方IOC接管 core内置DI容器
         }
@@ -61,7 +59,7 @@ namespace YiDian.Soa.Sp
         {
             Console.OutputEncoding = Encoding.UTF8;
 
-            service.AddSingleton(builder.Config);
+            builder.Services.AddSingleton(builder.Config);
 
             RegisterBase(builder);
 
@@ -71,7 +69,7 @@ namespace YiDian.Soa.Sp
 
         private void RegisterBase(SoaServiceContainerBuilder builder)
         {
-            service.AddSingleton<IQpsCounter>(e =>
+            builder.Services.AddSingleton<IQpsCounter>(e =>
             {
                 var logger = e.GetService<ILogger<QpsCounter>>();
                 var counter = new QpsCounter(logger, true);
@@ -81,7 +79,7 @@ namespace YiDian.Soa.Sp
 
         public IServiceProvider ServicesProvider { get; private set; }
 
-        public IConfiguration Configuration { get; private set; }
+        public IConfiguration Configuration { get; }
         public int Run(Func<IConfiguration, string> getName, bool background = false)
         {
             var appname = getName(Configuration);
@@ -147,7 +145,7 @@ namespace YiDian.Soa.Sp
         private void RegisterLogger(SoaServiceContainerBuilder builder)
         {
             Enum.TryParse(Configuration["Logging:Console:LogLevel:Default"], out LogLevel level);
-            service.AddLogging(e =>
+            builder.Services.AddLogging(e =>
             {
                 e.AddFilter(m => level <= m);
                 e.AddConsole();

@@ -9,6 +9,7 @@ namespace YiDian.Soa.Sp
     public class SoaServiceContainerBuilder
     {
         readonly List<IAppRun> appRuns;
+        IConfiguration _config;
         public SoaServiceContainerBuilder(IServiceCollection services)
         {
             Services = services ?? new ServiceCollection();
@@ -24,7 +25,15 @@ namespace YiDian.Soa.Sp
             return appRuns;
         }
         public IServiceCollection Services { get; }
-        public IConfigurationRoot Config { get; internal set; }
+        public IConfiguration Config
+        {
+            get { return _config; }
+            internal set
+            {
+                _config = value ?? throw new ArgumentNullException(nameof(Config));
+                Services.AddSingleton(value);
+            }
+        }
         internal Type StartUp { get; set; }
 
         public ISoaServiceHost Build(string[] args = null)

@@ -23,18 +23,6 @@ namespace YiDian.EventBus.MQ
             }
         }
     }
-    public class InMemoryAppEventsManager : IAppEventsManager
-    {
-        public AppMetas GetAppEventTypes(string app)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void RegisterEvents(string name, string version, List<PropertyMetaInfo> types)
-        {
-            throw new NotImplementedException();
-        }
-    }
     public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManager
     {
         readonly List<string> __bytes_subs = new List<string>();

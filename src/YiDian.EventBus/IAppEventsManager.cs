@@ -6,9 +6,10 @@ namespace YiDian.EventBus
     public interface IAppEventsManager
     {
         void RegisterEvents(AppMetas metas);
-        void RegisterEvent<T>(string appName, string version);
+        void RegisterEvent<T>(string appName, string version) where T : IntegrationMQEvent;
         CheckResult VaildityTest(string appName, string version);
-        AppMetas GetAppEventTypes(string appName, string version);
+        AppMetas GetAppEventTypes(string appName, string version = "");
+        string GetEventID<T>(string appName, string version);
     }
     public class CheckResult
     {

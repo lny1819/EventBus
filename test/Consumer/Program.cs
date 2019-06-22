@@ -10,7 +10,6 @@ namespace Consumer
         {
             ServiceHost.CreateBuilder()
                .ConfigApp(e => e.AddJsonFile("appsettings.json"))
-               .UseRabbitMq(e => e["mqconnstr"])
                .UserStartUp<StartUp>()
                .Build(args)
                .Run(e => e["sysname"]);

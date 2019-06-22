@@ -21,14 +21,12 @@ namespace YiDian.Soa.Sp.Extensions
         /// <param name="builder"></param>
         /// <param name="getconnstr"></param>
         /// <returns></returns>
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Func<IConfiguration, string> mqConnstr)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, IAppEventsManager eventsManager)
         {
-            var factory = CreateConnect(mqConnstr(builder.Config));
-            var defaultconn = new DefaultRabbitMQPersistentConnection(factory, 5);
             var service = builder.Services;
+            var factory = CreateConnect(mqConnstr);
+            var defaultconn = new DefaultRabbitMQPersistentConnection(factory, eventsManager, 5);
             service.AddSingleton<IRabbitMQPersistentConnection>(defaultconn);
-            var evensMgr = new InMemoryAppEventsManager();
-            service.AddSingleton<IAppEventsManager>(evensMgr);
             builder.RegisterRun(new MqEventsLoalBuild());
             return builder;
         }
@@ -78,9 +76,9 @@ namespace YiDian.Soa.Sp.Extensions
             };
             return factory;
         }
-        public static IServiceCollection UseDirectEventBus<T>(this IServiceCollection service, int cacheLength = 0) where T : ISeralize, new()
+        public static SoaServiceContainerBuilder UseDirectEventBus<T>(this SoaServiceContainerBuilder builder, int cacheLength = 0) where T : ISeralize, new()
         {
-            service.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
+            builder.Services.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
             {
                 var conn = sp.GetService<IRabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
@@ -91,11 +89,11 @@ namespace YiDian.Soa.Sp.Extensions
                 eventbus.EnableHandlerCache(cacheLength);
                 return eventbus;
             });
-            return service;
+            return builder;
         }
-        public static IServiceCollection UseTopicEventBus<T>(this IServiceCollection service, int cacheLength = 0) where T : ISeralize, new()
+        public static SoaServiceContainerBuilder UseTopicEventBus<T>(this SoaServiceContainerBuilder builder, int cacheLength = 0) where T : ISeralize, new()
         {
-            service.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
+            builder.Services.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
             {
                 var conn = sp.GetService<IRabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
@@ -106,7 +104,7 @@ namespace YiDian.Soa.Sp.Extensions
                 eventbus.EnableHandlerCache(cacheLength);
                 return eventbus;
             });
-            return service;
+            return builder;
         }
     }
 

@@ -8,7 +8,7 @@ namespace YiDian.EventBus.MQ
     {
         event EventHandler OnConnectRecovery;
         bool IsConnected { get; }
-
+        IAppEventsManager EventsManager { get; }
         bool TryConnect();
 
         IModel CreateModel();

@@ -22,7 +22,7 @@ namespace ConsoleApp
         }
         public void ConfigService(SoaServiceContainerBuilder soa, ContainerBuilder builder)
         {
-            soa.UseRabbitMq(Configuration["mqconnstr"], null)
+            soa.UseRabbitMq(Configuration["mqconnstr"], , Configuration["eventImsApi"])
                  .UseDirectEventBus<MySeralize>(1000)
                  .UseTopicEventBus<MySeralize>(1000);
         }

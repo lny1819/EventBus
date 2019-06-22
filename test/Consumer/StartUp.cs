@@ -37,13 +37,13 @@ namespace Consumer
         {
             var curAssembly = Assembly.GetEntryAssembly();
             builder.RegisterAssemblyTypes(curAssembly).Where(e => e.Name.EndsWith("Handler")).PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
-            soa.UseRabbitMq(Configuration["mqconnstr"], null)
+            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"])
                  .UseDirectEventBus<MySeralize>(1000)
                  .UseTopicEventBus<MySeralize>(1000)
                  .Services.AddSingleton((e) =>
                  {
-                    var cct = e.GetService<IQpsCounter>();
-                    return new SleepTaskResult(cct);
+                     var cct = e.GetService<IQpsCounter>();
+                     return new SleepTaskResult(cct);
                  });
         }
         public void Start(IServiceProvider sp, string[] args)

@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using YiDian.EventBus;
-using YiDian.EventBus.MQ;
 
 namespace ConsoleApp
 {
@@ -11,24 +7,14 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
-            var mgr = new HttpEventsManager("http://www.baidu.com");
-            var appmeta = new AppMetas() { Name = "quote", Version = "1.0" };
-            var meta = new ClassMeta()
+            var task = WithTask();
+            var awaiter = task.GetAwaiter();
+            awaiter.UnsafeOnCompleted(() =>
             {
-                Name = "CA"
-            };
-            meta.Properties.Add(new PropertyMetaInfo() { Name = "p1", Type = PropertyMetaInfo.P_String });
-            appmeta.MetaInfos.Add(meta);
-            var json = appmeta.ToJson();
-            var m2 = mgr.ToMetas(json);
-            //var task = WithTask();
-            //var awaiter = task.GetAwaiter();
-            //awaiter.UnsafeOnCompleted(() =>
-            //{
-            //    var f = task.IsCompletedSuccessfully;
-            //    Console.WriteLine("2");
-            //});
-            //Console.WriteLine("Hello World!");
+                var f = task.IsCompletedSuccessfully;
+                Console.WriteLine("2");
+            });
+            Console.WriteLine("Hello World!");
             Console.ReadKey();
         }
 

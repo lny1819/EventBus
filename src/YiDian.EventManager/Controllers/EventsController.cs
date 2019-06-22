@@ -4,7 +4,7 @@ using YiDian.EventBus;
 
 namespace YiDian.EventManager.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]/[action]")]
     [ApiController]
     public class EventsController : ControllerBase
     {
@@ -12,15 +12,15 @@ namespace YiDian.EventManager.Controllers
         [HttpPost]
         public ActionResult<CheckResult> Reg(string app, string version, [FromBody]ClassMeta meta)
         {
-            return new JsonResult(new CheckResult());
+            return new CheckResult();
         }
         [HttpGet]
         public ActionResult<CheckResult> Check(string app, string version)
         {
-            return new JsonResult(new CheckResult());
+            return new CheckResult();
         }
         [HttpGet]
-        public string Version(string app)
+        public ActionResult<string> Version(string app)
         {
             return "1.0";
         }

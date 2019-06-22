@@ -8,10 +8,20 @@ namespace YiDian.EventManager.Controllers
     [ApiController]
     public class EventsController : ControllerBase
     {
+        static Dictionary<string, AppMetas> dic = new Dictionary<string, AppMetas>();
         // GET api/values
         [HttpPost]
         public ActionResult<CheckResult> Reg(string app, string version, [FromBody]ClassMeta meta)
         {
+            if (!dic.ContainsKey(app))
+            {
+                dic[app] = new AppMetas
+                {
+                    Name = app,
+                    Version = version
+                };
+            }
+            dic[app].MetaInfos.Add(meta);
             return new CheckResult();
         }
         [HttpGet]
@@ -27,14 +37,7 @@ namespace YiDian.EventManager.Controllers
         [HttpGet]
         public ActionResult<AppMetas> ListEvent(string app)
         {
-            var appmeta = new AppMetas() { Name = "quote", Version = "1.0" };
-            var meta = new ClassMeta()
-            {
-                Name = "CA"
-            };
-            meta.Properties.Add(new PropertyMetaInfo() { Name = "p1", Type = PropertyMetaInfo.P_String });
-            appmeta.MetaInfos.Add(meta);
-            return new JsonResult(appmeta);
+            return dic[app];
         }
         [HttpGet]
         public string EventId(string app, string name)

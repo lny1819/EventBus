@@ -34,7 +34,7 @@ namespace YiDian.EventBus.MQ
             var sb = new StringBuilder();
             meta.ToJson(sb);
             var json = sb.ToString();
-            Req(uri, json);
+            PostReq(uri, json);
         }
         private void SendMeta(Type type, string appName, string version)
         {
@@ -87,33 +87,33 @@ namespace YiDian.EventBus.MQ
         public CheckResult VaildityTest(string appname, string version)
         {
             var uri = "check?app=" + appname + "&version=" + version;
-            var value = HttpGet(uri);
+            var value = GetReq(uri);
             bool.TryParse(value, out bool res);
             return new CheckResult();
         }
         public string GetVersion(string appname)
         {
             var uri = "version?app=" + appname;
-            var value = HttpGet(uri);
+            var value = GetReq(uri);
             return value;
         }
         public AppMetas ListEvents(string appname)
         {
             var uri = "listevent?app=" + appname;
-            var value = HttpGet(uri);
+            var value = GetReq(uri);
             return ToMetas(value);
         }
         public string GetEventId<T>(string appName) where T : IntegrationMQEvent
         {
             var typename = typeof(T).Name;
             var uri = "eventid?app=" + appName + "&name=" + typename;
-            var value = HttpGet(uri);
+            var value = GetReq(uri);
             return value;
         }
         public List<EventId> GetEventIds(string appname)
         {
             var uri = "listevent?app=" + appname;
-            var value = HttpGet(uri);
+            var value = GetReq(uri);
             var obj = JsonString.Unpack(value);
             if (obj == null || obj.GetType() != typeof(ArrayList)) throw new ArgumentException("the returns is not expected result");
             var al = (ArrayList)obj;
@@ -144,13 +144,16 @@ namespace YiDian.EventBus.MQ
                 {
                     Name = ht2["Name"].ToString()
                 };
-                var attr_ht = (Hashtable)ht2["Attr"];
-                var attr = new MetaAttr()
+                if (ht2["Attr"].ToString() != "null")
                 {
-                    AttrType = (AttrType)(int.Parse(attr_ht["AttrType"].ToString())),
-                    Value = attr_ht["Value"].ToString()
-                };
-                class_meta.Attr = attr;
+                    var attr_ht = (Hashtable)ht2["Attr"];
+                    var attr = new MetaAttr()
+                    {
+                        AttrType = (AttrType)(int.Parse(attr_ht["AttrType"].ToString())),
+                        Value = attr_ht["Value"].ToString()
+                    };
+                    class_meta.Attr = attr;
+                }
                 var pss_ht = (ArrayList)ht2["Properties"];
                 foreach (Hashtable ps in pss_ht)
                 {
@@ -159,24 +162,33 @@ namespace YiDian.EventBus.MQ
                         Name = ps["Name"].ToString(),
                         Type = ps["Type"].ToString()
                     };
-                    var p_attr_ht = (Hashtable)ps["Attr"];
-                    var p_attr = new MetaAttr()
+                    if (ps["Attr"].ToString() != "null")
                     {
-                        AttrType = (AttrType)(int.Parse(p_attr_ht["AttrType"].ToString())),
-                        Value = p_attr_ht["Value"].ToString()
-                    };
-                    p_info.Attr = p_attr;
+                        var p_attr_ht = (Hashtable)ps["Attr"];
+                        var p_attr = new MetaAttr()
+                        {
+                            AttrType = (AttrType)(int.Parse(p_attr_ht["AttrType"].ToString())),
+                            Value = p_attr_ht["Value"].ToString()
+                        };
+                        p_info.Attr = p_attr;
+                    }
                     class_meta.Properties.Add(p_info);
                 }
                 appmetas.MetaInfos.Add(class_meta);
             }
             return appmetas;
         }
-        string Req(string uri, string value)
+        string PostReq(string uri, string value)
         {
             uri = web_host.OriginalString + "/" + uri;
             if (web_host.Scheme == Uri.UriSchemeHttps) return HttpsPost(uri, value);
             return HttpPost(uri, value);
+        }
+        string GetReq(string uri)
+        {
+            uri = web_host.OriginalString + "/" + uri;
+            if (web_host.Scheme == Uri.UriSchemeHttps) return HttpGet(uri);
+            return HttpGet(uri);
         }
         string HttpsPost(string url, string value)
         {

@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 using System.Threading.Tasks;
+using YiDian.Soa.Sp;
+using YiDian.Soa.Sp.Extensions;
 
 namespace ConsoleApp
 {
@@ -7,6 +10,12 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
+            ServiceHost.CreateBuilder()
+                 .ConfigApp(e => e.AddJsonFile("appsettings.json"))
+                 .UserStartUp<StartUp>()
+                 .Build(args)
+                 .Run(e => e["sysname"]);
+
             var task = WithTask();
             var awaiter = task.GetAwaiter();
             awaiter.UnsafeOnCompleted(() =>

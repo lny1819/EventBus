@@ -19,6 +19,7 @@ namespace YiDian.Soa.Sp
         {
             if (appRuns.Contains(run))
                 return;
+            appRuns.Add(run);
         }
         public List<IAppRun> GetAllAppRun()
         {

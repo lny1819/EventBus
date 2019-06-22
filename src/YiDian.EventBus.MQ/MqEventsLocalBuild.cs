@@ -41,6 +41,7 @@ namespace YiDian.EventBus.MQ
                     foreach (var app in appnames)
                     {
                         var meta = mgr.ListEvents(app);
+                        LocalBuildEvents(meta, path);
                     }
                     host.Exit(0);
                 }

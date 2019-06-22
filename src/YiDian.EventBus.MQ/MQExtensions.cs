@@ -39,13 +39,6 @@ namespace YiDian.Soa.Sp.Extensions
             builder.RegisterRun(new MqEventsLocalBuild());
             return builder;
         }
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Func<IRabbitMQPersistentConnection> getFactory)
-        {
-            var defaultconn = getFactory() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
-            var service = builder.Services;
-            service.AddSingleton(defaultconn);
-            return builder;
-        }
         private static ConnectionFactory CreateConnect(string connstr)
         {
             string server = "";

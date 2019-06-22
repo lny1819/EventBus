@@ -238,7 +238,7 @@ namespace YiDian.EventBus.MQ
                         parsesys = parsekey;
                         parseenum = parsemap;
 
-                        Hashtable _newtable = new Hashtable();
+                        Hashtable _newtable = new Hashtable(StringComparer.Create(System.Globalization.CultureInfo.CurrentCulture, true));
                         if (_table != null)
                         {
                             key = key.Trim();

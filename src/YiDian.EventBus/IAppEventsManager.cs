@@ -33,7 +33,10 @@ namespace YiDian.EventBus
         public static readonly string P_String = "string";
         public static readonly string P_Boolean = "boolean";
         public static string[] MetaTypeValues = new string[] { P_Int32, P_Int64, P_UInt32, P_UInt64, P_String, P_Boolean, P_Double };
-
+        public PropertyMetaInfo()
+        {
+            Attr = MetaAttr.None;
+        }
         public string Name { get; set; }
         public string Type { get; set; }
         public MetaAttr Attr { get; set; }
@@ -48,6 +51,7 @@ namespace YiDian.EventBus
         public ClassMeta()
         {
             Properties = new List<PropertyMetaInfo>();
+            Attr = MetaAttr.None;
         }
         public MetaAttr Attr { get; set; }
         public string Name { get; set; }
@@ -66,8 +70,13 @@ namespace YiDian.EventBus
             sb.Append("]}");
         }
     }
-    public struct MetaAttr
+    public class MetaAttr
     {
+        public static MetaAttr None;
+        static MetaAttr()
+        {
+            None = new MetaAttr() { AttrType = AttrType.None, Value = string.Empty };
+        }
         public AttrType AttrType { get; set; }
         public string Value { get; set; }
 
@@ -78,6 +87,10 @@ namespace YiDian.EventBus
     }
     public class AppMetas
     {
+        public AppMetas()
+        {
+            MetaInfos = new List<ClassMeta>();
+        }
         public List<ClassMeta> MetaInfos { get; set; }
         public string Version { get; set; }
         public string Name { get; set; }

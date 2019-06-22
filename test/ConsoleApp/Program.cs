@@ -1,6 +1,9 @@
 ﻿using System;
-using System.Reflection;
+using System.Collections;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using YiDian.EventBus;
+using YiDian.EventBus.MQ;
 
 namespace ConsoleApp
 {
@@ -8,8 +11,16 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
-            var t = typeof(CB);
-            WriteProperty(t);
+            var mgr = new HttpEventsManager("http://www.baidu.com");
+            var appmeta = new AppMetas() { Name = "quote", Version = "1.0" };
+            var meta = new ClassMeta()
+            {
+                Name = "CA"
+            };
+            meta.Properties.Add(new PropertyMetaInfo() { Name = "p1", Type = PropertyMetaInfo.P_String });
+            appmeta.MetaInfos.Add(meta);
+            var json = appmeta.ToJson();
+            var m2 = mgr.ToMetas(json);
             //var task = WithTask();
             //var awaiter = task.GetAwaiter();
             //awaiter.UnsafeOnCompleted(() =>
@@ -40,48 +51,4 @@ namespace ConsoleApp
             });
         }
     }
-    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
-    sealed class MyAttribute : Attribute
-    {
-        // See the attribute guidelines at 
-        //  http://go.microsoft.com/fwlink/?LinkId=85236
-        readonly string positionalString;
-
-        // This is a positional argument
-        public MyAttribute(string positionalString)
-        {
-            this.positionalString = positionalString;
-
-            // TODO: Implement code here
-
-            throw new NotImplementedException();
-        }
-
-        public string PositionalString
-        {
-            get { return positionalString; }
-        }
-
-        // This is a named argument
-        public int NamedInt { get; set; }
-    }
-    public class CA
-    {
-        [My("zs")]
-        public string Name { get; set; }
-        public int Age { get; set; }
-        public EA EA { get; set; }
-    }
-    public class CB
-    {
-        public CA CA { get; set; }
-        public string XA { get; set; }
-        public double P { get; set; }
-    }
-    public enum EA
-    {
-        A = 2,
-        B = 3
-    }
-
 }

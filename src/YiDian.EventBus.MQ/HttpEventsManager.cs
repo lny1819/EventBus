@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.IO;
 using System.Net;
 using System.Net.Security;
@@ -19,14 +20,9 @@ namespace YiDian.EventBus.MQ
         //eventid?app=a&name=zs
         //allids?app=a
         readonly Uri web_host;
-        public static MetaAttr NoneAttr;
-        static HttpEventsManager()
-        {
-            NoneAttr = new MetaAttr() { AttrType = AttrType.None, Value = string.Empty };
-        }
         public HttpEventsManager(string web_api_address)
         {
-            var flag = Uri.TryCreate(web_api_address, UriKind.Absolute, out Uri web_host);
+            var flag = Uri.TryCreate(web_api_address, UriKind.Absolute, out web_host);
             if (!flag) throw new ArgumentException("not vaild web api address", nameof(web_api_address));
         }
         public AppMetas GetAppEventTypes(string appName, string version = "")
@@ -64,7 +60,6 @@ namespace YiDian.EventBus.MQ
                 else pinfo.Type = p.PropertyType.Name;
                 var attrs = p.GetCustomAttributes(typeof(KeyIndexAttribute), false);
                 if (attrs.Length != 0) pinfo.Attr = new MetaAttr() { AttrType = AttrType.Index, Value = ((KeyIndexAttribute)attrs[0]).Index.ToString() };
-                else pinfo.Attr = pinfo.Attr = NoneAttr;
                 meta.Properties.Add(pinfo);
             }
             RegisterEvent(appName, version, meta);
@@ -109,8 +104,55 @@ namespace YiDian.EventBus.MQ
         {
             var uri = "listevent?app=" + appname;
             var value = HttpGet(uri);
+            return ToMetas(value);
         }
         #endregion
+        public AppMetas ToMetas(string json)
+        {
+            var obj = JsonString.Unpack(json);
+            if (obj == null) throw new ArgumentException("the returns is not expected result");
+            var ht = (Hashtable)obj;
+            var appmetas = new AppMetas
+            {
+                Name = ht["Name"].ToString(),
+                Version = ht["Version"].ToString()
+            };
+            var list = (ArrayList)ht["MetaInfos"];
+            foreach (var item in list)
+            {
+                var ht2 = (Hashtable)item;
+                var class_meta = new ClassMeta
+                {
+                    Name = ht2["Name"].ToString()
+                };
+                var attr_ht = (Hashtable)ht2["Attr"];
+                var attr = new MetaAttr()
+                {
+                    AttrType = (AttrType)(int.Parse(attr_ht["AttrType"].ToString())),
+                    Value = attr_ht["Value"].ToString()
+                };
+                class_meta.Attr = attr;
+                var pss_ht = (ArrayList)ht2["Properties"];
+                foreach (Hashtable ps in pss_ht)
+                {
+                    var p_info = new PropertyMetaInfo()
+                    {
+                        Name = ps["Name"].ToString(),
+                        Type = ps["Type"].ToString()
+                    };
+                    var p_attr_ht = (Hashtable)ps["Attr"];
+                    var p_attr = new MetaAttr()
+                    {
+                        AttrType = (AttrType)(int.Parse(p_attr_ht["AttrType"].ToString())),
+                        Value = p_attr_ht["Value"].ToString()
+                    };
+                    p_info.Attr = p_attr;
+                    class_meta.Properties.Add(p_info);
+                }
+                appmetas.MetaInfos.Add(class_meta);
+            }
+            return appmetas;
+        }
         string Req(string uri, string value)
         {
             uri = web_host.OriginalString + "/" + uri;
@@ -146,7 +188,7 @@ namespace YiDian.EventBus.MQ
             webreq.Method = "POST";
             webreq.ContentType = "application/json";
             var stream = webreq.GetRequestStream();
-            var bytes = Encoding.UTF8.GetBytes(t.ToJson());
+            var bytes = Encoding.UTF8.GetBytes(value);
             stream.Write(bytes, 0, bytes.Length);
             stream.Close();
             stream = webreq.GetResponse().GetResponseStream();

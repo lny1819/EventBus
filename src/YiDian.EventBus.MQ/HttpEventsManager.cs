@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
@@ -52,6 +53,14 @@ namespace YiDian.EventBus.MQ
                 else if (p.PropertyType == typeof(UInt64)) pinfo.Type = PropertyMetaInfo.P_UInt64;
                 else if (p.PropertyType == typeof(Int64)) pinfo.Type = PropertyMetaInfo.P_Int64;
                 else if (p.PropertyType == typeof(Double) || p.PropertyType == typeof(Decimal)) pinfo.Type = PropertyMetaInfo.P_Double;
+                else if (p.PropertyType.IsArray)
+                {
+
+                }
+                else if (p.PropertyType.IsGenericType && p.PropertyType.GetInterfaces().Contains(typeof(IList)))
+                {
+
+                }
                 else pinfo.Type = p.PropertyType.Name;
                 var attrs = p.GetCustomAttributes(typeof(KeyIndexAttribute), false);
                 if (attrs.Length != 0) pinfo.Attr = new MetaAttr() { AttrType = AttrType.Index, Value = ((KeyIndexAttribute)attrs[0]).Index.ToString() };
@@ -201,8 +210,8 @@ namespace YiDian.EventBus.MQ
             var bytes = Encoding.UTF8.GetBytes(value);
             stream.Write(bytes, 0, bytes.Length);
             stream.Close();
-            stream = webreq.GetResponse().GetResponseStream();
-            StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+            var new_stream = webreq.GetResponse().GetResponseStream();
+            StreamReader reader = new StreamReader(new_stream, Encoding.UTF8);
             return reader.ReadToEnd();
         }
         public string HttpGet(string url)

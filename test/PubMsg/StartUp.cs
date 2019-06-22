@@ -22,14 +22,14 @@ namespace ConsoleApp
         }
         public void ConfigService(SoaServiceContainerBuilder soa, ContainerBuilder builder)
         {
-            soa.UseRabbitMq(Configuration["mqconnstr"], , Configuration["eventImsApi"])
+            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"])
                  .UseDirectEventBus<MySeralize>(1000)
                  .UseTopicEventBus<MySeralize>(1000);
         }
         public void Start(IServiceProvider sp, string[] args)
         {
             var eventsMgr = sp.GetRequiredService<IAppEventsManager>();
-            eventsMgr.RegisterEvent<MqA>("mypub", "1.0");
+            eventsMgr.RegisterEvent<MqA>("pub_test", "1.0");
             var a = new MqA() { A = "a", B = "b2" };
             var b = new MqA() { A = "b", B = "b1" };
             var direct = sp.GetService<IDirectEventBus>();

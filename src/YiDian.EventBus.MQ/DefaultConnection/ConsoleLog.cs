@@ -11,18 +11,18 @@ namespace YiDian.EventBus.MQ.DefaultConnection
         }
         public void LogWarning(string msg)
         {
-            Log(LogLevel.Warning, new EventId(), msg, null, __format);
+            Log(LogLevel.Warning, new Microsoft.Extensions.Logging.EventId(), msg, null, __format);
         }
         public void LogCritical(string msg)
         {
-            Log(LogLevel.Critical, new EventId(), msg, null, __format);
+            Log(LogLevel.Critical, new Microsoft.Extensions.Logging.EventId(), msg, null, __format);
         }
         public void LogInformation(string msg)
         {
-            Log(LogLevel.Information, new EventId(), msg, null, __format);
+            Log(LogLevel.Information, new Microsoft.Extensions.Logging.EventId(), msg, null, __format);
         }
         string _tag = "{0}: ";
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        public void Log<TState>(LogLevel logLevel, Microsoft.Extensions.Logging.EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
             string tag = "";
             switch (logLevel)

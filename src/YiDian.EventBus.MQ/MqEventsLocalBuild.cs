@@ -3,6 +3,8 @@ using YiDian.Soa.Sp;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
 using System;
+using System.Text;
+using System.Linq;
 
 namespace YiDian.EventBus.MQ
 {
@@ -61,13 +63,33 @@ namespace YiDian.EventBus.MQ
                 CreateFiles(meta.MetaInfos, app, Path.Combine(path, version));
             }
         }
-
         private void CreateFiles(List<ClassMeta> list, string s_namespace, string dir)
         {
+            const string s_property = "public {0} {1} { get; set; }";
             Directory.CreateDirectory(dir);
             foreach (var meta in list)
             {
+                var file = File.Create(Path.Combine(dir, meta.Name));
+                var sb = new StringBuilder();
+                sb.AppendLine("using System;");
+                sb.AppendLine("using System.Collections.Generic;");
+                sb.AppendLine("namespace Events." + s_namespace + "");
+                sb.AppendLine("{");
+                sb.AppendLine("public class " + meta.Name);
+                sb.AppendLine("{");
+                foreach (var p in meta.Properties)
+                {
+                    if (p.Type.StartsWith("arr_"))
+                    {
 
+                    }
+                    else if (p.Type.StartsWith("list_"))
+                    {
+
+                    }
+                    sb.Append(string.Format(s_property, p.Type, p.Name));
+                }
+                sb.AppendLine("}}");
             }
         }
     }

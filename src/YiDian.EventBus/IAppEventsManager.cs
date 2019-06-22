@@ -27,12 +27,12 @@ namespace YiDian.EventBus
     public class PropertyMetaInfo
     {
         public static readonly string P_Double = "double";
-        public static readonly string P_Int32 = "int32";
-        public static readonly string P_Int64 = "int64";
-        public static readonly string P_UInt32 = "uint32";
-        public static readonly string P_UInt64 = "uint64";
+        public static readonly string P_Int32 = "Int32";
+        public static readonly string P_Int64 = "Int64";
+        public static readonly string P_UInt32 = "UInt32";
+        public static readonly string P_UInt64 = "UInt64";
         public static readonly string P_String = "string";
-        public static readonly string P_Boolean = "boolean";
+        public static readonly string P_Boolean = "Boolean";
         public static string[] MetaTypeValues = new string[] { P_Int32, P_Int64, P_UInt32, P_UInt64, P_String, P_Boolean, P_Double };
         public PropertyMetaInfo()
         {
@@ -44,7 +44,13 @@ namespace YiDian.EventBus
 
         internal void ToJson(StringBuilder sb)
         {
-            throw new NotImplementedException();
+            sb.Append("{\"Name\":\"");
+            sb.Append(Name);
+            sb.Append("\",\"Type\":\"");
+            sb.Append(Type);
+            sb.Append("\",\"Attr\":");
+            Attr.ToJson(sb);
+            sb.Append("}");
         }
     }
     public class ClassMeta
@@ -63,10 +69,11 @@ namespace YiDian.EventBus
             sb.Append(Name);
             sb.Append("\",\"Attr\":");
             Attr.ToJson(sb);
-            sb.Append('[');
-            foreach (var p in Properties)
+            sb.Append(",\"Properties\":[");
+            for (var i = 0; i < Properties.Count; i++)
             {
-                p.ToJson(sb);
+                Properties[i].ToJson(sb);
+                if (i != Properties.Count - 1) sb.Append(',');
             }
             sb.Append("]}");
         }
@@ -83,7 +90,13 @@ namespace YiDian.EventBus
 
         internal void ToJson(StringBuilder sb)
         {
-            throw new NotImplementedException();
+            sb.Append('{');
+            sb.Append("\"AttrType\":");
+            sb.Append(((int)AttrType).ToString());
+            sb.Append(',');
+            sb.Append("\"Value\":\"");
+            sb.Append(Value);
+            sb.Append("\"}");
         }
     }
     public class AppMetas

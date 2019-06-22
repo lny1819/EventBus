@@ -1,0 +1,16 @@
+﻿<xml appname="quote_es" version="1.0">
+  <class name="CA" attr="Index:0">
+    <p name="CB" type="CB"></p>
+    <p name="Age" type="int32" attr="Index:1"></p>
+    <p name="Name" type="string" attr="Index:1"></p>
+    <p name="CT" type="CT" attr="Index:1"></p>
+  </class>
+  <class name="CB">
+    <p name="CA" type="CA"></p>
+    <p name="Name" type="string"></p>
+  </class>
+  <enum name="CT">
+    <p v="1">class</p>
+    <p v="2">enum</p>
+  </enum>
+</xml>

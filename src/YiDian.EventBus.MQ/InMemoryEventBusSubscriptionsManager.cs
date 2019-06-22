@@ -30,7 +30,7 @@ namespace YiDian.EventBus.MQ
             throw new NotImplementedException();
         }
 
-        public void RegisterEvents(string name, string version, List<MetaInfo> types)
+        public void RegisterEvents(string name, string version, List<PropertyMetaInfo> types)
         {
             throw new NotImplementedException();
         }

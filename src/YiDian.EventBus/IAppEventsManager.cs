@@ -17,7 +17,7 @@ namespace YiDian.EventBus
     public class CheckResult
     {
         public bool IsVaild { get; set; }
-        public string InVaildMessage { get; set; }
+        public string InvaildMessage { get; set; }
     }
     public enum AttrType
     {

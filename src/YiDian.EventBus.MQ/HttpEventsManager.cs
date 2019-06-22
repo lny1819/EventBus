@@ -13,13 +13,13 @@ namespace YiDian.EventBus.MQ
     /// <summary>
     /// reg?app=a&version=1.0
     /// check?app=a&version=1.0
+    /// version?app=a
+    /// listevent?app=a
+    /// eventid?app=a&name=zs
+    /// allids?app=a
     /// </summary>
     public class HttpEventsManager : IAppEventsManager
     {
-        //version?app=a
-        //listevent?app=a
-        //eventid?app=a&name=zs
-        //allids?app=a
         readonly Uri web_host;
         public HttpEventsManager(string web_api_address)
         {

@@ -23,7 +23,6 @@ namespace YiDian.Soa.Sp.Extensions
         {
             var service = builder.Services;
             service.AddSingleton(eventsManager);
-            builder.RegisterRun(new MqEventsLocalBuild());
             var factory = CreateConnect(mqConnstr);
             var defaultconn = new DefaultRabbitMQPersistentConnection(factory, eventsManager, 5);
             service.AddSingleton<IRabbitMQPersistentConnection>(defaultconn);
@@ -33,6 +32,31 @@ namespace YiDian.Soa.Sp.Extensions
         {
             var mgr = new HttpEventsManager(enven_mgr_api);
             return UseRabbitMq(builder, mqConnstr, mgr);
+        }
+        public static SoaServiceContainerBuilder AutoCreateAppEvents(this SoaServiceContainerBuilder builder, string all_apps, string fileDir)
+        {
+            var service = builder.Services;
+            builder.RegisterRun(new MqEventsLocalBuild());
+            //--loadevents -app history,userapi -path /data/his
+            var apps = all_apps.Split(',');
+            if (apps.Length == 0) throw new ArgumentException("not set event app names");
+            var data = new string[5];
+            data[0] = "--loadevents";
+            data[1] = "-app";
+            var s_apps = "";
+            for (var i = 0; i < apps.Length; i++)
+            {
+                s_apps += apps[i];
+                if (i != apps.Length - 1)
+                {
+                    s_apps += ',';
+                }
+            }
+            data[2] = s_apps;
+            data[3] = "-path";
+            data[4] = fileDir;
+            builder.AppendArgs(data);
+            return builder;
         }
         private static ConnectionFactory CreateConnect(string connstr)
         {

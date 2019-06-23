@@ -8,10 +8,10 @@ namespace Consumer
     {
         static void Main(string[] args)
         {
-            ServiceHost.CreateBuilder()
+            ServiceHost.CreateBuilder(args)
                .ConfigApp(e => e.AddJsonFile("appsettings.json"))
                .UserStartUp<StartUp>()
-               .Build(args)
+               .Build()
                .Run(e => e["sysname"]);
         }
     }

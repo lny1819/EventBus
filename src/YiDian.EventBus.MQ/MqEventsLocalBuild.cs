@@ -75,7 +75,7 @@ namespace YiDian.EventBus.MQ
             else
             {
                 var versionFile = Path.Combine(path, version + ".v");
-                if (File.Exists(version)) return;
+                if (File.Exists(versionFile)) return;
                 foreach (var file in Directory.GetFiles(path, "*.cs"))
                     File.Delete(file);
                 CreateFiles(meta, path);
@@ -95,7 +95,7 @@ namespace YiDian.EventBus.MQ
                     file = File.Create(Path.Combine(dir, meta.Name + ".cs"));
                     file.WriteLine("using System;");
                     file.WriteLine("using System.Collections.Generic;");
-                    file.WriteLine("using  YiDian.EventBus.MQ.KeyAttribute;");
+                    file.WriteLine("using YiDian.EventBus.MQ.KeyAttribute;");
                     file.WriteLine("namespace EventModels." + s_namespace);
                     file.WriteLine("{");
                     file.WriteLine("    public class " + meta.Name);

@@ -15,7 +15,7 @@ namespace ConsoleApp
         }
         public void ConfigService(SoaServiceContainerBuilder soa, ContainerBuilder builder)
         {
-            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"]);
+            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"]).AutoCreateAppEvents(Configuration["dependApps"],"");
         }
         public void Start(IServiceProvider sp, string[] args)
         {

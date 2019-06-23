@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -10,7 +11,7 @@ namespace YiDian.Soa.Sp
     {
         readonly List<IAppRun> appRuns;
         IConfiguration _config;
-        readonly string[] _args;
+        string[] _args;
         public SoaServiceContainerBuilder(string[] args, IServiceCollection services)
         {
             Services = services ?? new ServiceCollection();
@@ -43,6 +44,11 @@ namespace YiDian.Soa.Sp
         {
             var host = new DefaultServiceHost(this, _args);
             return host;
+        }
+
+        public void AppendArgs(string[] command)
+        {
+            _args = _args.ToList().Concat(command).ToArray();
         }
     }
 }

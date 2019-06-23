@@ -10,7 +10,6 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
-            var s = Environment.CommandLine;
             ServiceHost.CreateBuilder(args)
                  .ConfigApp(e => e.AddJsonFile("appsettings.json"))
                  .UserStartUp<StartUp>()

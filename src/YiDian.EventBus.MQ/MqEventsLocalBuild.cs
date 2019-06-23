@@ -26,11 +26,14 @@ namespace YiDian.EventBus.MQ
     internal class MqEventsLocalBuild : IAppRun
     {
         ILogger<MqEventsLocalBuild> _logger;
+        IAppEventsManager _eventsManager;
         public string Name { get; private set; }
         public void Run(ISoaServiceHost host, string name, string[] args)
         {
+            var scope= host.ServicesProvider.CreateScope(); 
             //--loadevents -app history,userapi -path /data/his
-            _logger = host.ServicesProvider.GetService<ILogger<MqEventsLocalBuild>>();
+            _eventsManager = scope.ServiceProvider.GetService<IAppEventsManager>();
+            _logger = scope.ServiceProvider.GetService<ILogger<MqEventsLocalBuild>>();
             Name = name;
             for (var i = 0; i < args.Length; i++)
             {
@@ -51,16 +54,16 @@ namespace YiDian.EventBus.MQ
                         else if (n[0] == "-path") path = n[1];
                     }
                     var sp = host.ServicesProvider;
-                    var mgr = sp.GetService<IAppEventsManager>();
                     var appnames = appname.Split(',');
                     foreach (var app in appnames)
                     {
-                        var meta = mgr.ListEvents(app);
+                        var meta = _eventsManager.ListEvents(app);
                         LocalBuildEvents(meta, path);
                     }
                     host.Exit(0);
                 }
             }
+            scope.Dispose();
         }
 
         private void LocalBuildEvents(AppMetas meta, string path)

@@ -10,10 +10,12 @@ namespace YiDian.Soa.Sp
     {
         readonly List<IAppRun> appRuns;
         IConfiguration _config;
-        public SoaServiceContainerBuilder(IServiceCollection services)
+        readonly string[] _args;
+        public SoaServiceContainerBuilder(string[] args, IServiceCollection services)
         {
             Services = services ?? new ServiceCollection();
             appRuns = new List<IAppRun>();
+            _args = args;
         }
         public void RegisterRun(IAppRun run)
         {
@@ -37,9 +39,9 @@ namespace YiDian.Soa.Sp
         }
         internal Type StartUp { get; set; }
 
-        public ISoaServiceHost Build(string[] args = null)
+        public ISoaServiceHost Build()
         {
-            var host = new DefaultServiceHost(this, args);
+            var host = new DefaultServiceHost(this, _args);
             return host;
         }
     }

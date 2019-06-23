@@ -22,22 +22,17 @@ namespace YiDian.Soa.Sp.Extensions
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, IAppEventsManager eventsManager)
         {
             var service = builder.Services;
+            service.AddSingleton(eventsManager);
+            builder.RegisterRun(new MqEventsLocalBuild());
             var factory = CreateConnect(mqConnstr);
             var defaultconn = new DefaultRabbitMQPersistentConnection(factory, eventsManager, 5);
             service.AddSingleton<IRabbitMQPersistentConnection>(defaultconn);
-            builder.RegisterRun(new MqEventsLocalBuild());
             return builder;
         }
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, string enven_mgr_api)
         {
-            var service = builder.Services;
             var mgr = new HttpEventsManager(enven_mgr_api);
-            service.AddSingleton<IAppEventsManager>(mgr);
-            var factory = CreateConnect(mqConnstr);
-            var defaultconn = new DefaultRabbitMQPersistentConnection(factory, mgr, 5);
-            service.AddSingleton<IRabbitMQPersistentConnection>(defaultconn);
-            builder.RegisterRun(new MqEventsLocalBuild());
-            return builder;
+            return UseRabbitMq(builder, mqConnstr, mgr);
         }
         private static ConnectionFactory CreateConnect(string connstr)
         {

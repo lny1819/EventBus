@@ -1,7 +1,6 @@
 ﻿using Autofac;
 using Microsoft.Extensions.Configuration;
 using System;
-using YiDian.EventBus.MQ;
 using YiDian.Soa.Sp;
 using YiDian.Soa.Sp.Extensions;
 

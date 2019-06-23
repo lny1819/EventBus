@@ -81,7 +81,8 @@ namespace YiDian.EventBus.MQ
         }
         private void CreateFiles(List<ClassMeta> list, string s_namespace, string dir)
         {
-            const string s_property = "public {0} {1} ";
+            const string s_property = "        public {0} {1} ";
+            const string attr_property = "        [KeyIndex({0})]";
             Directory.CreateDirectory(dir);
             foreach (var meta in list)
             {
@@ -91,13 +92,20 @@ namespace YiDian.EventBus.MQ
                     file = File.Create(Path.Combine(dir, meta.Name + ".cs"));
                     file.WriteLine("using System;");
                     file.WriteLine("using System.Collections.Generic;");
-                    file.WriteLine("using Events." + s_namespace + ";");
+                    file.WriteLine("using  YiDian.EventBus.MQ.KeyAttribute;");
                     file.WriteLine("namespace Events." + s_namespace);
                     file.WriteLine("{");
-                    file.WriteLine("public class " + meta.Name);
-                    file.WriteLine("{");
+                    file.WriteLine("    public class " + meta.Name);
+                    file.WriteLine("    {");
                     foreach (var p in meta.Properties)
                     {
+                        if (p.Attr != null)
+                        {
+                            if (p.Attr.AttrType == AttrType.Index)
+                            {
+                                file.WriteLine(string.Format(attr_property, p.Attr.Value));
+                            }
+                        }
                         if (p.Type.StartsWith("arr_"))
                         {
 
@@ -109,7 +117,8 @@ namespace YiDian.EventBus.MQ
                         file.Write(string.Format(s_property, p.Type, p.Name));
                         file.WriteLine("{ get; set; }");
                     }
-                    file.WriteLine("}}");
+                    file.WriteLine("    }");
+                    file.WriteLine("}");
                 }
                 catch (Exception ex)
                 {

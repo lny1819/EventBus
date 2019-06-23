@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="pub_test\" />
+    <Folder Include="EventModels\" />
   </ItemGroup>
 
 </Project>

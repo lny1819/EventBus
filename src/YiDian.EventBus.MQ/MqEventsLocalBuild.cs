@@ -71,26 +71,23 @@ namespace YiDian.EventBus.MQ
             var app = meta.Name;
             var version = meta.Version;
             path = Path.Combine(path, "EventModels", app);
-            if (!Directory.Exists(path)) CreateFiles(meta.MetaInfos, app, path);
+            if (!Directory.Exists(path)) CreateFiles(meta, path);
             else
             {
                 var versionFile = Path.Combine(path, version + ".v");
                 if (File.Exists(version)) return;
                 foreach (var file in Directory.GetFiles(path, "*.cs"))
                     File.Delete(file);
-                CreateFiles(meta.MetaInfos, app, path);
-                var v_file = File.OpenWrite(versionFile);
-                var json = meta.ToJson();
-                v_file.Write(json);
-                v_file.Close();
+                CreateFiles(meta, path);
             }
         }
-        private void CreateFiles(List<ClassMeta> list, string s_namespace, string dir)
+        private void CreateFiles(AppMetas appmeta, string dir)
         {
+            var s_namespace = appmeta.Name;
             const string s_property = "        public {0} {1} ";
             const string attr_property = "        [KeyIndex({0})]";
             Directory.CreateDirectory(dir);
-            foreach (var meta in list)
+            foreach (var meta in appmeta.MetaInfos)
             {
                 FileStream file = null;
                 try
@@ -99,7 +96,7 @@ namespace YiDian.EventBus.MQ
                     file.WriteLine("using System;");
                     file.WriteLine("using System.Collections.Generic;");
                     file.WriteLine("using  YiDian.EventBus.MQ.KeyAttribute;");
-                    file.WriteLine("namespace Events." + s_namespace);
+                    file.WriteLine("namespace EventModels." + s_namespace);
                     file.WriteLine("{");
                     file.WriteLine("    public class " + meta.Name);
                     file.WriteLine("    {");
@@ -135,6 +132,11 @@ namespace YiDian.EventBus.MQ
                     file?.Close();
                 }
             }
+            var versionFile = Path.Combine(dir, appmeta.Version + ".v");
+            var v_file = File.OpenWrite(versionFile);
+            var json = appmeta.ToJson();
+            v_file.Write(json);
+            v_file.Close();
         }
     }
 }

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using  YiDian.EventBus.MQ.KeyAttribute;
-namespace Events.pub_test
+namespace EventModels.pub_test
 {
     public class MqA
     {

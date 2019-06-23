@@ -10,7 +10,6 @@ namespace YiDian.EventBus.MQ
             object _out = null;
             Hashtable _table = null;
             ArrayList _array = null;
-
             String key = "";
             String value = "";
             CharEnumerator c = jsonstr.GetEnumerator();
@@ -239,6 +238,7 @@ namespace YiDian.EventBus.MQ
                         parseenum = parsemap;
 
                         Hashtable _newtable = new Hashtable(StringComparer.Create(System.Globalization.CultureInfo.CurrentCulture, true));
+                        if (_table != null && key == "") _table = null;
                         if (_table != null)
                         {
                             key = key.Trim();
@@ -263,7 +263,7 @@ namespace YiDian.EventBus.MQ
                         continue;
                     }
 
-                    if (c.Current.ToString() == "}")
+                    if (c.Current == '}')
                     {
                         parseenum(c.Current.ToString());
 
@@ -308,8 +308,8 @@ namespace YiDian.EventBus.MQ
                     if (c.Current.ToString() == "]")
                     {
                         parseenum(c.Current.ToString());
-
-                        parsepop(s.Pop());
+                        if (s.Count > 0)
+                            parsepop(s.Pop());
 
                         continue;
                     }

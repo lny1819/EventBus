@@ -5,17 +5,32 @@ using System.IO;
 using System;
 using System.Text;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace YiDian.EventBus.MQ
 {
 
+    static class FileWrite
+    {
+        public static void WriteLine(this FileStream fs, string value)
+        {
+            fs.Write(Encoding.UTF8.GetBytes(value));
+            fs.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
+        }
+        public static void Write(this FileStream fs, string value)
+        {
+            fs.Write(Encoding.UTF8.GetBytes(value));
+        }
+    }
 
     internal class MqEventsLocalBuild : IAppRun
     {
+        ILogger<MqEventsLocalBuild> _logger;
         public string Name { get; private set; }
         public void Run(ISoaServiceHost host, string name, string[] args)
         {
             //--loadevents -app history,userapi -path /data/his
+            _logger = host.ServicesProvider.GetService<ILogger<MqEventsLocalBuild>>();
             Name = name;
             for (var i = 0; i < args.Length; i++)
             {
@@ -66,31 +81,44 @@ namespace YiDian.EventBus.MQ
         }
         private void CreateFiles(List<ClassMeta> list, string s_namespace, string dir)
         {
-            const string s_property = "public {0} {1} { get; set; }";
+            const string s_property = "public {0} {1} ";
             Directory.CreateDirectory(dir);
             foreach (var meta in list)
             {
-                var file = File.Create(Path.Combine(dir, meta.Name));
-                var sb = new StringBuilder();
-                sb.AppendLine("using System;");
-                sb.AppendLine("using System.Collections.Generic;");
-                sb.AppendLine("namespace Events." + s_namespace + "");
-                sb.AppendLine("{");
-                sb.AppendLine("public class " + meta.Name);
-                sb.AppendLine("{");
-                foreach (var p in meta.Properties)
+                FileStream file = null;
+                try
                 {
-                    if (p.Type.StartsWith("arr_"))
+                    file = File.Create(Path.Combine(dir, meta.Name + ".cs"));
+                    file.WriteLine("using System;");
+                    file.WriteLine("using System.Collections.Generic;");
+                    file.WriteLine("using Events." + s_namespace + ";");
+                    file.WriteLine("namespace Events." + s_namespace);
+                    file.WriteLine("{");
+                    file.WriteLine("public class " + meta.Name);
+                    file.WriteLine("{");
+                    foreach (var p in meta.Properties)
                     {
+                        if (p.Type.StartsWith("arr_"))
+                        {
 
-                    }
-                    else if (p.Type.StartsWith("list_"))
-                    {
+                        }
+                        else if (p.Type.StartsWith("list_"))
+                        {
 
+                        }
+                        file.Write(string.Format(s_property, p.Type, p.Name));
+                        file.WriteLine("{ get; set; }");
                     }
-                    sb.Append(string.Format(s_property, p.Type, p.Name));
+                    file.WriteLine("}}");
                 }
-                sb.AppendLine("}}");
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.ToString());
+                }
+                finally
+                {
+                    file?.Close();
+                }
             }
         }
     }

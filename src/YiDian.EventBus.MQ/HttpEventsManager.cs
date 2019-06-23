@@ -144,7 +144,7 @@ namespace YiDian.EventBus.MQ
                 {
                     Name = ht2["Name"].ToString()
                 };
-                if (ht2["Attr"].ToString() != "null")
+                if (ht2["Attr"] != null)
                 {
                     var attr_ht = (Hashtable)ht2["Attr"];
                     var attr = new MetaAttr()
@@ -162,7 +162,7 @@ namespace YiDian.EventBus.MQ
                         Name = ps["Name"].ToString(),
                         Type = ps["Type"].ToString()
                     };
-                    if (ps["Attr"].ToString() != "null")
+                    if (ps["Attr"] != null)
                     {
                         var p_attr_ht = (Hashtable)ps["Attr"];
                         var p_attr = new MetaAttr()

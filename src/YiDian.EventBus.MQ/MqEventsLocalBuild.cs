@@ -30,7 +30,7 @@ namespace YiDian.EventBus.MQ
         public string Name { get; private set; }
         public void Run(ISoaServiceHost host, string name, string[] args)
         {
-            var scope= host.ServicesProvider.CreateScope(); 
+            var scope = host.ServicesProvider.CreateScope();
             //--loadevents -app history,userapi -path /data/his
             _eventsManager = scope.ServiceProvider.GetService<IAppEventsManager>();
             _logger = scope.ServiceProvider.GetService<ILogger<MqEventsLocalBuild>>();
@@ -70,16 +70,19 @@ namespace YiDian.EventBus.MQ
         {
             var app = meta.Name;
             var version = meta.Version;
-            path = Path.Combine(path, app);
-            if (!Directory.Exists(path)) CreateFiles(meta.MetaInfos, app, Path.Combine(path, version));
+            path = Path.Combine(path, "EventModels", app);
+            if (!Directory.Exists(path)) CreateFiles(meta.MetaInfos, app, path);
             else
             {
-                var versions = Directory.GetDirectories(path);
-                foreach (var dir in versions)
-                {
-                    if (dir == version) return;
-                }
-                CreateFiles(meta.MetaInfos, app, Path.Combine(path, version));
+                var versionFile = Path.Combine(path, version + ".v");
+                if (File.Exists(version)) return;
+                foreach (var file in Directory.GetFiles(path, "*.cs"))
+                    File.Delete(file);
+                CreateFiles(meta.MetaInfos, app, path);
+                var v_file = File.OpenWrite(versionFile);
+                var json = meta.ToJson();
+                v_file.Write(json);
+                v_file.Close();
             }
         }
         private void CreateFiles(List<ClassMeta> list, string s_namespace, string dir)

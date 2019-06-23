@@ -101,6 +101,22 @@ namespace YiDian.EventBus
         public List<ClassMeta> MetaInfos { get; set; }
         public string Version { get; set; }
         public string Name { get; set; }
+        public string ToJson()
+        {
+            var sb = new StringBuilder();
+            sb.Append("{\"Name\":\"");
+            sb.Append(Name);
+            sb.Append("\",\"Version\":\"");
+            sb.Append(Version);
+            sb.Append("\",\"MetaInfos\":[");
+            for (var i = 0; i < MetaInfos.Count; i++)
+            {
+                MetaInfos[i].ToJson(sb);
+                if (i != MetaInfos.Count - 1) sb.Append(',');
+            }
+            sb.Append("]}");
+            return sb.ToString();
+        }
     }
     public class EventId
     {

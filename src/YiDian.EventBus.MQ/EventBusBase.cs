@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.IO;
 
 namespace YiDian.EventBus.MQ
 {
@@ -123,9 +124,9 @@ namespace YiDian.EventBus.MQ
         }
         public virtual void Publish<T>(T @event, string routingKey, bool enableTx) where T : IntegrationMQEvent
         {
-            var message = __seralize.SerializeObject(@event);
-            var body = Encoding.UTF8.GetBytes(message);
-            PublishBytes(body, routingKey, enableTx);
+            var ms = new MemoryStream();
+            __seralize.Serialize(ms, @event);
+            PublishBytes(ms.GetBuffer(), routingKey, enableTx);
         }
         public void PublishBytes(byte[] data, string eventName, bool enableTransaction = false)
         {
@@ -311,7 +312,8 @@ namespace YiDian.EventBus.MQ
         [MethodImpl(methodImplOptions: MethodImplOptions.AggressiveInlining)]
         private object DeserializeObject(byte[] body, Type type)
         {
-            return __seralize.DeserializeObject(Encoding.UTF8.GetString(body), type);
+            var ms = new MemoryStream(body);
+            return __seralize.DeserializeObject(ms, type);
         }
         #endregion
 

@@ -1,10 +1,8 @@
 ﻿using Autofac;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System;
-using System.Collections.Generic;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.DefaultConnection;
@@ -21,22 +19,43 @@ namespace YiDian.Soa.Sp.Extensions
         /// <param name="builder"></param>
         /// <param name="getconnstr"></param>
         /// <returns></returns>
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Func<IConfiguration, string> mqConnstr)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, IAppEventsManager eventsManager)
         {
-            var factory = CreateConnect(mqConnstr(builder.Config));
-            var defaultconn = new DefaultRabbitMQPersistentConnection(factory, 5);
             var service = builder.Services;
+            service.AddSingleton(eventsManager);
+            var factory = CreateConnect(mqConnstr);
+            var defaultconn = new DefaultRabbitMQPersistentConnection(factory, eventsManager, 5);
             service.AddSingleton<IRabbitMQPersistentConnection>(defaultconn);
-            var evensMgr = new InMemoryAppEventsManager();
-            service.AddSingleton<IAppEventsManager>(evensMgr);
-            builder.RegisterRun(new MqEventsLoalBuild());
             return builder;
         }
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Func<IRabbitMQPersistentConnection> getFactory)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, string enven_mgr_api)
         {
-            var defaultconn = getFactory() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
+            var mgr = new HttpEventsManager(enven_mgr_api);
+            return UseRabbitMq(builder, mqConnstr, mgr);
+        }
+        public static SoaServiceContainerBuilder AutoCreateAppEvents(this SoaServiceContainerBuilder builder, string all_apps, string fileDir)
+        {
             var service = builder.Services;
-            service.AddSingleton(defaultconn);
+            builder.RegisterRun(new MqEventsLocalBuild());
+            //--loadevents -app history,userapi -path /data/his
+            var apps = all_apps.Split(',');
+            if (apps.Length == 0) throw new ArgumentException("not set event app names");
+            var data = new string[5];
+            data[0] = "--loadevents";
+            data[1] = "-app";
+            var s_apps = "";
+            for (var i = 0; i < apps.Length; i++)
+            {
+                s_apps += apps[i];
+                if (i != apps.Length - 1)
+                {
+                    s_apps += ',';
+                }
+            }
+            data[2] = s_apps;
+            data[3] = "-path";
+            data[4] = fileDir;
+            builder.AppendArgs(data);
             return builder;
         }
         private static ConnectionFactory CreateConnect(string connstr)
@@ -78,9 +97,9 @@ namespace YiDian.Soa.Sp.Extensions
             };
             return factory;
         }
-        public static IServiceCollection UseDirectEventBus<T>(this IServiceCollection service, int cacheLength = 0) where T : ISeralize, new()
+        public static SoaServiceContainerBuilder UseDirectEventBus<T>(this SoaServiceContainerBuilder builder, int cacheLength = 0) where T : ISeralize, new()
         {
-            service.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
+            builder.Services.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
             {
                 var conn = sp.GetService<IRabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
@@ -91,11 +110,11 @@ namespace YiDian.Soa.Sp.Extensions
                 eventbus.EnableHandlerCache(cacheLength);
                 return eventbus;
             });
-            return service;
+            return builder;
         }
-        public static IServiceCollection UseTopicEventBus<T>(this IServiceCollection service, int cacheLength = 0) where T : ISeralize, new()
+        public static SoaServiceContainerBuilder UseTopicEventBus<T>(this SoaServiceContainerBuilder builder, int cacheLength = 0) where T : ISeralize, new()
         {
-            service.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
+            builder.Services.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
             {
                 var conn = sp.GetService<IRabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
@@ -106,51 +125,7 @@ namespace YiDian.Soa.Sp.Extensions
                 eventbus.EnableHandlerCache(cacheLength);
                 return eventbus;
             });
-            return service;
-        }
-    }
-
-    internal class MqEventsLoalBuild : IAppRun
-    {
-        public string Name { get; private set; }
-        public void Run(ISoaServiceHost host, string name, string[] args)
-        {
-            //--loadevents -app history,userapi -path /data/his
-            Name = name;
-            for (var i = 0; i < args.Length; i++)
-            {
-                if (args[i].ToLower() == "--loadevents")
-                {
-                    string appname = "";
-                    string path = "";
-                    var n1 = args[i + 1];
-                    var n2 = args[i + 3];
-                    var v1 = args[i + 2];
-                    var v2 = args[i + 4];
-                    var arr1 = new string[] { n1, v1 };
-                    var arr2 = new string[] { n2, v2 };
-                    var arr = new string[2][] { arr1, arr2 };
-                    foreach (var n in arr)
-                    {
-                        if (n[0] == "-app") appname = n[1];
-                        else if (n[0] == "-path") path = n[1];
-                    }
-                    var sp = host.ServicesProvider;
-                    var mgr = sp.GetService<IAppEventsManager>();
-                    var appnames = appname.Split(',');
-                    foreach (var app in appnames)
-                    {
-                        var list = mgr.GetAppEventTypes(app);
-                        ReloadEvents(list, app, path);
-                    }
-                    host.Exit(0);
-                }
-            }
-        }
-
-        private void ReloadEvents(AppMetas meta, string appname, string path)
-        {
-
+            return builder;
         }
     }
 }

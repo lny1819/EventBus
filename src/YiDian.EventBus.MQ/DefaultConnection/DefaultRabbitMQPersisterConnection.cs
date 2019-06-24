@@ -22,9 +22,10 @@ namespace YiDian.EventBus.MQ.DefaultConnection
 
         public event EventHandler OnConnectRecovery;
 
-        public DefaultRabbitMQPersistentConnection(IConnectionFactory connectionFactory, int retryCount = 5)
+        public DefaultRabbitMQPersistentConnection(IConnectionFactory connectionFactory, IAppEventsManager eventsManager, int retryCount = 5)
         {
             _logger = new ConsoleLog();
+            EventsManager = eventsManager;
             _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
             _retryCount = retryCount;
         }
@@ -36,6 +37,8 @@ namespace YiDian.EventBus.MQ.DefaultConnection
                 return _connection != null && _connection.IsOpen && !_disposed;
             }
         }
+
+        public IAppEventsManager EventsManager { get; }
 
         public IModel CreateModel()
         {

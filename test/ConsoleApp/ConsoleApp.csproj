@@ -16,11 +16,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="Utils" Version="1.0.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\YiDian.EventBus.MQ\YiDian.EventBus.MQ.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="EventModels\" />
   </ItemGroup>
 
 </Project>

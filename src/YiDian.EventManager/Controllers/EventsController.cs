@@ -47,7 +47,8 @@ namespace YiDian.EventManager.Controllers
         [HttpGet]
         public ActionResult<string> Version(string app)
         {
-            return "1.0";
+            if (!dic.ContainsKey(app)) return "0.0";
+            return dic[app].Version;
         }
         [HttpGet]
         public ActionResult<AppMetas> ListEvent(string app)

@@ -12,8 +12,8 @@ using YiDian.EventBus.MQ.KeyAttribute;
 namespace YiDian.EventBus.MQ
 {
     /// <summary>
-    /// post reg_class?app=a&version=1.0
-    /// post reg_enum?app=a&version=1.0
+    /// post reg_class?app=a&version=1.0 (ClassMeta)
+    /// post reg_enum?app=a&version=1.0 (EnumMeta)
     /// get check?app=a&version=1.0
     /// get version?app=a
     /// get listevent?app=a

@@ -59,11 +59,11 @@ namespace YiDian.EventBus.MQ
                         var app_path = Path.Combine(path, "EventModels", app);
                         if (!Directory.Exists(app_path)) Directory.CreateDirectory(app_path);
                         var versionFile = Path.Combine(app_path, version + ".v");
-                        if (File.Exists(versionFile)) return;
+                        if (File.Exists(versionFile)) continue;
                         var meta = _eventsManager.ListEvents(app);
                         LocalBuildEvents(meta, app_path);
                     }
-                    host.Exit(100);
+                    break;
                 }
             }
             scope.Dispose();

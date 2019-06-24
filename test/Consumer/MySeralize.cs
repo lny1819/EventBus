@@ -5,7 +5,7 @@ using YiDian.EventBus.MQ;
 
 namespace Consumer
 {
-    public class MySeralize : ISeralize
+    public class MySeralize : IEventSeralize
     {
         public object DeserializeObject(string v, Type type)
         {

@@ -111,7 +111,7 @@ namespace YiDian.Soa.Sp.Extensions
             };
             return factory;
         }
-        public static SoaServiceContainerBuilder UseDirectEventBus<T>(this SoaServiceContainerBuilder builder, int cacheLength = 0) where T : ISeralize, new()
+        public static SoaServiceContainerBuilder UseDirectEventBus<T>(this SoaServiceContainerBuilder builder, int cacheLength = 0) where T : IEventSeralize, new()
         {
             builder.Services.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
             {
@@ -126,7 +126,7 @@ namespace YiDian.Soa.Sp.Extensions
             });
             return builder;
         }
-        public static SoaServiceContainerBuilder UseTopicEventBus<T>(this SoaServiceContainerBuilder builder, int cacheLength = 0) where T : ISeralize, new()
+        public static SoaServiceContainerBuilder UseTopicEventBus<T>(this SoaServiceContainerBuilder builder, int cacheLength = 0) where T : IEventSeralize, new()
         {
             builder.Services.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
             {

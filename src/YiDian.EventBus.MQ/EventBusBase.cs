@@ -23,14 +23,14 @@ namespace YiDian.EventBus.MQ
         public event EventHandler<Exception> OnUncatchException;
 
         protected readonly List<ConsumerConfig<TEventBus, TSub>> consumerInfos;
-        protected readonly ISeralize __seralize;
+        protected readonly IEventSeralize __seralize;
 
-        internal EventBusBase(ILogger<TEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection = null, IEventBusSubscriptionsManagerFactory factory = null, ISeralize seralize = null, int retryCount = 5, int cacheCount = 100)
+        internal EventBusBase(ILogger<TEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection = null, IEventBusSubscriptionsManagerFactory factory = null, IEventSeralize seralize = null, int retryCount = 5, int cacheCount = 100)
         {
             _persistentConnection = persistentConnection ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
             _persistentConnection.OnConnectRecovery += _persistentConnection_OnConnectRecovery;
             _logger = logger ?? throw new ArgumentNullException(nameof(ILogger<TEventBus>));
-            __seralize = seralize ?? throw new ArgumentNullException(nameof(ISeralize));
+            __seralize = seralize ?? throw new ArgumentNullException(nameof(IEventSeralize));
             _subsFactory = factory ?? new InMemorySubFactory();
             consumerInfos = new List<ConsumerConfig<TEventBus, TSub>>();
             hanlerCacheMgr = new EventHanlerCacheMgr(cacheCount, autofac, AUTOFAC_SCOPE_NAME);

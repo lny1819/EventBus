@@ -12,7 +12,7 @@ namespace YiDian.EventBus.MQ
 
     public class TopicEventBusMQ : EventBusBase<ITopicEventBus, TopicSubscriber>, ITopicEventBus
     {
-        public TopicEventBusMQ(ILogger<ITopicEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection = null, IEventBusSubscriptionsManagerFactory factory = null, ISeralize seralize = null, int retryCount = 5, int cacheCount = 100) : base(logger, autofac, persistentConnection, factory, seralize, retryCount, cacheCount)
+        public TopicEventBusMQ(ILogger<ITopicEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection = null, IEventBusSubscriptionsManagerFactory factory = null, IEventSeralize seralize = null, int retryCount = 5, int cacheCount = 100) : base(logger, autofac, persistentConnection, factory, seralize, retryCount, cacheCount)
         {
         }
 

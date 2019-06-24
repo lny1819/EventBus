@@ -34,7 +34,7 @@ namespace YiDian.Soa.Sp.Extensions
             return UseRabbitMq(builder, mqConnstr, mgr);
         }
         /// <summary>
-        /// 创建系统所依赖的消息总线中的消息类型
+        /// 创建系统所依赖的消息总线中的消息类型 需要DEBUG预编译指令
         /// </summary>
         /// <param name="builder">builder</param>
         /// <param name="all_apps">所依赖的消息系统名称列表，以逗号隔开
@@ -46,6 +46,9 @@ namespace YiDian.Soa.Sp.Extensions
         /// <returns>builder</returns>
         public static SoaServiceContainerBuilder AutoCreateAppEvents(this SoaServiceContainerBuilder builder, string all_apps = "", string fileDir = "")
         {
+#if !DEBUG
+            return builder;
+#endif
             if (string.IsNullOrEmpty(all_apps)) all_apps = builder.Config["dependApps"];
             if (string.IsNullOrEmpty(fileDir)) fileDir = builder.Project_Dir;
             var service = builder.Services;

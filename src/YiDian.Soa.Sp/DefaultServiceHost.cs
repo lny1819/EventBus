@@ -8,7 +8,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Diagnostics;
-using System.Collections.Generic;
 
 namespace YiDian.Soa.Sp
 {
@@ -16,26 +15,25 @@ namespace YiDian.Soa.Sp
     {
         static object appstartResult;
         object sysstart;
-        readonly string[] _args;
         readonly AutoResetEvent waitExit;
-        readonly List<IAppRun> run_list;
+        readonly SoaServiceContainerBuilder _builder;
+        readonly string[] original_args;
         int exitCode = 0;
         int state = 0;
         public DefaultServiceHost(SoaServiceContainerBuilder builder, string[] args)
         {
-            run_list = builder.GetAllAppRun();
-            _args = args;
+            original_args = args;
+            _builder = builder;
             waitExit = new AutoResetEvent(false);
             var service = builder.Services;
-            Configuration = builder.Config;
             service.AddSingleton<ISoaServiceHost, DefaultServiceHost>((s) => this);
-            Init(builder);
-            ConfigApps(builder);
+            Init();
+            ConfigApps();
         }
 
-        private void ConfigApps(SoaServiceContainerBuilder builder)
+        private void ConfigApps()
         {
-            var startup = builder.StartUp;
+            var startup = _builder.StartUp;
 
             System.Reflection.ConstructorInfo ci = startup.GetConstructor(new Type[] { typeof(IConfiguration) });
             if (ci == null)
@@ -47,29 +45,27 @@ namespace YiDian.Soa.Sp
 
             var config = startup.GetMethod("ConfigService");
             var autofac = new ContainerBuilder();
-            config.Invoke(sysstart, new object[] { builder, autofac });
+            config.Invoke(sysstart, new object[] { _builder, autofac });
 
-            autofac.Populate(builder.Services);
+            autofac.Populate(_builder.Services);
             var container = autofac.Build();
             ServicesProvider = new AutofacServiceProvider(container);//第三方IOC接管 core内置DI容器
         }
 
         public event Action<Exception> UnCatchedException;
-        private void Init(SoaServiceContainerBuilder builder)
+        private void Init()
         {
             Console.OutputEncoding = Encoding.UTF8;
 
-            builder.Services.AddSingleton(builder.Config);
+            RegisterBase();
 
-            RegisterBase(builder);
-
-            RegisterLogger(builder);
+            RegisterLogger();
 
         }
 
-        private void RegisterBase(SoaServiceContainerBuilder builder)
+        private void RegisterBase()
         {
-            builder.Services.AddSingleton<IQpsCounter>(e =>
+            _builder.Services.AddSingleton<IQpsCounter>(e =>
             {
                 var logger = e.GetService<ILogger<QpsCounter>>();
                 var counter = new QpsCounter(logger, true);
@@ -79,7 +75,7 @@ namespace YiDian.Soa.Sp
 
         public IServiceProvider ServicesProvider { get; private set; }
 
-        public IConfiguration Configuration { get; }
+        public IConfiguration Configuration { get { return _builder.Config; } }
         public int Run(Func<IConfiguration, string> getName, bool background = false)
         {
             var appname = getName(Configuration);
@@ -88,9 +84,9 @@ namespace YiDian.Soa.Sp
             logger.LogWarning($"soa service start with sysname {appname} datetime {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}");
             try
             {
-                foreach (var run in run_list)
+                foreach (var run in _builder.GetAllAppRun())
                 {
-                    run.Run(this, appname, _args);
+                    run.Run(this, appname, _builder.GetArgs());
                 }
                 if (state != 0) return exitCode;
                 Start();
@@ -131,7 +127,7 @@ namespace YiDian.Soa.Sp
         {
             var appstart = sysstart.GetType().GetMethod("Start");
             if (appstart == null) return;
-            appstartResult = appstart.Invoke(sysstart, new object[] { ServicesProvider, _args });
+            appstartResult = appstart.Invoke(sysstart, new object[] { ServicesProvider, original_args });
         }
         void OnException(Exception ex)
         {
@@ -142,10 +138,10 @@ namespace YiDian.Soa.Sp
             }
             else UnCatchedException(ex);
         }
-        private void RegisterLogger(SoaServiceContainerBuilder builder)
+        private void RegisterLogger()
         {
             Enum.TryParse(Configuration["Logging:Console:LogLevel:Default"], out LogLevel level);
-            builder.Services.AddLogging(e =>
+            _builder.Services.AddLogging(e =>
             {
                 e.AddFilter(m => level <= m);
                 e.AddConsole();

@@ -16,15 +16,15 @@ namespace ConsoleApp
                  .Build()
                  .Run(e => e["sysname"]);
 
-            var task = WithTask();
-            var awaiter = task.GetAwaiter();
-            awaiter.UnsafeOnCompleted(() =>
-            {
-                var f = task.IsCompletedSuccessfully;
-                Console.WriteLine("2");
-            });
-            Console.WriteLine("Hello World!");
-            Console.ReadKey();
+            //var task = WithTask();
+            //var awaiter = task.GetAwaiter();
+            //awaiter.UnsafeOnCompleted(() =>
+            //{
+            //    var f = task.IsCompletedSuccessfully;
+            //    Console.WriteLine("2");
+            //});
+            //Console.WriteLine("Hello World!");
+            //Console.ReadKey();
         }
 
         private static void WriteProperty(Type t)

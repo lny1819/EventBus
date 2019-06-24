@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -32,8 +31,9 @@ namespace YiDian.EventBus
         public static readonly string P_UInt32 = "UInt32";
         public static readonly string P_UInt64 = "UInt64";
         public static readonly string P_String = "string";
+        public static readonly string P_Date = "DateTime";
         public static readonly string P_Boolean = "Boolean";
-        public static string[] MetaTypeValues = new string[] { P_Int32, P_Int64, P_UInt32, P_UInt64, P_String, P_Boolean, P_Double };
+        public static string[] MetaTypeValues = new string[] { P_Int32, P_Int64, P_UInt32, P_UInt64, P_String, P_Boolean, P_Double, P_Date };
 
         public string Name { get; set; }
         public string Type { get; set; }
@@ -51,6 +51,31 @@ namespace YiDian.EventBus
             sb.Append("}");
         }
     }
+    public class EnumMeta
+    {
+        public EnumMeta()
+        {
+            Values = new List<(string, int)>();
+        }
+        public string Name { get; set; }
+        public List<ValueTuple<string, int>> Values { get; set; }
+        public void ToJson(StringBuilder sb)
+        {
+            sb.Append("{\"Name\":\"");
+            sb.Append(Name);
+            sb.Append("\",\"Values\":[");
+            for (var i = 0; i < Values.Count; i++)
+            {
+                sb.Append("{\"Item1\":\"");
+                sb.Append(Values[i].Item1);
+                sb.Append("\",\"Item2\":");
+                sb.Append(Values[i].Item2.ToString());
+                sb.Append("}");
+                if (i != Values.Count - 1) sb.Append(',');
+            }
+            sb.Append("]}");
+        }
+    }
     public class ClassMeta
     {
         public ClassMeta()
@@ -59,13 +84,16 @@ namespace YiDian.EventBus
         }
         public MetaAttr Attr { get; set; }
         public string Name { get; set; }
+        public bool IsEventType { get; set; }
         public List<PropertyMetaInfo> Properties { get; set; }
         public void ToJson(StringBuilder sb)
         {
             sb.Append("{\"Name\":\"");
             sb.Append(Name);
-            sb.Append("\",\"Attr\":");
-            if(Attr==null) sb.Append("null");
+            sb.Append("\",\"IsEventType\":");
+            sb.Append(IsEventType.ToString().ToLower());
+            sb.Append(",\"Attr\":");
+            if (Attr == null) sb.Append("null");
             else Attr.ToJson(sb);
             sb.Append(",\"Properties\":[");
             for (var i = 0; i < Properties.Count; i++)
@@ -97,7 +125,9 @@ namespace YiDian.EventBus
         public AppMetas()
         {
             MetaInfos = new List<ClassMeta>();
+            Enums = new List<EnumMeta>();
         }
+        public List<EnumMeta> Enums { get; set; }
         public List<ClassMeta> MetaInfos { get; set; }
         public string Version { get; set; }
         public string Name { get; set; }
@@ -113,6 +143,12 @@ namespace YiDian.EventBus
             {
                 MetaInfos[i].ToJson(sb);
                 if (i != MetaInfos.Count - 1) sb.Append(',');
+            }
+            sb.Append("],\"Enums\":[");
+            for (var i = 0; i < Enums.Count; i++)
+            {
+                Enums[i].ToJson(sb);
+                if (i != Enums.Count - 1) sb.Append(',');
             }
             sb.Append("]}");
             return sb.ToString();

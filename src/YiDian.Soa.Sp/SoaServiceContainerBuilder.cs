@@ -12,11 +12,23 @@ namespace YiDian.Soa.Sp
         readonly List<IAppRun> appRuns;
         IConfiguration _config;
         string[] _args;
+#if DEBUG
+        public string Project_Dir { get; }
+#endif
         public SoaServiceContainerBuilder(string[] args, IServiceCollection services)
         {
             Services = services ?? new ServiceCollection();
             appRuns = new List<IAppRun>();
             _args = args;
+#if DEBUG
+            for (var i = 0; i < _args.Length; i++)
+            {
+                if (_args[i] == "-pj_dir")
+                {
+                    Project_Dir = _args[i + 1];
+                }
+            }
+#endif
         }
         public void RegisterRun(IAppRun run)
         {
@@ -39,7 +51,10 @@ namespace YiDian.Soa.Sp
             }
         }
         internal Type StartUp { get; set; }
-
+        public string[] GetArgs()
+        {
+            return _args;
+        }
         public ISoaServiceHost Build()
         {
             var host = new DefaultServiceHost(this, _args);

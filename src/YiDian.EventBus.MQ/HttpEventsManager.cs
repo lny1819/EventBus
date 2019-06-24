@@ -12,12 +12,13 @@ using YiDian.EventBus.MQ.KeyAttribute;
 namespace YiDian.EventBus.MQ
 {
     /// <summary>
-    /// reg?app=a&version=1.0
-    /// check?app=a&version=1.0
-    /// version?app=a
-    /// listevent?app=a
-    /// eventid?app=a&name=zs
-    /// allids?app=a
+    /// post reg?app=a&version=1.0
+    /// get check?app=a&version=1.0
+    /// get version?app=a
+    /// get listevent?app=a
+    /// get eventid?app=a&name=zs
+    /// get allids?app=a
+    /// get check_not_event?app=a&version=1.0 (true,false)
     /// </summary>
     public class HttpEventsManager : IAppEventsManager
     {
@@ -28,22 +29,20 @@ namespace YiDian.EventBus.MQ
             if (!flag) throw new ArgumentException("not vaild web api address", nameof(web_api_address));
         }
 
-        private void RegisterEvent(string appname, string version, ClassMeta meta)
+        private void SendTypeMeta(Type type, string appName, string version)
         {
-            var uri = "reg?app=" + appname + "&version=" + version;
-            var sb = new StringBuilder();
-            meta.ToJson(sb);
-            var json = sb.ToString();
-            PostReq(uri, json);
+            if (type.IsEnum) SendEnumMeta(type, appName, version);
+            else SendClassMeta(type, appName, version);
         }
-        private void SendMeta(Type type, string appName, string version)
+
+        private void SendClassMeta(Type type, string appName, string version)
         {
-            var meta = new ClassMeta()
-            {
-                Name = type.Name
-            };
+            var isEventType = type.IsSubclassOf(typeof(IntegrationMQEvent));
+            var meta = new ClassMeta() { Name = type.Name, IsEventType = isEventType };
+            var list = new List<Type>();
             foreach (var p in type.GetProperties())
             {
+                if (isEventType && (p.Name == "ErrorCode" || p.Name == "ErrorMsg")) continue;
                 var pinfo = new PropertyMetaInfo() { Name = p.Name };
                 if (p.PropertyType == typeof(Int16) || p.PropertyType == typeof(Int32)) pinfo.Type = PropertyMetaInfo.P_Int32;
                 else if (p.PropertyType == typeof(Int64)) pinfo.Type = PropertyMetaInfo.P_Int64;
@@ -53,20 +52,52 @@ namespace YiDian.EventBus.MQ
                 else if (p.PropertyType == typeof(UInt64)) pinfo.Type = PropertyMetaInfo.P_UInt64;
                 else if (p.PropertyType == typeof(Int64)) pinfo.Type = PropertyMetaInfo.P_Int64;
                 else if (p.PropertyType == typeof(Double) || p.PropertyType == typeof(Decimal)) pinfo.Type = PropertyMetaInfo.P_Double;
-                else if (p.PropertyType.IsArray)
-                {
-
-                }
+                else if (p.PropertyType == typeof(DateTime)) pinfo.Type = PropertyMetaInfo.P_Double;
                 else if (p.PropertyType.IsGenericType && p.PropertyType.GetInterfaces().Contains(typeof(IList)))
                 {
-
+                    var s_list = "list#";
+                    var t_args = p.PropertyType.GenericTypeArguments;
+                    for (var i = 0; i < t_args.Length; i++)
+                    {
+                        s_list += t_args[i].Name;
+                        if (i != t_args.Length - 1) s_list += "#";
+                    }
+                    pinfo.Type = s_list;
                 }
-                else pinfo.Type = p.PropertyType.Name;
+                else if (p.PropertyType.IsArray) pinfo.Type = p.PropertyType.Name;
+                else
+                {
+                    if (!p.PropertyType.IsSubclassOf(typeof(IntegrationMQEvent))) list.Add(p.PropertyType);
+                    pinfo.Type = p.PropertyType.Name;
+                }
                 var attrs = p.GetCustomAttributes(typeof(KeyIndexAttribute), false);
                 if (attrs.Length != 0) pinfo.Attr = new MetaAttr() { AttrType = AttrType.Index, Value = ((KeyIndexAttribute)attrs[0]).Index.ToString() };
                 meta.Properties.Add(pinfo);
             }
-            RegisterEvent(appName, version, meta);
+            RegisterClassEvent(appName, version, meta);
+            foreach (var not_event_type in list)
+            {
+                if (!IfExistNotEventType(appName, not_event_type, version))
+                {
+                    SendTypeMeta(not_event_type, appName, version);
+                }
+            }
+        }
+
+        private void SendEnumMeta(Type type, string appName, string version)
+        {
+            var enumMeta = new EnumMeta() { Name = type.Name };
+            var values = Enum.GetValues(type);
+            foreach (var v in values)
+            {
+                enumMeta.Values.Add((v.ToString(), (int)v));
+            }
+            RegisterEnumType(appName, version, enumMeta);
+        }
+
+        public void RegisterEvent<T>(string appName, string version) where T : IntegrationMQEvent
+        {
+            SendTypeMeta(typeof(T), appName, version);
         }
         //public void RegisterEvents(AppMetas metas)
         //{
@@ -79,10 +110,21 @@ namespace YiDian.EventBus.MQ
         //}
 
         #region HttpApi
-        public void RegisterEvent<T>(string appName, string version) where T : IntegrationMQEvent
+        private void RegisterClassEvent(string appname, string version, ClassMeta meta)
         {
-            var type = typeof(T);
-            SendMeta(type, appName, version);
+            var uri = "reg_class?app=" + appname + "&version=" + version;
+            var sb = new StringBuilder();
+            meta.ToJson(sb);
+            var json = sb.ToString();
+            PostReq(uri, json);
+        }
+        private void RegisterEnumType(string appname, string version, EnumMeta meta)
+        {
+            var uri = "reg_enum?app=" + appname + "&version=" + version;
+            var sb = new StringBuilder();
+            meta.ToJson(sb);
+            var json = sb.ToString();
+            PostReq(uri, json);
         }
         public CheckResult VaildityTest(string appname, string version)
         {
@@ -102,6 +144,14 @@ namespace YiDian.EventBus.MQ
             var uri = "listevent?app=" + appname;
             var value = GetReq(uri);
             return ToMetas(value);
+        }
+        public bool IfExistNotEventType(string appName, Type type, string version)
+        {
+            var typename = type.Name;
+            var uri = "check_not_event?app=" + appName + "&version=" + version + "&name=" + typename;
+            var value = GetReq(uri);
+            bool.TryParse(value, out bool res);
+            return res;
         }
         public string GetEventId<T>(string appName) where T : IntegrationMQEvent
         {
@@ -134,7 +184,7 @@ namespace YiDian.EventBus.MQ
             var appmetas = new AppMetas
             {
                 Name = ht["Name"].ToString(),
-                Version = ht["Version"].ToString()
+                Version = ht["Version"].ToString(),
             };
             var list = (ArrayList)ht["MetaInfos"];
             foreach (var item in list)
@@ -142,7 +192,8 @@ namespace YiDian.EventBus.MQ
                 var ht2 = (Hashtable)item;
                 var class_meta = new ClassMeta
                 {
-                    Name = ht2["Name"].ToString()
+                    Name = ht2["Name"].ToString(),
+                    IsEventType = bool.Parse(ht2["IsEventType"].ToString())
                 };
                 if (ht2["Attr"] != null)
                 {
@@ -175,6 +226,19 @@ namespace YiDian.EventBus.MQ
                     class_meta.Properties.Add(p_info);
                 }
                 appmetas.MetaInfos.Add(class_meta);
+            }
+            var list2 = (ArrayList)ht["Enums"];
+            foreach (var item in list2)
+            {
+                var ht2 = (Hashtable)item;
+                var v_ht = (ArrayList)ht2["Values"];
+                var enumMeta = new EnumMeta() { Name = ht2["Name"].ToString() };
+                foreach (var v in v_ht)
+                {
+                    var h_v = (Hashtable)v;
+                    enumMeta.Values.Add((h_v["Item1"].ToString(), int.Parse(h_v["Item2"].ToString())));
+                }
+                appmetas.Enums.Add(enumMeta);
             }
             return appmetas;
         }

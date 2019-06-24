@@ -15,7 +15,10 @@ namespace ConsoleApp
         }
         public void ConfigService(SoaServiceContainerBuilder soa, ContainerBuilder builder)
         {
-            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"]).AutoCreateAppEvents(Configuration["dependApps"],"");
+            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"]);
+#if DEBUG
+            soa.AutoCreateAppEvents();
+#endif
         }
         public void Start(IServiceProvider sp, string[] args)
         {
@@ -26,20 +29,6 @@ namespace ConsoleApp
             //var d = JsonString.Unpack(json);
             //var m = HttpEventsManager.ToMetas(json);
             Console.WriteLine();
-        }
-        public class A
-        {
-            public string D { get; set; }
-        }
-        public class B
-        {
-            public int AV { get; set; }
-            public A ZA { get; set; }
-        }
-        public class C
-        {
-            public B AB { get; set; }
-            public String SC { get; set; }
         }
     }
 }

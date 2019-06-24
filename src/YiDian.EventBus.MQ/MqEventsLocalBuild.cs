@@ -1,10 +1,8 @@
-﻿using System.Collections.Generic;
-using YiDian.Soa.Sp;
+﻿using YiDian.Soa.Sp;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
 using System;
 using System.Text;
-using System.Linq;
 using Microsoft.Extensions.Logging;
 
 namespace YiDian.EventBus.MQ
@@ -57,34 +55,30 @@ namespace YiDian.EventBus.MQ
                     var appnames = appname.Split(',');
                     foreach (var app in appnames)
                     {
+                        var version = _eventsManager.GetVersion(app);
+                        var app_path = Path.Combine(path, "EventModels", app);
+                        if (!Directory.Exists(app_path)) Directory.CreateDirectory(app_path);
+                        var versionFile = Path.Combine(app_path, version + ".v");
+                        if (File.Exists(versionFile)) return;
                         var meta = _eventsManager.ListEvents(app);
-                        LocalBuildEvents(meta, path);
+                        LocalBuildEvents(meta, app_path);
                     }
-                    host.Exit(0);
+                    host.Exit(100);
                 }
             }
             scope.Dispose();
         }
-
         private void LocalBuildEvents(AppMetas meta, string path)
         {
-            var app = meta.Name;
-            var version = meta.Version;
-            path = Path.Combine(path, "EventModels", app);
-            if (!Directory.Exists(path)) CreateFiles(meta, path);
-            else
-            {
-                var versionFile = Path.Combine(path, version + ".v");
-                if (File.Exists(versionFile)) return;
-                foreach (var file in Directory.GetFiles(path, "*.cs"))
-                    File.Delete(file);
-                CreateFiles(meta, path);
-            }
+            foreach (var file in Directory.GetFiles(path, "*.cs"))
+                File.Delete(file);
+            CreateFiles(meta, path);
         }
         private void CreateFiles(AppMetas appmeta, string dir)
         {
             var s_namespace = appmeta.Name;
             const string s_property = "        public {0} {1} ";
+            const string list_property = "        public List<{0}> {1} ";
             const string attr_property = "        [KeyIndex({0})]";
             Directory.CreateDirectory(dir);
             foreach (var meta in appmeta.MetaInfos)
@@ -95,10 +89,14 @@ namespace YiDian.EventBus.MQ
                     file = File.Create(Path.Combine(dir, meta.Name + ".cs"));
                     file.WriteLine("using System;");
                     file.WriteLine("using System.Collections.Generic;");
+                    file.WriteLine("using YiDian.EventBus;");
                     file.WriteLine("using YiDian.EventBus.MQ.KeyAttribute;");
                     file.WriteLine("namespace EventModels." + s_namespace);
                     file.WriteLine("{");
-                    file.WriteLine("    public class " + meta.Name);
+                    if (meta.IsEventType)
+                        file.WriteLine("    public class " + meta.Name + ": IntegrationMQEvent");
+                    else
+                        file.WriteLine("    public class " + meta.Name);
                     file.WriteLine("    {");
                     foreach (var p in meta.Properties)
                     {
@@ -109,16 +107,51 @@ namespace YiDian.EventBus.MQ
                                 file.WriteLine(string.Format(attr_property, p.Attr.Value));
                             }
                         }
-                        if (p.Type.StartsWith("arr_"))
+                        if (p.Type.StartsWith("list#"))
                         {
-
+                            var list_type = "";
+                            var args = p.Type.Split('#');
+                            for (var i = 1; i < args.Length; i++)
+                            {
+                                list_type += args[i];
+                                if (i != args.Length - 1) list_type += ',';
+                            }
+                            file.Write(string.Format(list_property, list_type, p.Name));
                         }
-                        else if (p.Type.StartsWith("list_"))
-                        {
-
-                        }
-                        file.Write(string.Format(s_property, p.Type, p.Name));
+                        else file.Write(string.Format(s_property, p.Type, p.Name));
                         file.WriteLine("{ get; set; }");
+                    }
+                    file.WriteLine("    }");
+                    file.WriteLine("}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.ToString());
+                }
+                finally
+                {
+                    file?.Close();
+                }
+            }
+            foreach (var meta in appmeta.Enums)
+            {
+                FileStream file = null;
+                try
+                {
+                    file = File.Create(Path.Combine(dir, meta.Name + ".cs"));
+                    file.WriteLine("using System;");
+                    file.WriteLine("namespace EventModels." + s_namespace);
+                    file.WriteLine("{");
+                    file.WriteLine("    public enum " + meta.Name);
+                    file.WriteLine("    {");
+                    for (var i = 0; i < meta.Values.Count; i++)
+                    {
+                        if (i != meta.Values.Count - 1)
+                        {
+                            file.Write("        " + meta.Values[i].Item1 + " = " + meta.Values[i].Item2);
+                            file.WriteLine(",");
+                        }
+                        else file.WriteLine("        " + meta.Values[i].Item1 + " = " + meta.Values[i].Item2);
                     }
                     file.WriteLine("    }");
                     file.WriteLine("}");

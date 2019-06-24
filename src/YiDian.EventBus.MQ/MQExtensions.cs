@@ -33,8 +33,21 @@ namespace YiDian.Soa.Sp.Extensions
             var mgr = new HttpEventsManager(enven_mgr_api);
             return UseRabbitMq(builder, mqConnstr, mgr);
         }
-        public static SoaServiceContainerBuilder AutoCreateAppEvents(this SoaServiceContainerBuilder builder, string all_apps, string fileDir)
+        /// <summary>
+        /// 创建系统所依赖的消息总线中的消息类型
+        /// </summary>
+        /// <param name="builder">builder</param>
+        /// <param name="all_apps">所依赖的消息系统名称列表，以逗号隔开
+        /// <para>为空时，从配置文件中加载键为 dependApps 的值</para>
+        /// </param>
+        /// <param name="fileDir">创建消息 体的目录
+        /// <para>为空时，使用当前系统目录 依赖命令行传入键为-pj_dir的参数</para>
+        /// </param>
+        /// <returns>builder</returns>
+        public static SoaServiceContainerBuilder AutoCreateAppEvents(this SoaServiceContainerBuilder builder, string all_apps = "", string fileDir = "")
         {
+            if (string.IsNullOrEmpty(all_apps)) all_apps = builder.Config["dependApps"];
+            if (string.IsNullOrEmpty(fileDir)) fileDir = builder.Project_Dir;
             var service = builder.Services;
             builder.RegisterRun(new MqEventsLocalBuild());
             //--loadevents -app history,userapi -path /data/his

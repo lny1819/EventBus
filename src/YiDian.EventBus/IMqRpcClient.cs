@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace YiDian.EventBus
+﻿namespace YiDian.EventBus
 {
     public interface IMqRpcClient
     {

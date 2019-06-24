@@ -4,7 +4,7 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <RootNamespace>YiDian.EventBus</RootNamespace>
     <AssemblyName>YiDian.EventBus</AssemblyName>
-    <Version>0.0.0.8</Version>
+    <Version>0.0.0.9</Version>
     <Company></Company>
     <Product>YiDian.EventBus</Product>
     <Copyright></Copyright>

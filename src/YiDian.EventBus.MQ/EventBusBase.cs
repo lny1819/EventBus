@@ -341,10 +341,5 @@ namespace YiDian.EventBus.MQ
             _pubChannel.Dispose();
             _persistentConnection.Dispose();
         }
-
-        public List<Type> GetAppEvents(string appname)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

@@ -114,9 +114,9 @@ namespace YiDian.EventBus.MQ
                 if (right != null) GetMembers(right, dic);
             }
         }
-        public override void Publish<T>(T @event, string prefix, bool enableTransaction = false)
+        public void PublishPrefix<T>(T @event, string prefix, bool enableTransaction = false) where T : IntegrationMQEvent
         {
-            if (string.IsNullOrEmpty(prefix)) Publish(@event, enableTransaction);
+            if (string.IsNullOrEmpty(prefix)) return;
             else
             {
                 var name = GetSubscriber("publish").GetEventKey<T>();

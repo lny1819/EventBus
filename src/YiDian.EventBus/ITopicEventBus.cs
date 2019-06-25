@@ -33,7 +33,8 @@ namespace YiDian.EventBus
         void Unsubscribe<T, TH>(string queueName, Expression<Func<T, bool>> where)
              where T : IntegrationMQEvent
              where TH : IIntegrationEventHandler<T>;
-        void Publish<T>(T @event, string prifix, bool enableTransaction = false) where T : IntegrationMQEvent;
+        void PublishPrefix<T>(T @event, string fix, bool enableTransaction = false) where T : IntegrationMQEvent;
+        void PublishSuffix<T>(T @event, string fix, bool enableTransaction = false) where T : IntegrationMQEvent;
         void Subscribe<T, TH>(string queueName, string prifix)
              where T : IntegrationMQEvent
             where TH : IIntegrationEventHandler<T>;

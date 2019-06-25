@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Utils.Seralize;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.KeyAttribute;
@@ -23,8 +24,8 @@ namespace ConsoleApp
         public void ConfigService(SoaServiceContainerBuilder soa, ContainerBuilder builder)
         {
             soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"])
-                 .UseDirectEventBus<MySeralize>(1000)
-                 .UseTopicEventBus<MySeralize>(1000);
+                 .UseDirectEventBus<JsonSeralizer>(1000)
+                 .UseTopicEventBus<JsonSeralizer>(1000);
         }
         public void Start(IServiceProvider sp, string[] args)
         {

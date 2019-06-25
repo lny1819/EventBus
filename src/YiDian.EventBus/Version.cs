@@ -31,7 +31,7 @@ namespace YiDian.EventBus
         {
             v = new Version();
             var arr = version.Split('.');
-            if (arr.Length != 4) return false;
+            if (arr.Length != 2) return false;
             if (!byte.TryParse(arr[0], out byte temp)) return false;
             v.A = temp;
             if (!byte.TryParse(arr[1], out temp)) return false;

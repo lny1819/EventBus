@@ -117,7 +117,7 @@ namespace YiDian.EventBus.MQ
             var sb = new StringBuilder();
             meta.ToJson(sb);
             var json = sb.ToString();
-            PostReq(uri, json);
+            var response = PostReq(uri, json);
         }
         private void RegisterEnumType(string appname, string version, EnumMeta meta)
         {
@@ -125,7 +125,7 @@ namespace YiDian.EventBus.MQ
             var sb = new StringBuilder();
             meta.ToJson(sb);
             var json = sb.ToString();
-            PostReq(uri, json);
+            var response = PostReq(uri, json);
         }
         public CheckResult VaildityTest(string appname, string version)
         {
@@ -163,7 +163,7 @@ namespace YiDian.EventBus.MQ
         }
         public List<EventId> GetEventIds(string appname)
         {
-            var uri = "listevent?app=" + appname;
+            var uri = "allids?app=" + appname;
             var value = GetReq(uri);
             var obj = JsonString.Unpack(value);
             if (obj == null || obj.GetType() != typeof(ArrayList)) throw new ArgumentException("the returns is not expected result");

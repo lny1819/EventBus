@@ -17,7 +17,7 @@ namespace ConsoleApp
         {
             soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"]);
 #if DEBUG
-            soa.AutoCreateAppEvents();
+            soa.AutoCreateAppEvents("quote_es");
 #endif
         }
         public void Start(IServiceProvider sp, string[] args)

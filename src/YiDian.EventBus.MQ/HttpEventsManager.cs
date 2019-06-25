@@ -17,7 +17,7 @@ namespace YiDian.EventBus.MQ
     /// get check?app=a&version=1.0
     /// get version?app=a
     /// get listevent?app=a
-    /// get eventid?app=a&name=zs
+    /// get eventid?name=zs
     /// get allids?app=a
     /// get check_not_event?app=a&version=1.0 (true,false)
     /// </summary>
@@ -30,13 +30,13 @@ namespace YiDian.EventBus.MQ
             if (!flag) throw new ArgumentException("not vaild web api address", nameof(web_api_address));
         }
 
-        private void SendTypeMeta(Type type, string appName, string version)
+        private CheckResult SendTypeMeta(Type type, string appName, string version)
         {
-            if (type.IsEnum) SendEnumMeta(type, appName, version);
-            else SendClassMeta(type, appName, version);
+            if (type.IsEnum) return SendEnumMeta(type, appName, version);
+            else return SendClassMeta(type, appName, version);
         }
 
-        private void SendClassMeta(Type type, string appName, string version)
+        private CheckResult SendClassMeta(Type type, string appName, string version)
         {
             var isEventType = type.IsSubclassOf(typeof(IntegrationMQEvent));
             var meta = new ClassMeta() { Name = type.Name, IsEventType = isEventType };
@@ -75,17 +75,19 @@ namespace YiDian.EventBus.MQ
                 if (attrs.Length != 0) pinfo.Attr = new MetaAttr() { AttrType = AttrType.Index, Value = ((KeyIndexAttribute)attrs[0]).Index.ToString() };
                 meta.Properties.Add(pinfo);
             }
-            RegisterClassEvent(appName, version, meta);
+            var res = RegisterClassEvent(appName, version, meta);
             foreach (var not_event_type in list)
             {
                 if (!IfExistNotEventType(appName, not_event_type, version))
                 {
-                    SendTypeMeta(not_event_type, appName, version);
+                    res = SendTypeMeta(not_event_type, appName, version);
+                    if (!res.IsVaild) return res;
                 }
             }
+            return res;
         }
 
-        private void SendEnumMeta(Type type, string appName, string version)
+        private CheckResult SendEnumMeta(Type type, string appName, string version)
         {
             var enumMeta = new EnumMeta() { Name = type.Name };
             var values = Enum.GetValues(type);
@@ -93,12 +95,12 @@ namespace YiDian.EventBus.MQ
             {
                 enumMeta.Values.Add((v.ToString(), (int)v));
             }
-            RegisterEnumType(appName, version, enumMeta);
+            return RegisterEnumType(appName, version, enumMeta);
         }
 
-        public void RegisterEvent<T>(string appName, string version) where T : IntegrationMQEvent
+        public CheckResult RegisterEvent<T>(string appName, string version) where T : IntegrationMQEvent
         {
-            SendTypeMeta(typeof(T), appName, version);
+            return SendTypeMeta(typeof(T), appName, version);
         }
         //public void RegisterEvents(AppMetas metas)
         //{
@@ -111,28 +113,71 @@ namespace YiDian.EventBus.MQ
         //}
 
         #region HttpApi
-        private void RegisterClassEvent(string appname, string version, ClassMeta meta)
+        private CheckResult RegisterClassEvent(string appname, string version, ClassMeta meta)
         {
-            var uri = "reg_class?app=" + appname + "&version=" + version;
-            var sb = new StringBuilder();
-            meta.ToJson(sb);
-            var json = sb.ToString();
-            var response = PostReq(uri, json);
+            try
+            {
+                var uri = "reg_class?app=" + appname + "&version=" + version;
+                var sb = new StringBuilder();
+                meta.ToJson(sb);
+                var json = sb.ToString();
+                var response = PostReq(uri, json);
+                var obj = JsonString.Unpack(response);
+                var ht = (Hashtable)obj;
+                var res = new CheckResult
+                {
+                    IsVaild = bool.Parse(ht["IsVaild"].ToString()),
+                    InvaildMessage = ht["InvaildMessage"].ToString(),
+                };
+                return res;
+            }
+            catch (Exception ex)
+            {
+                return new CheckResult() { IsVaild = false, InvaildMessage = ex.ToString() };
+            }
         }
-        private void RegisterEnumType(string appname, string version, EnumMeta meta)
+        private CheckResult RegisterEnumType(string appname, string version, EnumMeta meta)
         {
-            var uri = "reg_enum?app=" + appname + "&version=" + version;
-            var sb = new StringBuilder();
-            meta.ToJson(sb);
-            var json = sb.ToString();
-            var response = PostReq(uri, json);
+            try
+            {
+                var uri = "reg_enum?app=" + appname + "&version=" + version;
+                var sb = new StringBuilder();
+                meta.ToJson(sb);
+                var json = sb.ToString();
+                var response = PostReq(uri, json);
+                var obj = JsonString.Unpack(response);
+                var ht = (Hashtable)obj;
+                var res = new CheckResult
+                {
+                    IsVaild = bool.Parse(ht["IsVaild"].ToString()),
+                    InvaildMessage = ht["InvaildMessage"].ToString(),
+                };
+                return res;
+            }
+            catch (Exception ex)
+            {
+                return new CheckResult() { IsVaild = false, InvaildMessage = ex.ToString() };
+            }
         }
         public CheckResult VaildityTest(string appname, string version)
         {
-            var uri = "check?app=" + appname + "&version=" + version;
-            var value = GetReq(uri);
-            bool.TryParse(value, out bool res);
-            return new CheckResult();
+            try
+            {
+                var uri = "check?app=" + appname + "&version=" + version;
+                var response = GetReq(uri);
+                var obj = JsonString.Unpack(response);
+                var ht = (Hashtable)obj;
+                var res = new CheckResult
+                {
+                    IsVaild = bool.Parse(ht["IsVaild"].ToString()),
+                    InvaildMessage = ht["InvaildMessage"].ToString(),
+                };
+                return res;
+            }
+            catch (Exception ex)
+            {
+                return new CheckResult() { IsVaild = false, InvaildMessage = ex.ToString() };
+            }
         }
         public string GetVersion(string appname)
         {
@@ -154,12 +199,26 @@ namespace YiDian.EventBus.MQ
             bool.TryParse(value, out bool res);
             return res;
         }
-        public string GetEventId<T>(string appName) where T : IntegrationMQEvent
+        public CheckResult GetEventId<T>() where T : IntegrationMQEvent
         {
-            var typename = typeof(T).Name;
-            var uri = "eventid?app=" + appName + "&name=" + typename;
-            var value = GetReq(uri);
-            return value;
+            try
+            {
+                var typename = typeof(T).Name;
+                var uri = "eventid?name=" + typename;
+                var response = GetReq(uri);
+                var obj = JsonString.Unpack(response);
+                var ht = (Hashtable)obj;
+                var res = new CheckResult
+                {
+                    IsVaild = bool.Parse(ht["IsVaild"].ToString()),
+                    InvaildMessage = ht["InvaildMessage"].ToString(),
+                };
+                return res;
+            }
+            catch (Exception ex)
+            {
+                return new CheckResult() { IsVaild = false, InvaildMessage = ex.ToString() };
+            }
         }
         public List<EventId> GetEventIds(string appname)
         {

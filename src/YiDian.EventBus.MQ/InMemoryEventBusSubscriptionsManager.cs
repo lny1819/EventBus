@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,13 @@ namespace YiDian.EventBus.MQ
 {
     public class InMemorySubFactory : IEventBusSubscriptionsManagerFactory
     {
+        readonly IAppEventsManager _manager;
+        readonly ILogger<IEventBusSubscriptionsManager> _logger;
+        public InMemorySubFactory(IAppEventsManager manager, ILogger<IEventBusSubscriptionsManager> logger)
+        {
+            _logger = logger;
+            _manager = manager;
+        }
         readonly List<InMemoryEventBusSubscriptionsManager> __containers = new List<InMemoryEventBusSubscriptionsManager>();
         public IEventBusSubscriptionsManager GetOrCreateByQueue(string queueName)
         {
@@ -17,7 +25,7 @@ namespace YiDian.EventBus.MQ
             {
                 mgr = __containers.FirstOrDefault(x => x.QueueName == queueName);
                 if (mgr != null) return mgr;
-                mgr = new InMemoryEventBusSubscriptionsManager(queueName);
+                mgr = new InMemoryEventBusSubscriptionsManager(queueName, _manager, _logger);
                 __containers.Add(mgr);
                 return mgr;
             }
@@ -26,12 +34,17 @@ namespace YiDian.EventBus.MQ
     public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManager
     {
         readonly List<string> __bytes_subs = new List<string>();
-        private readonly ConcurrentDictionary<string, List<SubscriptionInfo>> _handlers;
+        readonly ConcurrentDictionary<string, List<SubscriptionInfo>> _handlers;
+        readonly ILogger<IEventBusSubscriptionsManager> _logger;
+
         public event EventHandler<string> OnEventRemoved;
         public event EventHandler<string> OnEventAdd;
         SubscriptionInfo _bytesHandler = null;
-        public InMemoryEventBusSubscriptionsManager(string name)
+        readonly IAppEventsManager _manager;
+        public InMemoryEventBusSubscriptionsManager(string name, IAppEventsManager manager, ILogger<IEventBusSubscriptionsManager> logger)
         {
+            _logger = logger;
+            _manager = manager;
             QueueName = name;
             _handlers = new ConcurrentDictionary<string, List<SubscriptionInfo>>(StringComparer.OrdinalIgnoreCase);
         }
@@ -209,7 +222,10 @@ namespace YiDian.EventBus.MQ
         }
         public string GetEventKey<T>() where T : IntegrationMQEvent
         {
-            return typeof(T).Name;
+            var res = _manager.GetEventId<T>();
+            if (!res.IsVaild)
+                _logger.LogError("when get event key, response error: " + res.InvaildMessage);
+            return res.InvaildMessage;
         }
     }
 }

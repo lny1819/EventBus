@@ -53,7 +53,7 @@ namespace YiDian.EventBus.MQ
                 else if (p.PropertyType == typeof(UInt64)) pinfo.Type = PropertyMetaInfo.P_UInt64;
                 else if (p.PropertyType == typeof(Int64)) pinfo.Type = PropertyMetaInfo.P_Int64;
                 else if (p.PropertyType == typeof(Double) || p.PropertyType == typeof(Decimal)) pinfo.Type = PropertyMetaInfo.P_Double;
-                else if (p.PropertyType == typeof(DateTime)) pinfo.Type = PropertyMetaInfo.P_Double;
+                else if (p.PropertyType == typeof(DateTime)) pinfo.Type = PropertyMetaInfo.P_Date;
                 else if (p.PropertyType.IsGenericType && p.PropertyType.GetInterfaces().Contains(typeof(IList)))
                 {
                     var s_list = "list#";

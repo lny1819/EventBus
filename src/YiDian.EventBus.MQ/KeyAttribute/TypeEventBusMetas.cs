@@ -5,12 +5,16 @@ using System.Reflection;
 
 namespace YiDian.EventBus.MQ.KeyAttribute
 {
-    public class TypeEventBusMetas
+    internal class EventAttrMeta
     {
         public Func<object, object> Property { get; set; }
         public int Index { get; set; }
+        public string Name { get; set; }
+    }
+    internal class TypeEventBusMetas
+    {
 
-        static Dictionary<Type, Tuple<string, Dictionary<string, TypeEventBusMetas>>> dictionary = new Dictionary<Type, Tuple<string, Dictionary<string, TypeEventBusMetas>>>();
+        static Dictionary<Type, List<EventAttrMeta>> dictionary = new Dictionary<Type, List<EventAttrMeta>>();
         static void LoadMatchingAssemblies()
         {
             var finder = new AppDomainTypeFinder();
@@ -32,8 +36,6 @@ namespace YiDian.EventBus.MQ.KeyAttribute
             foreach (var type in types)
             {
                 if (!(type.GetInterfaces().Where(x => x == typeof(IMQEvent)).Count() > 0)) continue;
-                var keynameatt = type.GetCustomAttribute<KeyNameAttribute>();
-                if (keynameatt != null) AddKeyName(type, keynameatt.Name);
                 var props = type.GetProperties();
                 var hash = new HashSet<int>();
                 foreach (var p in props)
@@ -41,33 +43,28 @@ namespace YiDian.EventBus.MQ.KeyAttribute
                     var att = p.GetCustomAttribute<KeyIndexAttribute>();
                     if (att != null)
                     {
-                        if (hash.Contains(att.Index)) throw new ArgumentException("索引重复" + nameof(Index));
+                        if (hash.Contains(att.Index)) throw new ArgumentException("repeat set KeyIndexAttribute index");
                         hash.Add(att.Index);
-                        AddKeyIndex(type, p.Name, new TypeEventBusMetas() { Index = att.Index, Property = FastInvoke.EmitGetter(p) });
+                        AddKeyIndex(type, new EventAttrMeta() { Index = att.Index, Property = FastInvoke.EmitGetter(p), Name = p.Name });
                     }
                 }
             }
         }
-        static void AddKeyName(Type type, string name)
+        static void AddKeyIndex(Type type, EventAttrMeta meta)
         {
-            if (!dictionary.ContainsKey(type)) dictionary[type] = new Tuple<string, Dictionary<string, TypeEventBusMetas>>(name, new Dictionary<string, TypeEventBusMetas>());
-        }
-        static void AddKeyIndex(Type type, string name, TypeEventBusMetas meta)
-        {
-            if (!dictionary.ContainsKey(type)) dictionary[type] = new Tuple<string, Dictionary<string, TypeEventBusMetas>>("", new Dictionary<string, TypeEventBusMetas>());
-            var dic = dictionary[type].Item2;
-            dic.Add(name, meta);
-        }
-        public static Dictionary<string, TypeEventBusMetas> GetKeys(Type type, out string keyname)
-        {
-            keyname = "";
-            var flag = dictionary.TryGetValue(type, out Tuple<string, Dictionary<string, TypeEventBusMetas>> res);
-            if (flag)
+            if (!dictionary.ContainsKey(type)) dictionary[type] = new List<EventAttrMeta>();
+            dictionary[type].Add(meta);
+            var list = dictionary[type];
+            if (list.Count > 1)
             {
-                keyname = res.Item1;
-                return res.Item2;
+                list = list.OrderBy(e => e.Index).ToList();
             }
-            return null;
+            dictionary[type] = list;
+        }
+        public static List<EventAttrMeta> GetProperties(Type type)
+        {
+            if (!dictionary.ContainsKey(type)) return null;
+            return dictionary[type];
         }
     }
 }

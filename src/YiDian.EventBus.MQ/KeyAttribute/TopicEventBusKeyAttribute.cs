@@ -11,13 +11,4 @@ namespace YiDian.EventBus.MQ.KeyAttribute
         }
         public int Index { get; }
     }
-    [AttributeUsage(AttributeTargets.Class)]
-    public class KeyNameAttribute : Attribute
-    {
-        public KeyNameAttribute(string name)
-        {
-            Name = name;
-        }
-        public string Name { get; }
-    }
 }

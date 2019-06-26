@@ -40,15 +40,14 @@ namespace YiDian.EventBus.MQ
         string GetPubKey<T>(T @event) where T : IMQEvent
         {
             var type = typeof(T);
-            var props = TypeEventBusMetas.GetKeys(type, out string keyname);
+            var props = TypeEventBusMetas.GetProperties(type);
             if (props == null || props.Count == 0) return string.Empty;
             var sb = new StringBuilder();
-            var values = props.Values.ToList().OrderBy(e => e.Index);
-            foreach (var p in values)
+            foreach (var p in props)
             {
-                var value = p.Property(@event);
+                var value = p.Property.Invoke(@event);
                 if (value.GetType().IsValueType) value = ((int)value).ToString();
-                sb.Append(value.ToString());
+                else sb.Append(value.ToString());
                 sb.Append('.');
             }
             var key = sb.ToString();
@@ -57,25 +56,24 @@ namespace YiDian.EventBus.MQ
         string GetSubKey<T>() where T : IMQEvent
         {
             var type = typeof(T);
-            var props = TypeEventBusMetas.GetKeys(type, out string keyname);
+            var props = TypeEventBusMetas.GetProperties(type);
             if (props == null || props.Count == 0) return string.Empty;
             return "#.";
         }
         string GetSubKey<T>(Expression<Func<T, bool>> where) where T : IMQEvent
         {
             var type = typeof(T);
-            var props = TypeEventBusMetas.GetKeys(type, out string keyname);
-            if (props == null) return string.Empty;
+            var props = TypeEventBusMetas.GetProperties(type);
+            if (props == null || props.Count == 0) return string.Empty;
             var body = where.Body as BinaryExpression;
             var dic = new Dictionary<string, string>();
             GetMembers(body, dic);
             var sb = new StringBuilder();
-            var lst = props.OrderBy(e => e.Value.Index).ToList();
-            lst.ForEach(e =>
+            props.ForEach(e =>
             {
-                if (dic.ContainsKey(e.Key))
+                if (dic.ContainsKey(e.Name))
                 {
-                    sb.Append(dic[e.Key]);
+                    sb.Append(dic[e.Name]);
                     sb.Append('.');
                 }
                 else sb.Append("*.");

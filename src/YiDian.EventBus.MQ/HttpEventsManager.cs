@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -204,8 +205,14 @@ namespace YiDian.EventBus.MQ
             var typename = typeof(T).Name;
             return GetEventId(typename);
         }
+
+        readonly ConcurrentDictionary<string, string> dic = new ConcurrentDictionary<string, string>();
         public CheckResult GetEventId(string typename)
         {
+            if (dic.TryGetValue(typename, out string id))
+            {
+                return new CheckResult() { IsVaild = true, InvaildMessage = id };
+            }
             try
             {
                 var uri = "eventid?name=" + typename;
@@ -217,6 +224,7 @@ namespace YiDian.EventBus.MQ
                     IsVaild = (bool)ht["IsVaild"],
                     InvaildMessage = (ht["InvaildMessage"] ?? "").ToString(),
                 };
+                if (res.IsVaild) dic.TryAdd(typename, res.InvaildMessage);
                 return res;
             }
             catch (Exception ex)

@@ -2,6 +2,7 @@
 using EventModels.pub_test;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -43,7 +44,7 @@ namespace Consumer
             var channels = ThreadChannels.Default;
             var direct = sp.GetService<IDirectEventBus>();
             var topic = sp.GetService<ITopicEventBus>();
-            direct.StartConsumer("test-direct", x =>
+            direct.StartConsumer("test-direct1", x =>
             {
                 x.Subscribe<MqA, MyHandler>();
                 x.SubscribeBytes<MqA, MyHandler>();
@@ -54,16 +55,18 @@ namespace Consumer
              }, length: 10000000, durable: false, autodelete: true);
             topic.StartConsumer("test-direct-3", x =>
             {
-                x.Subscribe<MqA, My2Handler>("zs");
+                x.Subscribe<MqA, MyHandler2>("s1.#");
             }, length: 10000000, durable: false, autodelete: true);
         }
     }
     public class MyHandler : IEventHandler<MqA>, IBytesHandler
     {
+        public ILogger<MyHandler> Logger { get; set; }
         public SleepTaskResult TaskResult { get; set; }
         public IQpsCounter Counter { get; set; }
         public Task<bool> Handle(MqA @event)
         {
+            Logger.LogInformation("MyHandler get MqA");
             var cts = TaskSource.Create<bool>(@event);
             var task = cts.Task;
             TaskResult.Push(cts);
@@ -76,11 +79,33 @@ namespace Consumer
             return Task.FromResult<bool>(true);
         }
     }
+    public class MyHandler2 : IEventHandler<MqA>, IBytesHandler
+    {
+        public ILogger<MyHandler2> Logger { get; set; }
+        public SleepTaskResult TaskResult { get; set; }
+        public IQpsCounter Counter { get; set; }
+        public Task<bool> Handle(MqA @event)
+        {
+            Logger.LogInformation("MyHandler2 get MqA");
+            var cts = TaskSource.Create<bool>(@event);
+            var task = cts.Task;
+            TaskResult.Push(cts);
+            return task;
+        }
+
+        public Task<bool> Handle(string routingKey, byte[] datas)
+        {
+            Logger.LogInformation("MyHandler2 get bytes " + routingKey);
+            return Task.FromResult<bool>(true);
+        }
+    }
     public class My2Handler : IEventHandler<MqA>
     {
+        public ILogger<My2Handler> Logger { get; set; }
         public SleepTaskResult TaskResult { get; set; }
         public Task<bool> Handle(MqA @event)
         {
+            Logger.LogInformation("My2Handler get MqA");
             var cts = TaskSource.Create<bool>(@event);
             var task = cts.Task;
             TaskResult.Push(cts);

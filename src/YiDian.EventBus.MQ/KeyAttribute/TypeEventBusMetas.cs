@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace YiDian.EventBus.MQ.KeyAttribute
@@ -30,7 +31,7 @@ namespace YiDian.EventBus.MQ.KeyAttribute
             var types = assembly.GetTypes();
             foreach (var type in types)
             {
-                if (!type.IsSubclassOf(typeof(IMQEvent))) continue;
+                if (!(type.GetInterfaces().Where(x => x == typeof(IMQEvent)).Count() > 0)) continue;
                 var keynameatt = type.GetCustomAttribute<KeyNameAttribute>();
                 if (keynameatt != null) AddKeyName(type, keynameatt.Name);
                 var props = type.GetProperties();

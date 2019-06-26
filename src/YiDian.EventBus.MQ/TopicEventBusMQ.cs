@@ -27,7 +27,8 @@ namespace YiDian.EventBus.MQ
         }
         public void PublishPrefix<T>(T @event, string prefix, bool enableTransaction = false) where T : IMQEvent
         {
-            Publish(@event, (x) => prefix + "." + x, enableTransaction);
+            var pubkey = GetPubKey<T>(@event);
+            Publish(@event, (x) => prefix + "." + pubkey + x, enableTransaction);
         }
         public override string GetEventKeyFromRoutingKey(string routingKey)
         {

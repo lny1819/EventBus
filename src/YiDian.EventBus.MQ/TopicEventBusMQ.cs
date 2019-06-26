@@ -138,7 +138,9 @@ namespace YiDian.EventBus.MQ
                 if (item.Name == queueName)
                 {
                     var mgr = item.GetSubMgr();
+                    var eventKey = mgr.GetEventKey<T>();
                     var subkey = GetSubKey(where);
+                    subkey += eventKey;
                     mgr.AddSubscription<T, TH>(subkey);
                     break;
                 }
@@ -153,7 +155,9 @@ namespace YiDian.EventBus.MQ
                 if (item.Name == queueName)
                 {
                     var mgr = item.GetSubMgr();
+                    var eventKey = mgr.GetEventKey<T>();
                     var subkey = GetSubKey(where);
+                    subkey += eventKey;
                     mgr.RemoveSubscription(subkey);
                     break;
                 }

@@ -213,11 +213,7 @@ namespace YiDian.EventBus.MQ
                 }
                 else
                 {
-                    object integrationEvent = null;
-                    using (var ms = new MemoryStream(ea.Body))
-                    {
-                        integrationEvent = __seralize.DeserializeObject(ms, subinfo.EventType);
-                    }
+                    var integrationEvent = __seralize.DeserializeObject(ea.Body, subinfo.EventType);
                     hanlerCacheMgr.GetIIntegrationEventHandler(subinfo.HandlerType, out IEventHandler handler, out ILifetimeScope scope);
                     var task = (Task<bool>)subinfo.Handler(handler, new object[] { integrationEvent });
                     var res = task.ConfigureAwait(false);

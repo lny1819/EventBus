@@ -27,14 +27,11 @@ namespace YiDian.EventBus.MQ
         internal void Send<T>(T @event, string pubkey, bool enableTransaction) where T : IMQEvent
         {
             if (_pubChannel == null) return;
-            using (var ms = new MemoryStream())
-            {
-                __seralize.Serialize(ms, @event);
-                _pubChannel.BasicPublish(exchange: BROKER_NAME,
-                                 routingKey: pubkey,
-                                 basicProperties: null,
-                                 body: ms.GetBuffer());
-            }
+            var data = __seralize.Serialize(@event);
+            _pubChannel.BasicPublish(exchange: BROKER_NAME,
+                             routingKey: pubkey,
+                             basicProperties: null,
+                             body: data);
         }
         void CreatePublishChannel()
         {

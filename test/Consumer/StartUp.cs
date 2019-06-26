@@ -48,15 +48,15 @@ namespace Consumer
             {
                 x.Subscribe<MqA, MyHandler>();
                 x.SubscribeBytes<MqA, MyHandler>();
-            }, queueLength: 10000000, durable: false, autodel: true);
-            topic.StartConsumer("test-direct-2", x =>
+            }, queueLength: 10000000, durable: false, autodel: false);
+            topic.StartConsumer("test-topic-1", x =>
              {
                  x.Subscribe<MqA, My2Handler>(m => m.A == "a");
-             }, length: 10000000, durable: false, autodelete: true);
-            topic.StartConsumer("test-direct-3", x =>
+             }, length: 10000000, durable: false, autodelete: false);
+            topic.StartConsumer("test-topic-2", x =>
             {
                 x.Subscribe<MqA, MyHandler2>("s1.#");
-            }, length: 10000000, durable: false, autodelete: true);
+            }, length: 10000000, durable: false, autodelete: false);
         }
     }
     public class MyHandler : IEventHandler<MqA>, IBytesHandler
@@ -66,7 +66,7 @@ namespace Consumer
         public IQpsCounter Counter { get; set; }
         public Task<bool> Handle(MqA @event)
         {
-            Logger.LogInformation("MyHandler get MqA");
+            Logger.LogInformation("MyHandler  MqA: " + @event.ToJson());
             var cts = TaskSource.Create<bool>(@event);
             var task = cts.Task;
             TaskResult.Push(cts);
@@ -75,6 +75,7 @@ namespace Consumer
 
         public Task<bool> Handle(string routingKey, byte[] datas)
         {
+            Logger.LogInformation("MyHandler bytes " + routingKey);
             Counter.Add("c2");
             return Task.FromResult<bool>(true);
         }
@@ -86,7 +87,7 @@ namespace Consumer
         public IQpsCounter Counter { get; set; }
         public Task<bool> Handle(MqA @event)
         {
-            Logger.LogInformation("MyHandler2 get MqA");
+            Logger.LogInformation("MyHandler2 MqA：" + @event.ToJson());
             var cts = TaskSource.Create<bool>(@event);
             var task = cts.Task;
             TaskResult.Push(cts);
@@ -95,7 +96,7 @@ namespace Consumer
 
         public Task<bool> Handle(string routingKey, byte[] datas)
         {
-            Logger.LogInformation("MyHandler2 get bytes " + routingKey);
+            Logger.LogInformation("MyHandler2 bytes " + routingKey);
             return Task.FromResult<bool>(true);
         }
     }
@@ -105,7 +106,7 @@ namespace Consumer
         public SleepTaskResult TaskResult { get; set; }
         public Task<bool> Handle(MqA @event)
         {
-            Logger.LogInformation("My2Handler get MqA");
+            Logger.LogInformation("My2Handler get MqA " + @event.ToJson());
             var cts = TaskSource.Create<bool>(@event);
             var task = cts.Task;
             TaskResult.Push(cts);

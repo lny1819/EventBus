@@ -10,27 +10,28 @@ namespace YiDian.EventBus
         }
 
         public void Subscribe<T, TH>(Expression<Func<T, bool>> where)
-             where T : IntegrationMQEvent
-             where TH : IIntegrationEventHandler<T>
+             where T : IMQEvent
+             where TH : IEventHandler<T>
         {
             __eventBus.Subscribe<T, TH>(__name, where);
         }
         public void Subscribe<T, TH>()
-          where T : IntegrationMQEvent
-          where TH : IIntegrationEventHandler<T>
+          where T : IMQEvent
+          where TH : IEventHandler<T>
         {
             __eventBus.Subscribe<T, TH>(__name);
         }
-        public void Subscribe<T, TH>(string eventName)
-            where T : IntegrationMQEvent
-            where TH : IIntegrationEventHandler<T>
+        public void Subscribe<T, TH>(string subkey)
+            where T : IMQEvent
+            where TH : IEventHandler<T>
         {
-            __eventBus.Subscribe<T, TH>(__name, eventName);
+            __eventBus.Subscribe<T, TH>(__name, subkey);
         }
-        public void Subscribe<TH>(string eventName)
-            where TH : IDynamicBytesHandler
+        public void SubscribeBytes<T, TH>(string subkey)
+            where T : IMQEvent
+            where TH : IBytesHandler
         {
-            __eventBus.Subscribe<TH>(__name, eventName);
+            __eventBus.SubscribeBytes<T, TH>(__name, subkey);
         }
     }
     public class DirectSubscriber : Subscriber<IDirectEventBus>
@@ -40,15 +41,16 @@ namespace YiDian.EventBus
         }
 
         public void Subscribe<T, TH>()
-            where T : IntegrationMQEvent
-            where TH : IIntegrationEventHandler<T>
+            where T : IMQEvent
+            where TH : IEventHandler<T>
         {
             __eventBus.Subscribe<T, TH>(__name);
         }
-        public void SubscribeDynamic<TH>(string eventName)
-            where TH : IDynamicBytesHandler
+        public void SubscribeBytes<T, TH>()
+            where T : IMQEvent
+            where TH : IBytesHandler
         {
-            __eventBus.Subscribe<TH>(__name, eventName);
+            __eventBus.SubscribeBytes<T, TH>(__name);
         }
     }
     public abstract class Subscriber<TEventBus> where TEventBus : IEventBus

@@ -38,7 +38,7 @@ namespace YiDian.EventBus.MQ
 
         private CheckResult SendClassMeta(Type type, string appName, string version)
         {
-            var isEventType = type.IsSubclassOf(typeof(IntegrationMQEvent));
+            var isEventType = type.IsSubclassOf(typeof(IMQEvent));
             var meta = new ClassMeta() { Name = type.Name, IsEventType = isEventType };
             var list = new List<Type>();
             foreach (var p in type.GetProperties())
@@ -68,7 +68,7 @@ namespace YiDian.EventBus.MQ
                 else if (p.PropertyType.IsArray) pinfo.Type = p.PropertyType.Name;
                 else
                 {
-                    if (!p.PropertyType.IsSubclassOf(typeof(IntegrationMQEvent))) list.Add(p.PropertyType);
+                    if (!p.PropertyType.IsSubclassOf(typeof(IMQEvent))) list.Add(p.PropertyType);
                     pinfo.Type = p.PropertyType.Name;
                 }
                 var attrs = p.GetCustomAttributes(typeof(KeyIndexAttribute), false);
@@ -98,7 +98,7 @@ namespace YiDian.EventBus.MQ
             return RegisterEnumType(appName, version, enumMeta);
         }
 
-        public CheckResult RegisterEvent<T>(string appName, string version) where T : IntegrationMQEvent
+        public CheckResult RegisterEvent<T>(string appName, string version) where T : IMQEvent
         {
             return SendTypeMeta(typeof(T), appName, version);
         }
@@ -199,11 +199,15 @@ namespace YiDian.EventBus.MQ
             bool.TryParse(value, out bool res);
             return res;
         }
-        public CheckResult GetEventId<T>() where T : IntegrationMQEvent
+        public CheckResult GetEventId<T>() where T : IMQEvent
+        {
+            var typename = typeof(T).Name;
+            return GetEventId(typename);
+        }
+        public CheckResult GetEventId(string typename) 
         {
             try
             {
-                var typename = typeof(T).Name;
                 var uri = "eventid?name=" + typename;
                 var response = GetReq(uri);
                 var obj = JsonString.Unpack(response);

@@ -14,8 +14,8 @@ namespace YiDian.EventBus.MQ
             _lifeName = lifeName;
             CacheLength = length;
         }
-        readonly ConcurrentDictionary<Type, ConcurrentStack<IDynamicBytesHandler>> dynamicDics = new ConcurrentDictionary<Type, ConcurrentStack<IDynamicBytesHandler>>();
-        readonly ConcurrentDictionary<Type, ConcurrentStack<IIntegrationEventHandler>> typeDics = new ConcurrentDictionary<Type, ConcurrentStack<IIntegrationEventHandler>>();
+        readonly ConcurrentDictionary<Type, ConcurrentStack<IBytesHandler>> dynamicDics = new ConcurrentDictionary<Type, ConcurrentStack<IBytesHandler>>();
+        readonly ConcurrentDictionary<Type, ConcurrentStack<IEventHandler>> typeDics = new ConcurrentDictionary<Type, ConcurrentStack<IEventHandler>>();
 
         public int CacheLength { get; set; }
 
@@ -26,20 +26,20 @@ namespace YiDian.EventBus.MQ
         /// <param name="handler"></param>
         /// <param name="scope"></param>
         /// <returns>是否是从缓存中获取</returns>
-        public void GetDynamicHandler(Type type, out IDynamicBytesHandler handler, out ILifetimeScope scope)
+        public void GetDynamicHandler(Type type, out IBytesHandler handler, out ILifetimeScope scope)
         {
             scope = null;
             if (CacheLength == 0)
             {
                 scope = _autofac.BeginLifetimeScope(_lifeName);
-                handler = scope.ResolveOptional(type) as IDynamicBytesHandler;
+                handler = scope.ResolveOptional(type) as IBytesHandler;
                 return;
             }
             if (!dynamicDics.ContainsKey(type))
             {
                 lock (dynamicDics)
                 {
-                    if (!dynamicDics.ContainsKey(type)) dynamicDics.TryAdd(type, new ConcurrentStack<IDynamicBytesHandler>());
+                    if (!dynamicDics.ContainsKey(type)) dynamicDics.TryAdd(type, new ConcurrentStack<IBytesHandler>());
                 }
             }
             var stack = dynamicDics[type];
@@ -47,10 +47,10 @@ namespace YiDian.EventBus.MQ
             if (!flag)
             {
                 scope = _autofac.BeginLifetimeScope(_lifeName);
-                handler = scope.ResolveOptional(type) as IDynamicBytesHandler;
+                handler = scope.ResolveOptional(type) as IBytesHandler;
             }
         }
-        public void ResteDymaicHandler(IDynamicBytesHandler handler, Type type, ILifetimeScope scope)
+        public void ResteDymaicHandler(IBytesHandler handler, Type type, ILifetimeScope scope)
         {
             if (CacheLength == 0)
             {
@@ -61,20 +61,20 @@ namespace YiDian.EventBus.MQ
             if (stack.Count < CacheLength) stack.Push(handler);
             else scope?.Dispose();
         }
-        public void GetIIntegrationEventHandler(Type type, out IIntegrationEventHandler handler, out ILifetimeScope scope)
+        public void GetIIntegrationEventHandler(Type type, out IEventHandler handler, out ILifetimeScope scope)
         {
             scope = null;
             if (CacheLength == 0)
             {
                 scope = _autofac.BeginLifetimeScope(_lifeName);
-                handler = scope.ResolveOptional(type) as IIntegrationEventHandler;
+                handler = scope.ResolveOptional(type) as IEventHandler;
                 return;
             }
             if (!typeDics.ContainsKey(type))
             {
                 lock (typeDics)
                 {
-                    if (!typeDics.ContainsKey(type)) typeDics.TryAdd(type, new ConcurrentStack<IIntegrationEventHandler>());
+                    if (!typeDics.ContainsKey(type)) typeDics.TryAdd(type, new ConcurrentStack<IEventHandler>());
                 }
             }
             var stack = typeDics[type];
@@ -82,10 +82,10 @@ namespace YiDian.EventBus.MQ
             if (!flag)
             {
                 scope = _autofac.BeginLifetimeScope(_lifeName);
-                handler = scope.ResolveOptional(type) as IIntegrationEventHandler;
+                handler = scope.ResolveOptional(type) as IEventHandler;
             }
         }
-        public void ResteTypeHandler(IIntegrationEventHandler handler, Type type, ILifetimeScope scope)
+        public void ResteTypeHandler(IEventHandler handler, Type type, ILifetimeScope scope)
         {
             if (CacheLength == 0)
             {

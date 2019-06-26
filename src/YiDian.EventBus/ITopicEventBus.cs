@@ -19,7 +19,7 @@ namespace YiDian.EventBus
         /// <param name="durable">是否持久化</param>
         /// <param name="autoAck">是否自动响应</param>
         void StartConsumer(string queuename, Action<TopicSubscriber> action, ushort fetchcount = 200, int length = 200000, bool autodelete = false, bool durable = true, bool autoAck = false);
-   
+        void PublishPrefix<T>(T @event, string fix, bool enableTransaction = false) where T : IMQEvent;
         /// <summary>
         /// 订阅消息
         /// </summary>
@@ -28,18 +28,19 @@ namespace YiDian.EventBus
         /// <param name="queueName">队列名称</param>
         /// <param name="where">消息条件</param>
         void Subscribe<T, TH>(string queueName, Expression<Func<T, bool>> where)
-             where T : IntegrationMQEvent
-             where TH : IIntegrationEventHandler<T>;
-        void Unsubscribe<T, TH>(string queueName, Expression<Func<T, bool>> where)
-             where T : IntegrationMQEvent
-             where TH : IIntegrationEventHandler<T>;
-        void PublishPrefix<T>(T @event, string fix, bool enableTransaction = false) where T : IntegrationMQEvent;
-        void PublishSuffix<T>(T @event, string fix, bool enableTransaction = false) where T : IntegrationMQEvent;
-        void Subscribe<T, TH>(string queueName, string prifix)
-             where T : IntegrationMQEvent
-            where TH : IIntegrationEventHandler<T>;
-        void Unsubscribe<T, TH>(string queueName, string prifix)
-              where T : IntegrationMQEvent
-              where TH : IIntegrationEventHandler<T>;
+             where T : IMQEvent
+             where TH : IEventHandler<T>;
+        void Unsubscribe<T>(string queueName, Expression<Func<T, bool>> where)
+             where T : IMQEvent;
+        void Subscribe<T, TH>(string queueName, string subkey)
+             where T : IMQEvent
+             where TH : IEventHandler<T>;
+        void Unsubscribe(string queueName, string subkey);
+        void SubscribeBytes<T, TH>(string queueName, string subkey)
+            where T : IMQEvent
+            where TH : IBytesHandler;
+        void UnsubscribeBytes<T, TH>(string queueName, string subkey)
+            where T : IMQEvent
+            where TH : IBytesHandler;
     }
 }

@@ -9,10 +9,10 @@ namespace YiDian.EventBus.MQ
         where TSub : Subscriber<TEventBus>
     {
         private readonly TSub _subscriber;
-        private readonly IEventBusSubscriptionsManager __manager;
+        private readonly IEventBusSubManager __manager;
         private IModel _model;
 
-        public ConsumerConfig(TSub subscriber, IEventBusSubscriptionsManager mgr)
+        public ConsumerConfig(TSub subscriber, IEventBusSubManager mgr)
         {
             __manager = mgr;
             _subscriber = subscriber;
@@ -46,24 +46,8 @@ namespace YiDian.EventBus.MQ
             var old = _model;
             return old;
         }
-        internal void Unsubscribe<T, TH>()
-            where T : IntegrationMQEvent
-            where TH : IIntegrationEventHandler<T>
-        {
-            __manager.RemoveSubscription<T, TH>();
-        }
-        internal void Unsubscribe<T, TH>(string eventName)
-           where T : IntegrationMQEvent
-           where TH : IIntegrationEventHandler<T>
-        {
-            __manager.RemoveSubscription<T, TH>(eventName);
-        }
-        internal void Unsubscribe<TH>(string eventName) where TH : IDynamicBytesHandler
-        {
-            __manager.RemoveSubscription<TH>(eventName);
-        }
 
-        internal IEventBusSubscriptionsManager GetSubMgr()
+        internal IEventBusSubManager GetSubMgr()
         {
             return __manager;
         }

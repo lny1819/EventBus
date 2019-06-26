@@ -30,7 +30,7 @@ namespace YiDian.EventBus.MQ.KeyAttribute
             var types = assembly.GetTypes();
             foreach (var type in types)
             {
-                if (!type.IsSubclassOf(typeof(IntegrationMQEvent))) continue;
+                if (!type.IsSubclassOf(typeof(IMQEvent))) continue;
                 var keynameatt = type.GetCustomAttribute<KeyNameAttribute>();
                 if (keynameatt != null) AddKeyName(type, keynameatt.Name);
                 var props = type.GetProperties();

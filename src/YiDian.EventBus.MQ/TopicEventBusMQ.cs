@@ -12,7 +12,7 @@ namespace YiDian.EventBus.MQ
 
     public class TopicEventBusMQ : EventBusBase<ITopicEventBus, TopicSubscriber>, ITopicEventBus
     {
-        public TopicEventBusMQ(ILogger<ITopicEventBus> logger, ILifetimeScope autofac, ILogger<IEventBusSubscriptionsManager> sub_logger, IRabbitMQPersistentConnection persistentConnection = null, IEventBusSubscriptionsManagerFactory factory = null, IEventSeralize seralize = null, int retryCount = 5, int cacheCount = 100) : base(logger, autofac, persistentConnection, sub_logger, factory, seralize, retryCount, cacheCount)
+        public TopicEventBusMQ(ILogger<ITopicEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection, ILogger<IEventBusSubManager> sub_logger, IEventBusSubManagerFactory factory = null, IEventSeralize seralize = null, int retryCount = 5, int cacheCount = 100) : base(logger, autofac, persistentConnection, sub_logger, factory, seralize, retryCount, cacheCount)
         {
         }
 
@@ -22,31 +22,26 @@ namespace YiDian.EventBus.MQ
 
         public override void Publish<T>(T @event, bool enableTransaction = false)
         {
-            var name = GetPubKey(@event);
-            base.Publish(@event, name, enableTransaction);
+            var fix = GetPubKey(@event);
+            Publish(@event, (x) => fix + x, enableTransaction);
         }
-        public override string GetEventKey(string routingKey)
+        public void PublishPrefix<T>(T @event, string prefix, bool enableTransaction = false) where T : IMQEvent
         {
-            if (routingKey.IndexOf('~') > -1) routingKey = routingKey.Substring(0, routingKey.IndexOf('~') - 1) + ".#";
-            //else if (routingKey.IndexOf('-') > -1)
-            //{
-
-            //}
-            return routingKey;
+            Publish(@event, (x) => prefix + "." + x, enableTransaction);
         }
-
-        string GetPubKey<T>(T @event) where T : IntegrationMQEvent
+        public override string GetEventKeyFromRoutingKey(string routingKey)
+        {
+            var index = routingKey.LastIndexOf('.');
+            if (index == -1)
+                return routingKey;
+            return routingKey.Substring(index + 1);
+        }
+        string GetPubKey<T>(T @event) where T : IMQEvent
         {
             var type = typeof(T);
-            var eventKey = GetSubscriber("publish").GetEventKey<T>();
             var props = TypeEventBusMetas.GetKeys(type, out string keyname);
-            if (props == null) return eventKey;
+            if (props == null || props.Count == 0) return string.Empty;
             var sb = new StringBuilder();
-            if (!string.IsNullOrEmpty(keyname))
-            {
-                sb.Append(keyname);
-                sb.Append('.');
-            }
             var values = props.Values.ToList().OrderBy(e => e.Index);
             foreach (var p in values)
             {
@@ -55,24 +50,25 @@ namespace YiDian.EventBus.MQ
                 sb.Append(value.ToString());
                 sb.Append('.');
             }
-            sb.Replace('-', '_');
-            sb.Append('-');
-            sb.Append('.');
-            sb.Append(eventKey);
             var key = sb.ToString();
             return key;
         }
-        string GetSubKey<T>(Expression<Func<T, bool>> where, IEventBusSubscriptionsManager mgr) where T : IntegrationMQEvent
+        string GetSubKey<T>() where T : IMQEvent
         {
             var type = typeof(T);
-            var fullname = mgr.GetEventKey<T>();
-            var dic = new Dictionary<string, string>();
             var props = TypeEventBusMetas.GetKeys(type, out string keyname);
-            if (props == null) return fullname;
+            if (props == null || props.Count == 0) return string.Empty;
+            return "#.";
+        }
+        string GetSubKey<T>(Expression<Func<T, bool>> where) where T : IMQEvent
+        {
+            var type = typeof(T);
+            var props = TypeEventBusMetas.GetKeys(type, out string keyname);
+            if (props == null) return string.Empty;
             var body = where.Body as BinaryExpression;
+            var dic = new Dictionary<string, string>();
             GetMembers(body, dic);
-            var sb = new StringBuilder(keyname);
-            if (!string.IsNullOrEmpty(keyname)) sb.Append('.');
+            var sb = new StringBuilder();
             var lst = props.OrderBy(e => e.Value.Index).ToList();
             lst.ForEach(e =>
             {
@@ -83,9 +79,6 @@ namespace YiDian.EventBus.MQ
                 }
                 else sb.Append("*.");
             });
-            sb.Append('-');
-            sb.Append('.');
-            sb.Append(fullname);
             return sb.ToString();
         }
         void GetMembers(BinaryExpression body, Dictionary<string, string> dic)
@@ -114,21 +107,6 @@ namespace YiDian.EventBus.MQ
                 if (right != null) GetMembers(right, dic);
             }
         }
-        public void PublishPrefix<T>(T @event, string prefix, bool enableTransaction = false) where T : IntegrationMQEvent
-        {
-            if (string.IsNullOrEmpty(prefix)) return;
-            else
-            {
-                var name = GetSubscriber("publish").GetEventKey<T>();
-                var sb = new StringBuilder(prefix);
-                sb.Append('.');
-                sb.Append('~');
-                sb.Append('.');
-                sb.Append(name);
-                name = sb.ToString();
-                base.Publish(@event, name, enableTransaction);
-            }
-        }
         public void StartConsumer(string queueName, Action<TopicSubscriber> action, ushort fetchCount, int queueLength, bool autodel, bool durable, bool autoAck)
         {
             if (string.IsNullOrEmpty(queueName)) return;
@@ -151,67 +129,102 @@ namespace YiDian.EventBus.MQ
         }
 
         public void Subscribe<T, TH>(string queueName, Expression<Func<T, bool>> where)
-             where T : IntegrationMQEvent
-             where TH : IIntegrationEventHandler<T>
+             where T : IMQEvent
+             where TH : IEventHandler<T>
         {
             foreach (var item in consumerInfos)
             {
                 if (item.Name == queueName)
                 {
                     var mgr = item.GetSubMgr();
-                    var keyname = GetSubKey(where, mgr);
-                    mgr.AddSubscription<T, TH>(keyname);
+                    var subkey = GetSubKey(where);
+                    mgr.AddSubscription<T, TH>(subkey);
                     break;
                 }
             }
         }
 
-        public void Unsubscribe<T, TH>(string queueName, Expression<Func<T, bool>> where)
-            where T : IntegrationMQEvent
-            where TH : IIntegrationEventHandler<T>
+        public void Unsubscribe<T>(string queueName, Expression<Func<T, bool>> where)
+            where T : IMQEvent
         {
             foreach (var item in consumerInfos)
             {
                 if (item.Name == queueName)
                 {
                     var mgr = item.GetSubMgr();
-                    var keyname = GetSubKey(where, mgr);
-                    item.Unsubscribe<T, TH>(keyname);
+                    var subkey = GetSubKey(where);
+                    mgr.RemoveSubscription(subkey);
                     break;
                 }
             }
         }
 
-        public void Subscribe<T, TH>(string queueName, string prifix)
-              where T : IntegrationMQEvent
-             where TH : IIntegrationEventHandler<T>
+        public void Subscribe<T, TH>(string queueName, string subkey)
+              where T : IMQEvent
+             where TH : IEventHandler<T>
         {
             foreach (var item in consumerInfos)
             {
                 if (item.Name == queueName)
                 {
                     var mgr = item.GetSubMgr();
-                    var eventName = prifix + ".#";
-                    mgr.AddSubscription<T, TH>(eventName);
+                    mgr.AddSubscription<T, TH>(subkey);
                     break;
                 }
             }
         }
-        public void Unsubscribe<T, TH>(string queueName, string prifix)
-              where T : IntegrationMQEvent
-              where TH : IIntegrationEventHandler<T>
+        public void Unsubscribe(string queueName, string subkey)
         {
             foreach (var item in consumerInfos)
             {
                 if (item.Name == queueName)
                 {
                     var mgr = item.GetSubMgr();
-                    var eventName = prifix + ".#";
-                    mgr.RemoveSubscription<T, TH>(eventName);
+                    mgr.RemoveSubscription(subkey);
+                    break;
+                }
+            }
+        }
+        public void SubscribeBytes<T, TH>(string queueName, string subkey)
+            where T : IMQEvent
+            where TH : IBytesHandler
+        {
+            throw new NotImplementedException();
+        }
+
+        public void UnsubscribeBytes<T, TH>(string queueName, string subkey)
+            where T : IMQEvent
+            where TH : IBytesHandler
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Subscribe<T, TH>(string queueName)
+        {
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    var eventKey = mgr.GetEventKey<T>();
+                    var subkey = GetSubKey<T>() + eventKey;
+                    mgr.AddSubscription<T, TH>(subkey);
                     break;
                 }
             }
         }
 
+        public override void Unsubscribe<T, TH>(string queueName)
+        {
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    mgr.RemoveSubscription<T, TH>();
+                    break;
+                }
+            }
+        }
     }
 }

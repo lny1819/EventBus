@@ -4,7 +4,7 @@ using YiDian.EventBus;
 using YiDian.EventBus.MQ.KeyAttribute;
 namespace EventModels.pub_test
 {
-    public class MqA: IntegrationMQEvent
+    public class MqA: IMQEvent
     {
         [KeyIndex(0)]
         public string A { get; set; }

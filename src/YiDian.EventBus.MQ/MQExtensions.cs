@@ -118,7 +118,7 @@ namespace YiDian.Soa.Sp.Extensions
                 var conn = sp.GetService<IRabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                 var logger = sp.GetService<ILogger<DirectEventBus>>();
-                var sub_logger = sp.GetService<ILogger<IEventBusSubscriptionsManager>>();
+                var sub_logger = sp.GetService<ILogger<IEventBusSubManager>>();
                 var seralize = sp.GetService<T>();
                 if (seralize == null) seralize = new T();
                 var eventbus = new DirectEventBus(logger, iLifetimeScope, sub_logger, conn, seralize: seralize);
@@ -134,10 +134,10 @@ namespace YiDian.Soa.Sp.Extensions
                 var conn = sp.GetService<IRabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                 var logger = sp.GetService<ILogger<ITopicEventBus>>();
-                var sub_logger = sp.GetService<ILogger<IEventBusSubscriptionsManager>>();
+                var sub_logger = sp.GetService<ILogger<IEventBusSubManager>>();
                 var seralize = sp.GetService<T>();
                 if (seralize == null) seralize = new T();
-                var eventbus = new TopicEventBusMQ(logger, iLifetimeScope, sub_logger, conn, seralize: seralize);
+                var eventbus = new TopicEventBusMQ(logger, iLifetimeScope, conn, sub_logger, seralize: seralize);
                 eventbus.EnableHandlerCache(cacheLength);
                 return eventbus;
             });

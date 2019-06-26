@@ -2,7 +2,7 @@
 
 namespace YiDian.EventBus
 {
-    public interface IDynamicBytesHandler
+    public interface IBytesHandler
     {
         Task<bool> Handle(string routingKey, byte[] datas);
     }

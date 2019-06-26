@@ -55,7 +55,7 @@ namespace ConsoleApp
                             else if (type == "top-where")
                                 topic.Publish(a);
                             else if (type == "top-pre")
-                                topic.Publish(b, "zs");
+                                topic.PublishPrefix(a, "s1");
                         });
                     }
                     Thread.Sleep(sleep);
@@ -63,7 +63,7 @@ namespace ConsoleApp
             });
         }
     }
-    public class MqA : IntegrationMQEvent
+    public class MqA : IMQEvent
     {
         [KeyIndex(0)]
         public string A { get; set; }

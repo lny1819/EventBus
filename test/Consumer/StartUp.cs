@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Utils.Seralize;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.KeyAttribute;
@@ -16,7 +17,7 @@ using YiDian.Soa.Sp.Extensions;
 namespace ConsoleApp
 {
 
-    public class MqA : IntegrationMQEvent
+    public class MqA : IMQEvent
     {
         [KeyIndex(0)]
         public string A { get; set; }
@@ -38,8 +39,8 @@ namespace Consumer
             var curAssembly = Assembly.GetEntryAssembly();
             builder.RegisterAssemblyTypes(curAssembly).Where(e => e.Name.EndsWith("Handler")).PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
             soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"])
-                 .UseDirectEventBus<MySeralize>(1000)
-                 .UseTopicEventBus<MySeralize>(1000)
+                 .UseDirectEventBus<JsonSeralizer>(1000)
+                 .UseTopicEventBus<JsonSeralizer>(1000)
                  .Services.AddSingleton((e) =>
                  {
                      var cct = e.GetService<IQpsCounter>();
@@ -67,7 +68,7 @@ namespace Consumer
             //}, length: 10000000, durable: false, autodelete: true);
         }
     }
-    public class MyHandler : IIntegrationEventHandler<MqA>, IDynamicBytesHandler
+    public class MyHandler : IEventHandler<MqA>, IBytesHandler
     {
         public SleepTaskResult TaskResult { get; set; }
         public IQpsCounter Counter { get; set; }
@@ -85,7 +86,7 @@ namespace Consumer
             return Task.FromResult<bool>(true);
         }
     }
-    public class My2Handler : IIntegrationEventHandler<MqA>
+    public class My2Handler : IEventHandler<MqA>
     {
         public SleepTaskResult TaskResult { get; set; }
         public Task<bool> Handle(MqA @event)

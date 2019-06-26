@@ -47,21 +47,21 @@ namespace ConsoleApp
                     var i = ps;
                     for (var j = 0; j < i; j++)
                     {
-                        topic.PublishPrefix(a, "s1");
-                        topic.Publish(a);
-                        direct.Publish(b);
-                        direct.Publish(a);
-                        direct.Publish(b);
-                        //qps.Add("i");
-                        //channel.QueueWorkItemInternal(x =>
-                        //{
-                        //    if (type == "direct")
-                        //        direct.Publish(a);
-                        //    else if (type == "top-where")
-                        //        topic.Publish(a);
-                        //    else if (type == "top-pre")
-                        //        topic.PublishPrefix(a, "s1");
-                        //});
+                        //topic.PublishPrefix(a, "s1");
+                        //topic.Publish(a);
+                        //direct.Publish(b);
+                        //direct.Publish(a);
+                        //direct.Publish(b);
+                        qps.Add("i");
+                        channel.QueueWorkItemInternal(x =>
+                        {
+                            if (type == "direct")
+                                direct.Publish(a);
+                            else if (type == "top-where")
+                                topic.Publish(a);
+                            else if (type == "top-pre")
+                                topic.PublishPrefix(a, "s1");
+                        });
                     }
                     Thread.Sleep(sleep);
                 }

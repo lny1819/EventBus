@@ -206,7 +206,10 @@ namespace YiDian.EventBus.MQ
                         if (task.IsFaulted) LogError(task.Exception);
                         if (!config.AutoAck && task.IsCompletedSuccessfully)
                         {
-                            if (waiter.IsCompleted && waiter.GetResult() && Interlocked.CompareExchange(ref xxx, 1, 0) == 0) config.GetChannel().BasicAck(ea.DeliveryTag, false);
+                            if (waiter.IsCompleted && waiter.GetResult())
+                            {
+                                if (Interlocked.CompareExchange(ref xxx, 1, 0) == 0) config.GetChannel().BasicAck(ea.DeliveryTag, false);
+                            }
                             else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
                         }
                     });
@@ -224,7 +227,10 @@ namespace YiDian.EventBus.MQ
                         if (task.IsFaulted) LogError(task.Exception);
                         if (!config.AutoAck && task.IsCompletedSuccessfully)
                         {
-                            if (waiter.IsCompleted && waiter.GetResult() && Interlocked.CompareExchange(ref xxx, 1, 0) == 0) config.GetChannel().BasicAck(ea.DeliveryTag, false);
+                            if (waiter.IsCompleted && waiter.GetResult())
+                            {
+                                if (Interlocked.CompareExchange(ref xxx, 1, 0) == 0) config.GetChannel().BasicAck(ea.DeliveryTag, false);
+                            }
                             else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
                         }
                     });

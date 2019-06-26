@@ -66,7 +66,6 @@ namespace Consumer
         public IQpsCounter Counter { get; set; }
         public Task<bool> Handle(MqA @event)
         {
-            Logger.LogInformation("MyHandler  MqA: " + @event.ToJson());
             var cts = TaskSource.Create<bool>(@event);
             var task = cts.Task;
             TaskResult.Push(cts);
@@ -75,7 +74,6 @@ namespace Consumer
 
         public Task<bool> Handle(string routingKey, byte[] datas)
         {
-            Logger.LogInformation("MyHandler bytes " + routingKey);
             Counter.Add("c2");
             return Task.FromResult<bool>(true);
         }
@@ -87,7 +85,6 @@ namespace Consumer
         public IQpsCounter Counter { get; set; }
         public Task<bool> Handle(MqA @event)
         {
-            Logger.LogInformation("MyHandler2 MqA：" + @event.ToJson());
             var cts = TaskSource.Create<bool>(@event);
             var task = cts.Task;
             TaskResult.Push(cts);
@@ -96,7 +93,6 @@ namespace Consumer
 
         public Task<bool> Handle(string routingKey, byte[] datas)
         {
-            Logger.LogInformation("MyHandler2 bytes " + routingKey);
             return Task.FromResult<bool>(true);
         }
     }
@@ -106,7 +102,6 @@ namespace Consumer
         public SleepTaskResult TaskResult { get; set; }
         public Task<bool> Handle(MqA @event)
         {
-            Logger.LogInformation("My2Handler get MqA " + @event.ToJson());
             var cts = TaskSource.Create<bool>(@event);
             var task = cts.Task;
             TaskResult.Push(cts);

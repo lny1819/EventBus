@@ -149,8 +149,8 @@ namespace YiDian.EventBus.MQ
                 var ht = (Hashtable)obj;
                 var res = new CheckResult
                 {
-                    IsVaild = bool.Parse(ht["IsVaild"].ToString()),
-                    InvaildMessage = ht["InvaildMessage"].ToString(),
+                    IsVaild = (bool)ht["IsVaild"],
+                    InvaildMessage = (ht["InvaildMessage"] ?? "").ToString(),
                 };
                 return res;
             }
@@ -204,7 +204,7 @@ namespace YiDian.EventBus.MQ
             var typename = typeof(T).Name;
             return GetEventId(typename);
         }
-        public CheckResult GetEventId(string typename) 
+        public CheckResult GetEventId(string typename)
         {
             try
             {

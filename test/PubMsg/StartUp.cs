@@ -30,7 +30,7 @@ namespace ConsoleApp
         public void Start(IServiceProvider sp, string[] args)
         {
             var eventsMgr = sp.GetRequiredService<IAppEventsManager>();
-            eventsMgr.RegisterEvent<MqA>("pub_test", "1.2");
+            var res = eventsMgr.RegisterEvent<MqA>("pub_test", "1.2");
             var a = new MqA() { A = "a", B = "b2" };
             var b = new MqA() { A = "b", B = "b1" };
             var direct = sp.GetService<IDirectEventBus>();

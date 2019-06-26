@@ -14,17 +14,6 @@ using YiDian.EventBus.MQ.KeyAttribute;
 using YiDian.Soa.Sp;
 using YiDian.Soa.Sp.Extensions;
 
-namespace ConsoleApp
-{
-
-    public class MqA : IMQEvent
-    {
-        [KeyIndex(0)]
-        public string A { get; set; }
-        public string B { get; set; }
-    }
-}
-
 namespace Consumer
 {
     public class StartUp

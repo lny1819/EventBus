@@ -18,6 +18,7 @@ namespace YiDian.EventBus.MQ
         readonly ThreadChannels channels = ThreadChannels.Default;
         readonly IEventBusSubManagerFactory _subsFactory;
         readonly PublishPool publishPool = null;
+        readonly IEventBusSubManager _pub_sub;
 
         public event EventHandler<Exception> OnUncatchException;
 
@@ -33,6 +34,7 @@ namespace YiDian.EventBus.MQ
             _subsFactory = factory ?? new InMemorySubFactory(persistentConnection.EventsManager, sub_logger);
             consumerInfos = new List<ConsumerConfig<TEventBus, TSub>>();
             hanlerCacheMgr = new EventHanlerCacheMgr(cacheCount, autofac, AUTOFAC_SCOPE_NAME);
+            _pub_sub = _subsFactory.GetOrCreateByQueue("publish");
             channels.UnCatchedException += LogError;
             _retryCount = retryCount;
             publishPool = new PublishPool(_persistentConnection, __seralize, BROKER_NAME);
@@ -103,16 +105,9 @@ namespace YiDian.EventBus.MQ
         #endregion
 
         #region Publish
-        IEventBusSubManager PubSubMgr
-        {
-            get
-            {
-                return _subsFactory.GetOrCreateByQueue("publish");
-            }
-        }
         public void Publish<T>(T @event, Func<string, string> key_handler, bool enableTransaction = false) where T : IMQEvent
         {
-            var pubkey1 = PubSubMgr.GetEventKey<T>();
+            var pubkey1 = _pub_sub.GetEventKey<T>();
             var pubkey2 = key_handler(pubkey1);
             if (string.IsNullOrEmpty(pubkey1) || string.IsNullOrEmpty(pubkey2))
             {

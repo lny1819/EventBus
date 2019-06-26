@@ -194,14 +194,15 @@ namespace YiDian.EventBus.MQ
             where T : IMQEvent
             where TH : IBytesHandler
         {
-            throw new NotImplementedException();
-        }
-
-        public void UnsubscribeBytes<T, TH>(string queueName, string subkey)
-            where T : IMQEvent
-            where TH : IBytesHandler
-        {
-            throw new NotImplementedException();
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    mgr.AddBytesSubscription<T, TH>(subkey);
+                    break;
+                }
+            }
         }
 
         public override void Subscribe<T, TH>(string queueName)

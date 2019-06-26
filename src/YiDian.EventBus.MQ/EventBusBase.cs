@@ -204,9 +204,9 @@ namespace YiDian.EventBus.MQ
                     {
                         hanlerCacheMgr.ResteDymaicHandler(handler, subinfo.HandlerType, scope);
                         if (task.IsFaulted) LogError(task.Exception);
-                        if (!config.AutoAck && task.IsCompletedSuccessfully && Interlocked.CompareExchange(ref xxx, 1, 0) == 0)
+                        if (!config.AutoAck && task.IsCompletedSuccessfully)
                         {
-                            if (waiter.IsCompleted && waiter.GetResult()) config.GetChannel().BasicAck(ea.DeliveryTag, false);
+                            if (waiter.IsCompleted && waiter.GetResult() && Interlocked.CompareExchange(ref xxx, 1, 0) == 0) config.GetChannel().BasicAck(ea.DeliveryTag, false);
                             else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
                         }
                     });
@@ -222,9 +222,9 @@ namespace YiDian.EventBus.MQ
                     {
                         hanlerCacheMgr.ResteTypeHandler(handler, subinfo.HandlerType, scope);
                         if (task.IsFaulted) LogError(task.Exception);
-                        if (!config.AutoAck && task.IsCompletedSuccessfully && Interlocked.CompareExchange(ref xxx, 1, 0) == 0)
+                        if (!config.AutoAck && task.IsCompletedSuccessfully)
                         {
-                            if (waiter.IsCompleted && waiter.GetResult()) config.GetChannel().BasicAck(ea.DeliveryTag, false);
+                            if (waiter.IsCompleted && waiter.GetResult() && Interlocked.CompareExchange(ref xxx, 1, 0) == 0) config.GetChannel().BasicAck(ea.DeliveryTag, false);
                             else config.GetChannel().BasicNack(ea.DeliveryTag, false, true);
                         }
                     });

@@ -56,6 +56,12 @@ namespace YiDian.EventBus.MQ
                     foreach (var app in appnames)
                     {
                         var version = _eventsManager.GetVersion(app);
+                        var res = _eventsManager.VaildityTest(app, version);
+                        if (!res.IsVaild)
+                        {
+                            _logger.LogError("EventModel vaild-test failed with err-msg:" + res.InvaildMessage + ",app=" + app + ",version=" + version);
+                            return;
+                        }
                         var app_path = Path.Combine(path, "EventModels", app);
                         if (!Directory.Exists(app_path)) Directory.CreateDirectory(app_path);
                         var versionFile = Path.Combine(app_path, version + ".v");

@@ -55,7 +55,7 @@ namespace Consumer
              }, length: 10000000, durable: false, autodelete: false);
             topic.StartConsumer("test-topic-2", x =>
             {
-                x.Subscribe<MqA, MyHandler2>("s1.#");
+                x.Subscribe<MqA, My3Handler>("s1.#");
             }, length: 10000000, durable: false, autodelete: false);
         }
     }
@@ -80,9 +80,9 @@ namespace Consumer
             return Task.FromResult<bool>(true);
         }
     }
-    public class MyHandler2 : IEventHandler<MqA>, IBytesHandler
+    public class My3Handler : IEventHandler<MqA>, IBytesHandler
     {
-        public ILogger<MyHandler2> Logger { get; set; }
+        public ILogger<My3Handler> Logger { get; set; }
         public SleepTaskResult TaskResult { get; set; }
         public IQpsCounter Counter { get; set; }
         public Task<bool> Handle(MqA @event)

@@ -94,7 +94,7 @@ namespace YiDian.EventBus.MQ
                     file.WriteLine("namespace EventModels." + s_namespace);
                     file.WriteLine("{");
                     if (meta.IsEventType)
-                        file.WriteLine("    public class " + meta.Name + ": IntegrationMQEvent");
+                        file.WriteLine("    public class " + meta.Name + ": " + typeof(IMQEvent).Name);
                     else
                         file.WriteLine("    public class " + meta.Name);
                     file.WriteLine("    {");

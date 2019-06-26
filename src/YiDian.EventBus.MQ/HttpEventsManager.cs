@@ -38,7 +38,7 @@ namespace YiDian.EventBus.MQ
 
         private CheckResult SendClassMeta(Type type, string appName, string version)
         {
-            var isEventType = type.IsSubclassOf(typeof(IMQEvent));
+            var isEventType = type.GetInterfaces().Where(x => x == typeof(IMQEvent)).Count() > 0;
             var meta = new ClassMeta() { Name = type.Name, IsEventType = isEventType };
             var list = new List<Type>();
             foreach (var p in type.GetProperties())
@@ -126,8 +126,8 @@ namespace YiDian.EventBus.MQ
                 var ht = (Hashtable)obj;
                 var res = new CheckResult
                 {
-                    IsVaild = bool.Parse(ht["IsVaild"].ToString()),
-                    InvaildMessage = ht["InvaildMessage"].ToString(),
+                    IsVaild = (bool)ht["IsVaild"],
+                    InvaildMessage = (ht["InvaildMessage"] ?? "").ToString(),
                 };
                 return res;
             }
@@ -214,8 +214,8 @@ namespace YiDian.EventBus.MQ
                 var ht = (Hashtable)obj;
                 var res = new CheckResult
                 {
-                    IsVaild = bool.Parse(ht["IsVaild"].ToString()),
-                    InvaildMessage = ht["InvaildMessage"].ToString(),
+                    IsVaild = (bool)ht["IsVaild"],
+                    InvaildMessage = (ht["InvaildMessage"] ?? "").ToString(),
                 };
                 return res;
             }

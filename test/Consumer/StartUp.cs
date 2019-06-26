@@ -1,5 +1,5 @@
 ﻿using Autofac;
-using ConsoleApp;
+using EventModels.pub_test;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using Utils.Seralize;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
-using YiDian.EventBus.MQ.KeyAttribute;
 using YiDian.Soa.Sp;
 using YiDian.Soa.Sp.Extensions;
 
@@ -35,26 +34,28 @@ namespace Consumer
                      var cct = e.GetService<IQpsCounter>();
                      return new SleepTaskResult(cct);
                  });
+#if DEBUG
+            soa.AutoCreateAppEvents("pub_test");
+#endif
         }
         public void Start(IServiceProvider sp, string[] args)
         {
             var channels = ThreadChannels.Default;
             var direct = sp.GetService<IDirectEventBus>();
             var topic = sp.GetService<ITopicEventBus>();
-            //direct.StartConsumer("test-direct", x =>
-            //{
-            //    x.Subscribe<MqA, MyHandler>();
-            //    x.SubscribeDynamic<MyHandler>("MqA");
-            //}, queueLength: 10000000, durable: false, autodel: true);
+            direct.StartConsumer("test-direct", x =>
+            {
+                x.Subscribe<MqA, MyHandler>();
+                x.SubscribeBytes<MqA, MyHandler>();
+            }, queueLength: 10000000, durable: false, autodel: true);
             topic.StartConsumer("test-direct-2", x =>
              {
                  x.Subscribe<MqA, My2Handler>(m => m.A == "a");
              }, length: 10000000, durable: false, autodelete: true);
-            //topic.StartConsumer("test-direct-3", x =>
-            //{
-            //    x.Subscribe<MqA, My2Handler>("zs");
-            //    x.Subscribe<MyHandler>("#.MqA");
-            //}, length: 10000000, durable: false, autodelete: true);
+            topic.StartConsumer("test-direct-3", x =>
+            {
+                x.Subscribe<MqA, My2Handler>("zs");
+            }, length: 10000000, durable: false, autodelete: true);
         }
     }
     public class MyHandler : IEventHandler<MqA>, IBytesHandler

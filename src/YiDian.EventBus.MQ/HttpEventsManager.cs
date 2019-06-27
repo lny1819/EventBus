@@ -77,6 +77,7 @@ namespace YiDian.EventBus.MQ
                 meta.Properties.Add(pinfo);
             }
             var res = RegisterClassEvent(appName, version, meta);
+            if (!res.IsVaild) return res;
             foreach (var not_event_type in list)
             {
                 res = IfExistNotEventType(appName, not_event_type, version);

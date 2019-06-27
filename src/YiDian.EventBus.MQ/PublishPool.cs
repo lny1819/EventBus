@@ -12,7 +12,7 @@ namespace YiDian.EventBus.MQ
         readonly string BROKER_NAME;
         //IModel _pubChannel1;
         IModel _pubChannel2;
-        int _index;
+        //int _index;
 
 
         public PublishPool(IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, string broker)

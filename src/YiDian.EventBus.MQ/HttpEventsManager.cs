@@ -79,7 +79,8 @@ namespace YiDian.EventBus.MQ
             var res = RegisterClassEvent(appName, version, meta);
             foreach (var not_event_type in list)
             {
-                if (!IfExistNotEventType(appName, not_event_type, version))
+                res = IfExistNotEventType(appName, not_event_type, version);
+                if (!res.IsVaild)
                 {
                     res = SendTypeMeta(not_event_type, appName, version);
                     if (!res.IsVaild) return res;
@@ -180,11 +181,25 @@ namespace YiDian.EventBus.MQ
                 return new CheckResult() { IsVaild = false, InvaildMessage = ex.ToString() };
             }
         }
-        public string GetVersion(string appname)
+        public CheckResult GetVersion(string appname)
         {
-            var uri = "version?app=" + appname;
-            var value = GetReq(uri);
-            return value;
+            try
+            {
+                var uri = "version?app=" + appname;
+                var response = GetReq(uri);
+                var obj = JsonString.Unpack(response);
+                var ht = (Hashtable)obj;
+                var res = new CheckResult
+                {
+                    IsVaild = bool.Parse(ht["IsVaild"].ToString()),
+                    InvaildMessage = ht["InvaildMessage"].ToString(),
+                };
+                return res;
+            }
+            catch (Exception ex)
+            {
+                return new CheckResult() { IsVaild = false, InvaildMessage = ex.ToString() };
+            }
         }
         public AppMetas ListEvents(string appname)
         {
@@ -192,13 +207,26 @@ namespace YiDian.EventBus.MQ
             var value = GetReq(uri);
             return ToMetas(value);
         }
-        public bool IfExistNotEventType(string appName, Type type, string version)
+        public CheckResult IfExistNotEventType(string appName, Type type, string version)
         {
-            var typename = type.Name;
-            var uri = "check_not_event?app=" + appName + "&name=" + typename;
-            var value = GetReq(uri);
-            bool.TryParse(value, out bool res);
-            return res;
+            try
+            {
+                var typename = type.Name;
+                var uri = "check_not_event?app=" + appName + "&name=" + typename + "&version=" + version;
+                var response = GetReq(uri);
+                var obj = JsonString.Unpack(response);
+                var ht = (Hashtable)obj;
+                var res = new CheckResult
+                {
+                    IsVaild = bool.Parse(ht["IsVaild"].ToString()),
+                    InvaildMessage = ht["InvaildMessage"].ToString(),
+                };
+                return res;
+            }
+            catch (Exception ex)
+            {
+                return new CheckResult() { IsVaild = false, InvaildMessage = ex.ToString() };
+            }
         }
 
         public CheckResult GetEventId(string typename)

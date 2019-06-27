@@ -8,7 +8,7 @@ namespace YiDian.EventBus
     {
         CheckResult RegisterEvent<T>(string appName, string version) where T : IMQEvent;
         CheckResult VaildityTest(string appName, string version);
-        string GetVersion(string appName);
+        CheckResult GetVersion(string appName);
         AppMetas ListEvents(string appName);
         CheckResult GetEventId(string typename);
         List<EventId> GetEventIds(string appname);

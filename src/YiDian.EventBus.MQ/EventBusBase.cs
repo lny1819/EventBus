@@ -107,7 +107,7 @@ namespace YiDian.EventBus.MQ
         #region Publish
         public void Publish<T>(T @event, Func<string, string> key_handler, bool enableTransaction = false) where T : IMQEvent
         {
-            var pubkey1 = _pub_sub.GetEventKey<T>();
+            var pubkey1 = _pub_sub.GetEventKey(@event.GetType());
             var pubkey2 = key_handler(pubkey1);
             if (string.IsNullOrEmpty(pubkey1) || string.IsNullOrEmpty(pubkey2))
             {
@@ -120,7 +120,7 @@ namespace YiDian.EventBus.MQ
 
         #region Consumer
 
-        private void LogError(Exception ex)
+        protected void LogError(Exception ex)
         {
             if (OnUncatchException != null)
                 OnUncatchException(this, ex);

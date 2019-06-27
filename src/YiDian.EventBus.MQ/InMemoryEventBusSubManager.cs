@@ -162,15 +162,18 @@ namespace YiDian.EventBus.MQ
                 OnEventAdd(this, eventName);
             }
         }
-
         public string GetEventKey<T>() where T : IMQEvent
         {
-            var typename = typeof(T).Name;
+            return GetEventKey(typeof(T));
+        }
+        public string GetEventKey(Type type)
+        {
+            var typename = type.Name;
             if (dic.TryGetValue(typename, out string id)) return id;
             lock (dic)
             {
                 if (dic.TryGetValue(typename, out id)) return id;
-                var res = _manager.GetEventId<T>();
+                var res = _manager.GetEventId(typename);
                 if (!res.IsVaild)
                     _logger.LogError("when get event key, response error: " + res.InvaildMessage);
                 dic.TryAdd(typename, res.InvaildMessage);

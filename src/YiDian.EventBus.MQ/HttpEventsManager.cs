@@ -200,11 +200,6 @@ namespace YiDian.EventBus.MQ
             bool.TryParse(value, out bool res);
             return res;
         }
-        public CheckResult GetEventId<T>() where T : IMQEvent
-        {
-            var typename = typeof(T).Name;
-            return GetEventId(typename);
-        }
 
         public CheckResult GetEventId(string typename)
         {

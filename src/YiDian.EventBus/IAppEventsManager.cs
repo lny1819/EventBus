@@ -10,7 +10,6 @@ namespace YiDian.EventBus
         CheckResult VaildityTest(string appName, string version);
         string GetVersion(string appName);
         AppMetas ListEvents(string appName);
-        CheckResult GetEventId<T>() where T : IMQEvent;
         CheckResult GetEventId(string typename);
         List<EventId> GetEventIds(string appname);
 

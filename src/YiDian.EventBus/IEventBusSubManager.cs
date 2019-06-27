@@ -23,6 +23,7 @@ namespace YiDian.EventBus
              where TH : IEventHandler<T>;
         IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventKey);
         string GetEventKey<T>() where T : IMQEvent;
+        string GetEventKey(Type type);
     }
     public interface IEventBusSubManagerFactory
     {

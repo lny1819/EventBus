@@ -172,7 +172,7 @@ namespace YiDian.EventBus.MQ
     public class ThreadChannels<T>
     {
         static readonly object lockobj = new object();
-        public static Action<Exception> UnCatchedException;
+        public Action<Exception> UnCatchedException;
         readonly Thread[] _threads;
         ConcurrentQueue<T> queue;
         readonly Action<T> dowork;

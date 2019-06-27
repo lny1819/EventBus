@@ -12,11 +12,14 @@ namespace YiDian.EventBus.MQ
 
     public class TopicEventBusMQ : EventBusBase<ITopicEventBus, TopicSubscriber>, ITopicEventBus
     {
-        readonly ThreadChannels<SendItem> sending;
+        //readonly ThreadChannels<SendItem> sending;
 
         public TopicEventBusMQ(ILogger<ITopicEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection, ILogger<IEventBusSubManager> sub_logger, IEventBusSubManagerFactory factory = null, IEventSeralize seralize = null, int retryCount = 5, int cacheCount = 100) : base(logger, autofac, persistentConnection, sub_logger, factory, seralize, retryCount, cacheCount)
         {
-            sending = new ThreadChannels<SendItem>(DoWork, 2);
+            //sending = new ThreadChannels<SendItem>(DoWork, 4)
+            //{
+            //    UnCatchedException = LogError
+            //};
         }
 
         public override string BROKER_NAME => "amq.topic";
@@ -25,7 +28,7 @@ namespace YiDian.EventBus.MQ
         private void DoWork(SendItem item)
         {
             var fix = GetPubKey(item.Event);
-            if (string.IsNullOrEmpty(item.Prefix))
+            if (!string.IsNullOrEmpty(item.Prefix))
             {
                 fix = item.Prefix + "." + fix;
             }
@@ -33,13 +36,18 @@ namespace YiDian.EventBus.MQ
         }
         public override void Publish<T>(T @event, bool enableTransaction = false)
         {
-            var item = new SendItem(@event, string.Empty, enableTransaction);
-            sending.QueueWorkItemInternal(item);
+            //var item = new SendItem(@event, string.Empty, enableTransaction);
+            //sending.QueueWorkItemInternal(item);
+            var fix = GetPubKey(@event);
+            Publish(@event, (x) => fix + x, enableTransaction);
         }
         public void PublishPrefix<T>(T @event, string prefix, bool enableTransaction = false) where T : IMQEvent
         {
-            var item = new SendItem(@event, prefix, enableTransaction);
-            sending.QueueWorkItemInternal(item);
+            //var item = new SendItem(@event, prefix, enableTransaction);
+            //sending.QueueWorkItemInternal(item);
+            var fix = GetPubKey(@event);
+            fix = prefix + "." + fix;
+            Publish(@event, (x) => fix + x, enableTransaction);
         }
         public override string GetEventKeyFromRoutingKey(string routingKey)
         {
@@ -50,7 +58,7 @@ namespace YiDian.EventBus.MQ
         }
         string GetPubKey<T>(T @event) where T : IMQEvent
         {
-            var type = typeof(T);
+            var type = @event.GetType();
             var props = TypeEventBusMetas.GetProperties(type);
             if (props == null || props.Count == 0) return string.Empty;
             var sb = new StringBuilder();

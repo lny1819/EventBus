@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace YiDian.EventBus.MQ
 {
-    class JsonString
+    public class JsonString
     {
         public static object Unpack(String jsonstr)
         {

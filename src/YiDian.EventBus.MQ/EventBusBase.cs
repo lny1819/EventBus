@@ -35,7 +35,7 @@ namespace YiDian.EventBus.MQ
             consumerInfos = new List<ConsumerConfig<TEventBus, TSub>>();
             hanlerCacheMgr = new EventHanlerCacheMgr(cacheCount, autofac, AUTOFAC_SCOPE_NAME);
             _pub_sub = _subsFactory.GetOrCreateByQueue("publish");
-            channels.UnCatchedException += LogError;
+            ThreadChannels.UnCatchedException = LogError;
             _retryCount = retryCount;
             publishPool = new PublishPool(_persistentConnection, __seralize, BROKER_NAME);
         }

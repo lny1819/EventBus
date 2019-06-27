@@ -251,21 +251,21 @@ namespace YiDian.EventBus.MQ.KeyAttribute
                 loadedAssemblyNames.Add(a);
             }
 
-            foreach (string dllPath in Directory.GetFiles(directoryPath, "*.dll"))
-            {
-                try
-                {
-                    var an = Assembly.LoadFile(dllPath);
-                    if (Matches(an.FullName) && !loadedAssemblyNames.Contains(an))
-                    {
-                        loadedAssemblyNames.Add(an);
-                    }
-                }
-                catch (BadImageFormatException ex)
-                {
-                    Trace.TraceError(ex.ToString());
-                }
-            }
+            //foreach (string dllPath in Directory.GetFiles(directoryPath, "*.dll"))
+            //{
+            //    try
+            //    {
+            //        var an = Assembly.LoadFile(dllPath);
+            //        if (Matches(an.FullName) && !loadedAssemblyNames.Contains(an))
+            //        {
+            //            loadedAssemblyNames.Add(an);
+            //        }
+            //    }
+            //    catch (BadImageFormatException ex)
+            //    {
+            //        Trace.TraceError(ex.ToString());
+            //    }
+            //}
             return loadedAssemblyNames;
         }
 

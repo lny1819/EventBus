@@ -41,6 +41,7 @@ namespace YiDian.EventBus.MQ
         public event EventHandler<string> OnEventRemoved;
         public event EventHandler<string> OnEventAdd;
 
+        static readonly ConcurrentDictionary<string, string> dic = new ConcurrentDictionary<string, string>();
         public InMemoryEventBusSubManager(string name, IAppEventsManager manager, ILogger<IEventBusSubManager> logger)
         {
             _logger = logger;
@@ -164,10 +165,17 @@ namespace YiDian.EventBus.MQ
 
         public string GetEventKey<T>() where T : IMQEvent
         {
-            var res = _manager.GetEventId<T>();
-            if (!res.IsVaild)
-                _logger.LogError("when get event key, response error: " + res.InvaildMessage);
-            return res.InvaildMessage;
+            var typename = typeof(T).Name;
+            if (dic.TryGetValue(typename, out string id)) return id;
+            lock (dic)
+            {
+                if (dic.TryGetValue(typename, out id)) return id;
+                var res = _manager.GetEventId<T>();
+                if (!res.IsVaild)
+                    _logger.LogError("when get event key, response error: " + res.InvaildMessage);
+                dic.TryAdd(typename, res.InvaildMessage);
+                return res.InvaildMessage;
+            }
         }
     }
 }

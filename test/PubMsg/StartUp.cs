@@ -30,7 +30,7 @@ namespace ConsoleApp
         public void Start(IServiceProvider sp, string[] args)
         {
             var eventsMgr = sp.GetRequiredService<IAppEventsManager>();
-            var res = eventsMgr.RegisterEvent<MqA>("pub_test", "1.2");
+            //var res = eventsMgr.RegisterEvent<MqA>("pub_test", "1.2");
             var a = new MqA() { A = "a", B = "b2" };
             var b = new MqA() { A = "b", B = "b1" };
             var direct = sp.GetService<IDirectEventBus>();
@@ -52,15 +52,25 @@ namespace ConsoleApp
                         //direct.Publish(b);
                         //direct.Publish(a);
                         //direct.Publish(b);
-                        qps.Add("i");
+                        qps.Add("p");
+                        qps.Set("work", channel.GetInWork());
                         channel.QueueWorkItemInternal(x =>
                         {
                             if (type == "direct")
+                            {
                                 direct.Publish(a);
+                                qps.Add("i");
+                            }
                             else if (type == "top-where")
+                            {
                                 topic.Publish(a);
+                                qps.Add("i");
+                            }
                             else if (type == "top-pre")
+                            {
                                 topic.PublishPrefix(a, "s1");
+                                qps.Add("i");
+                            }
                         });
                     }
                     Thread.Sleep(sleep);

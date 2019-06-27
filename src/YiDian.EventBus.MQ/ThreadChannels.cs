@@ -24,7 +24,7 @@ namespace YiDian.EventBus.MQ
                 return _current;
             }
         }
-        public event Action<Exception> UnCatchedException;
+        public static Action<Exception> UnCatchedException;
         readonly Thread[] _threads;
         ConcurrentQueue<__ITEM> queue;
         int _limit;

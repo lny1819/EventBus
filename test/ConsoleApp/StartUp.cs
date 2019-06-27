@@ -1,11 +1,11 @@
 ﻿using Autofac;
+using EventModels.es_quote;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
+using System.Reflection;
+using Utils.Seralize;
+using YiDian.EventBus;
 using YiDian.Soa.Sp;
 using YiDian.Soa.Sp.Extensions;
 
@@ -20,13 +20,20 @@ namespace ConsoleApp
         }
         public void ConfigService(SoaServiceContainerBuilder soa, ContainerBuilder builder)
         {
-            //            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"]);
-            //#if DEBUG
-            //            soa.AutoCreateAppEvents("quote_es");
-            //#endif
+            var curAssembly = Assembly.GetEntryAssembly();
+            builder.RegisterAssemblyTypes(curAssembly).Where(e => e.Name.EndsWith("Handler")).PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
+            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"]).UseTopicEventBus<JsonSeralizer>();
+#if DEBUG
+            soa.AutoCreateAppEvents("es_quote");
+#endif
         }
         public void Start(IServiceProvider sp, string[] args)
         {
+            var top = sp.GetService<ITopicEventBus>();
+            top.StartConsumer("rec_quote_bytes", (x) =>
+            {
+                x.SubscribeBytes<QuoteBytes, BytesHandler>("#.QuoteBytes");
+            }, 100, 3000, true, false, true);
             //B b = new B() { ZA = new A() { D = "zs" }, AV = 2 };
             //C c = new C() { AB = b, SC = "hello" };
             //var json = c.ToJson();

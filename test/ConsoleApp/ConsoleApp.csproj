@@ -20,11 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="EventModels\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Utils" Version="1.0.1.5" />
+    <PackageReference Include="Utils" Version="1.0.1.8" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties Properties_4launchSettings_1json__JSONSchema="" /></VisualStudio></ProjectExtensions>

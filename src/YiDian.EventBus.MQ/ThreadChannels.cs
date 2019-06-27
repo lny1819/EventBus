@@ -168,4 +168,139 @@ namespace YiDian.EventBus.MQ
             return z;
         }
     }
+
+    public class ThreadChannels<T>
+    {
+        static readonly object lockobj = new object();
+        public static Action<Exception> UnCatchedException;
+        readonly Thread[] _threads;
+        ConcurrentQueue<T> queue;
+        readonly Action<T> dowork;
+        int _limit;
+        int _state = 0;
+        readonly int _allRun = 0;
+        internal ThreadChannels(Action<T> action, int limit, bool highlvl = false)
+        {
+            _limit = Math.Min(limit, Environment.ProcessorCount);
+            dowork = action;
+            _threads = new Thread[_limit];
+            queue = new ConcurrentQueue<T>();
+            ExecutionContext.SuppressFlow();
+            for (var i = 0; i < _limit; i++)
+            {
+                _allRun |= (1 << i);
+            }
+            for (var i = 0; i < _limit; i++)
+            {
+                _state |= (1 << i);
+                var thread = CreateThread(i, highlvl);
+                _threads[i] = thread;
+                thread.Start(i);
+            }
+            ExecutionContext.RestoreFlow();
+        }
+        Thread CreateThread(int i, bool highlvl)
+        {
+            var thread = new Thread(ThreadAction) { IsBackground = true };
+            if (highlvl) thread.Priority = ThreadPriority.Highest;
+            return thread;
+        }
+
+        void ThreadAction(object obj)
+        {
+            try
+            {
+                ThreadLoop((int)obj);
+            }
+            catch (Exception ex)
+            {
+                UnCatchedException.Invoke(ex);
+            }
+        }
+
+        void ThreadLoop(int index)
+        {
+            var thread = _threads[index];
+            for (; ; )
+            {
+                var flag = queue.TryDequeue(out T t);
+                if (flag)
+                {
+                    try
+                    {
+                        dowork(t);
+                    }
+                    catch (Exception ex)
+                    {
+                        UnCatchedException?.Invoke(ex);
+                    }
+                }
+                else
+                {
+                    lock (thread)
+                    {
+                        SetThread(index);
+                        Monitor.Wait(thread, Timeout.Infinite);
+                    }
+                }
+            }
+        }
+        public void QueueWorkItemInternal(T indata)
+        {
+            queue.Enqueue(indata);
+            var thread = GetSetThread();
+            if (thread == null) return;
+            lock (thread)
+            {
+                Monitor.PulseAll(thread);
+            }
+        }
+
+        private Thread GetSetThread()
+        {
+            if (_state == _allRun) return null;
+            if (Interlocked.CompareExchange(ref _state, 1, 0) == 0)
+            {
+                return _threads[0];
+            }
+            for (var i = 0; i < _limit; i++)
+            {
+                if (_state == _allRun) return null;
+                var x = 1 << i;
+                var y = _state;
+                var r = y | x;
+                if (r != y)
+                {
+                    var flag = Interlocked.CompareExchange(ref _state, r, y) == y;
+                    if (flag) return _threads[i];
+                }
+            }
+            return null;
+        }
+
+        private void SetThread(int index)
+        {
+            for (; ; )
+            {
+                var i = ~(1 << index);
+                var x = _state;
+                var j = x & i;
+                var flag = Interlocked.CompareExchange(ref _state, j, x) == x;
+                if (flag) break;
+            }
+        }
+
+        public int GetInWork()
+        {
+            var y = _state;
+            int z = 0;
+            for (var i = 0; i < _limit; i++)
+            {
+                var x = 1 << i;
+                var r = y | x;
+                if (r == y) z++;
+            }
+            return z;
+        }
+    }
 }

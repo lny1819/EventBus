@@ -39,7 +39,6 @@ namespace ConsoleApp
             var ps = int.Parse(Configuration["ps"]);
             var type = Configuration["type"];
             var sleep = int.Parse(Configuration["sleep"]);
-            var channel = ThreadChannels.Default;
             Task.Run(() =>
             {
                 for (; ; )
@@ -53,25 +52,21 @@ namespace ConsoleApp
                         //direct.Publish(a);
                         //direct.Publish(b);
                         qps.Add("p");
-                        qps.Set("work", channel.GetInWork());
-                        channel.QueueWorkItemInternal(x =>
+                        if (type == "direct")
                         {
-                            if (type == "direct")
-                            {
-                                direct.Publish(a);
-                                qps.Add("i");
-                            }
-                            else if (type == "top-where")
-                            {
-                                topic.Publish(a);
-                                qps.Add("i");
-                            }
-                            else if (type == "top-pre")
-                            {
-                                topic.PublishPrefix(a, "s1");
-                                qps.Add("i");
-                            }
-                        });
+                            direct.Publish(a);
+                            qps.Add("i");
+                        }
+                        else if (type == "top-where")
+                        {
+                            topic.Publish(a);
+                            qps.Add("i");
+                        }
+                        else if (type == "top-pre")
+                        {
+                            topic.PublishPrefix(a, "s1");
+                            qps.Add("i");
+                        }
                     }
                     Thread.Sleep(sleep);
                 }

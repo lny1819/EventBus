@@ -12,23 +12,34 @@ namespace YiDian.EventBus.MQ
 
     public class TopicEventBusMQ : EventBusBase<ITopicEventBus, TopicSubscriber>, ITopicEventBus
     {
+        readonly ThreadChannels<SendItem> sending;
+
         public TopicEventBusMQ(ILogger<ITopicEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection, ILogger<IEventBusSubManager> sub_logger, IEventBusSubManagerFactory factory = null, IEventSeralize seralize = null, int retryCount = 5, int cacheCount = 100) : base(logger, autofac, persistentConnection, sub_logger, factory, seralize, retryCount, cacheCount)
         {
+            sending = new ThreadChannels<SendItem>(DoWork, 2);
         }
 
         public override string BROKER_NAME => "amq.topic";
 
         public override string AUTOFAC_SCOPE_NAME => "TopicEventBus";
-
+        private void DoWork(SendItem item)
+        {
+            var fix = GetPubKey(item.Event);
+            if (string.IsNullOrEmpty(item.Prefix))
+            {
+                fix = item.Prefix + "." + fix;
+            }
+            Publish(item.Event, (x) => fix + x, item.Enable);
+        }
         public override void Publish<T>(T @event, bool enableTransaction = false)
         {
-            var fix = GetPubKey(@event);
-            Publish(@event, (x) => fix + x, enableTransaction);
+            var item = new SendItem(@event, string.Empty, enableTransaction);
+            sending.QueueWorkItemInternal(item);
         }
         public void PublishPrefix<T>(T @event, string prefix, bool enableTransaction = false) where T : IMQEvent
         {
-            var pubkey = GetPubKey<T>(@event);
-            Publish(@event, (x) => prefix + "." + pubkey + x, enableTransaction);
+            var item = new SendItem(@event, prefix, enableTransaction);
+            sending.QueueWorkItemInternal(item);
         }
         public override string GetEventKeyFromRoutingKey(string routingKey)
         {
@@ -229,6 +240,18 @@ namespace YiDian.EventBus.MQ
                     break;
                 }
             }
+        }
+    }
+    struct SendItem
+    {
+        public IMQEvent Event { get; }
+        public bool Enable { get; }
+        public string Prefix { get; }
+        public SendItem(IMQEvent events, string prefix, bool enable)
+        {
+            Prefix = prefix;
+            Event = events;
+            Enable = enable;
         }
     }
 }

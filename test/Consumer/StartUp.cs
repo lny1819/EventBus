@@ -36,7 +36,7 @@ namespace Consumer
                      return new SleepTaskResult(cct);
                  });
 #if DEBUG
-            //soa.AutoCreateAppEvents("pub_test");
+            soa.AutoCreateAppEvents("pub_test");
 #endif
         }
         public void Start(IServiceProvider sp, string[] args)

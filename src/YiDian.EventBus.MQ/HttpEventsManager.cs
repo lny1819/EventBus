@@ -173,7 +173,7 @@ namespace YiDian.EventBus.MQ
                 var res = new CheckResult
                 {
                     IsVaild = bool.Parse(ht["IsVaild"].ToString()),
-                    InvaildMessage = ht["InvaildMessage"].ToString(),
+                    InvaildMessage = (ht["InvaildMessage"] ?? "").ToString(),
                 };
                 return res;
             }
@@ -187,13 +187,11 @@ namespace YiDian.EventBus.MQ
             try
             {
                 var uri = "version?app=" + appname;
-                var response = GetReq(uri);
-                var obj = JsonString.Unpack(response);
-                var ht = (Hashtable)obj;
+                var version = GetReq(uri);
                 var res = new CheckResult
                 {
-                    IsVaild = bool.Parse(ht["IsVaild"].ToString()),
-                    InvaildMessage = ht["InvaildMessage"].ToString(),
+                    IsVaild = true,
+                    InvaildMessage = version
                 };
                 return res;
             }

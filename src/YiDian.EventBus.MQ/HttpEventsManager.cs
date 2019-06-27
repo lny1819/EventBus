@@ -195,7 +195,7 @@ namespace YiDian.EventBus.MQ
         public bool IfExistNotEventType(string appName, Type type, string version)
         {
             var typename = type.Name;
-            var uri = "check_not_event?app=" + appName + "&version=" + version + "&name=" + typename;
+            var uri = "check_not_event?app=" + appName + "&name=" + typename;
             var value = GetReq(uri);
             bool.TryParse(value, out bool res);
             return res;

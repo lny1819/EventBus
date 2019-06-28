@@ -114,7 +114,14 @@ namespace YiDian.EventBus.MQ
                 _logger.LogError($"can not find the publish key of type:{typeof(T).Name}");
                 return;
             }
-            publishPool.Send(@event, pubkey2, enableTransaction);
+            try
+            {
+                publishPool.Send(@event, pubkey2, enableTransaction);
+            }
+            catch (Exception ex)
+            {
+                LogError(ex);
+            }
         }
         #endregion
 

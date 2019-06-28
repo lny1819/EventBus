@@ -1,14 +1,12 @@
 ﻿using Autofac;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using PubMessage.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils.Seralize;
 using YiDian.EventBus;
-using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.KeyAttribute;
 using YiDian.Soa.Sp;
 using YiDian.Soa.Sp.Extensions;
@@ -96,5 +94,16 @@ namespace ConsoleApp
     {
         public string C { get; set; }
         public string[] D { get; set; }
+
+        public byte[] ToBytes()
+        {
+            var encode = System.Text.Encoding.UTF8;
+            var a = encode.GetByteCount(C);
+            foreach (var s in D)
+            {
+                a += encode.GetByteCount(s);
+            }
+            var datas = new byte[a];
+        }
     }
 }

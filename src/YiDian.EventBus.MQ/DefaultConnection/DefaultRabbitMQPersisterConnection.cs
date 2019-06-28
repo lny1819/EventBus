@@ -17,19 +17,18 @@ namespace YiDian.EventBus.MQ.DefaultConnection
         private readonly int _retryCount;
         IConnection _connection;
         bool _disposed;
-
-        object sync_root = new object();
+        readonly object sync_root = new object();
 
         public event EventHandler OnConnectRecovery;
 
-        public DefaultRabbitMQPersistentConnection(IConnectionFactory connectionFactory, IAppEventsManager eventsManager, int retryCount = 5)
+        public DefaultRabbitMQPersistentConnection(IConnectionFactory connectionFactory, IAppEventsManager eventsManager, IEventSeralize seralize, int retryCount = 5)
         {
+            _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(IConnectionFactory));
+            Seralizer = seralize ?? throw new ArgumentNullException(nameof(IEventSeralize));
+            EventsManager = eventsManager ?? throw new ArgumentNullException(nameof(IAppEventsManager));
             _logger = new ConsoleLog();
-            EventsManager = eventsManager;
-            _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
             _retryCount = retryCount;
         }
-
         public bool IsConnected
         {
             get
@@ -37,8 +36,8 @@ namespace YiDian.EventBus.MQ.DefaultConnection
                 return _connection != null && _connection.IsOpen && !_disposed;
             }
         }
-
         public IAppEventsManager EventsManager { get; }
+        public IEventSeralize Seralizer { get; }
 
         public IModel CreateModel()
         {
@@ -70,6 +69,7 @@ namespace YiDian.EventBus.MQ.DefaultConnection
         {
             lock (sync_root)
             {
+                if (IsConnected) return true;
                 var policy = Policy.Handle<SocketException>()
                     .Or<BrokerUnreachableException>()
                     .WaitAndRetry(_retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>

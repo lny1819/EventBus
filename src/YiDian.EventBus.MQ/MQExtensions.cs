@@ -19,19 +19,19 @@ namespace YiDian.Soa.Sp.Extensions
         /// <param name="builder"></param>
         /// <param name="getconnstr"></param>
         /// <returns></returns>
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, IAppEventsManager eventsManager)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, IAppEventsManager eventsManager, IEventSeralize seralizer)
         {
             var service = builder.Services;
             service.AddSingleton(eventsManager);
             var factory = CreateConnect(mqConnstr);
-            var defaultconn = new DefaultRabbitMQPersistentConnection(factory, eventsManager, 5);
+            var defaultconn = new DefaultRabbitMQPersistentConnection(factory, eventsManager, seralizer, 5);
             service.AddSingleton<IRabbitMQPersistentConnection>(defaultconn);
             return builder;
         }
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, string enven_mgr_api)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, string enven_mgr_api, IEventSeralize seralizer)
         {
             var mgr = new HttpEventsManager(enven_mgr_api);
-            return UseRabbitMq(builder, mqConnstr, mgr);
+            return UseRabbitMq(builder, mqConnstr, mgr, seralizer);
         }
         /// <summary>
         /// 创建系统所依赖的消息总线中的消息类型
@@ -111,7 +111,7 @@ namespace YiDian.Soa.Sp.Extensions
             };
             return factory;
         }
-        public static SoaServiceContainerBuilder UseDirectEventBus<T>(this SoaServiceContainerBuilder builder, int cacheLength = 0) where T : IEventSeralize, new()
+        public static SoaServiceContainerBuilder UseDirectEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0)
         {
             builder.Services.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
             {
@@ -119,15 +119,13 @@ namespace YiDian.Soa.Sp.Extensions
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                 var logger = sp.GetService<ILogger<DirectEventBus>>();
                 var sub_logger = sp.GetService<ILogger<IEventBusSubManager>>();
-                var seralize = sp.GetService<T>();
-                if (seralize == null) seralize = new T();
-                var eventbus = new DirectEventBus(logger, iLifetimeScope, sub_logger, conn, seralize: seralize);
+                var eventbus = new DirectEventBus(logger, iLifetimeScope, sub_logger, conn);
                 eventbus.EnableHandlerCache(cacheLength);
                 return eventbus;
             });
             return builder;
         }
-        public static SoaServiceContainerBuilder UseTopicEventBus<T>(this SoaServiceContainerBuilder builder, int cacheLength = 0) where T : IEventSeralize, new()
+        public static SoaServiceContainerBuilder UseTopicEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0)
         {
             builder.Services.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
             {
@@ -135,9 +133,7 @@ namespace YiDian.Soa.Sp.Extensions
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                 var logger = sp.GetService<ILogger<ITopicEventBus>>();
                 var sub_logger = sp.GetService<ILogger<IEventBusSubManager>>();
-                var seralize = sp.GetService<T>();
-                if (seralize == null) seralize = new T();
-                var eventbus = new TopicEventBusMQ(logger, iLifetimeScope, conn, sub_logger, seralize: seralize);
+                var eventbus = new TopicEventBusMQ(logger, iLifetimeScope, conn, sub_logger);
                 eventbus.EnableHandlerCache(cacheLength);
                 return eventbus;
             });

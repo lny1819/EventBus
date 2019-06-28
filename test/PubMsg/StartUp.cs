@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PubMessage.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -23,14 +24,15 @@ namespace ConsoleApp
         }
         public void ConfigService(SoaServiceContainerBuilder soa, ContainerBuilder builder)
         {
-            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"])
-                 .UseDirectEventBus<JsonSeralizer>(1000)
-                 .UseTopicEventBus<JsonSeralizer>(1000);
+            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"], new JsonSeralizer())
+                 .UseDirectEventBus()
+                 .UseTopicEventBus();
         }
         public void Start(IServiceProvider sp, string[] args)
         {
             var eventsMgr = sp.GetRequiredService<IAppEventsManager>();
             var res = eventsMgr.RegisterEvent<MqA>("pub_test", "1.2");
+            res = eventsMgr.RegisterEvent<AddMarketRequest>("pub_test", "1.2");
             if (!res.IsVaild) Console.WriteLine(res.InvaildMessage);
             res = eventsMgr.VaildityTest("pub_test", "1.2");
             if (!res.IsVaild) Console.WriteLine(res.InvaildMessage);

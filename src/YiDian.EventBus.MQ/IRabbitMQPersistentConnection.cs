@@ -9,6 +9,7 @@ namespace YiDian.EventBus.MQ
         event EventHandler OnConnectRecovery;
         bool IsConnected { get; }
         IAppEventsManager EventsManager { get; }
+        IEventSeralize Seralizer { get; }
         bool TryConnect();
 
         IModel CreateModel();

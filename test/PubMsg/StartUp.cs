@@ -32,7 +32,6 @@ namespace ConsoleApp
         {
             var eventsMgr = sp.GetRequiredService<IAppEventsManager>();
             var res = eventsMgr.RegisterEvent<MqA>("pub_test", "1.2");
-            res = eventsMgr.RegisterEvent<AddMarketRequest>("pub_test", "1.2");
             if (!res.IsVaild) Console.WriteLine(res.InvaildMessage);
             res = eventsMgr.VaildityTest("pub_test", "1.2");
             if (!res.IsVaild) Console.WriteLine(res.InvaildMessage);

@@ -5,19 +5,19 @@ namespace YiDian.EventBus
 {
     public interface IEventBusSubManager
     {
-        event EventHandler<string> OnEventRemoved;
-        event EventHandler<string> OnEventAdd;
+        event EventHandler<ValueTuple<string, string>> OnEventRemoved;
+        event EventHandler<ValueTuple<string, string>> OnEventAdd;
         string QueueName { get; }
-        void AddBytesSubscription<T, TH>(string subkey)
+        void AddBytesSubscription<T, TH>(string subkey, string brokerName)
             where T : IMQEvent
             where TH : IBytesHandler;
         void RemoveBytesSubscription<T, TH>()
             where T : IMQEvent
             where TH : IBytesHandler;
-        void AddSubscription<T, TH>(string subkey)
+        void AddSubscription<T, TH>(string subkey, string brokerName)
             where T : IMQEvent
             where TH : IEventHandler<T>;
-        void RemoveSubscription(string subkey);
+        void RemoveSubscription(string subkey, string brokerName);
         void RemoveSubscription<T, TH>()
              where T : IMQEvent
              where TH : IEventHandler<T>;

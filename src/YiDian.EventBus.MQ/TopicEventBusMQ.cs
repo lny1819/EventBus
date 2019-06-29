@@ -158,7 +158,7 @@ namespace YiDian.EventBus.MQ
                     var eventKey = mgr.GetEventKey<T>();
                     var subkey = GetSubKey(where);
                     subkey += eventKey;
-                    mgr.AddSubscription<T, TH>(subkey);
+                    mgr.AddSubscription<T, TH>(subkey, BROKER_NAME);
                     break;
                 }
             }
@@ -175,7 +175,7 @@ namespace YiDian.EventBus.MQ
                     var eventKey = mgr.GetEventKey<T>();
                     var subkey = GetSubKey(where);
                     subkey += eventKey;
-                    mgr.RemoveSubscription(subkey);
+                    mgr.RemoveSubscription(subkey, BROKER_NAME);
                     break;
                 }
             }
@@ -190,7 +190,7 @@ namespace YiDian.EventBus.MQ
                 if (item.Name == queueName)
                 {
                     var mgr = item.GetSubMgr();
-                    mgr.AddSubscription<T, TH>(subkey);
+                    mgr.AddSubscription<T, TH>(subkey, BROKER_NAME);
                     break;
                 }
             }
@@ -202,7 +202,7 @@ namespace YiDian.EventBus.MQ
                 if (item.Name == queueName)
                 {
                     var mgr = item.GetSubMgr();
-                    mgr.RemoveSubscription(subkey);
+                    mgr.RemoveSubscription(subkey, BROKER_NAME);
                     break;
                 }
             }
@@ -216,7 +216,7 @@ namespace YiDian.EventBus.MQ
                 if (item.Name == queueName)
                 {
                     var mgr = item.GetSubMgr();
-                    mgr.AddBytesSubscription<T, TH>(subkey);
+                    mgr.AddBytesSubscription<T, TH>(subkey, BROKER_NAME);
                     break;
                 }
             }
@@ -231,7 +231,7 @@ namespace YiDian.EventBus.MQ
                     var mgr = item.GetSubMgr();
                     var eventKey = mgr.GetEventKey<T>();
                     var subkey = GetSubKey<T>() + eventKey;
-                    mgr.AddSubscription<T, TH>(subkey);
+                    mgr.AddSubscription<T, TH>(subkey, BROKER_NAME);
                     break;
                 }
             }

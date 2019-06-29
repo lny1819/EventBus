@@ -62,19 +62,25 @@ namespace YiDian.EventBus.MQ
             hanlerCacheMgr.CacheLength = cacheLength;
         }
         #region Mq Sub And UnSub
-        void Submgr_OnEventAdd(object sender, string eventName)
+        void Submgr_OnEventAdd(object sender, (string, string) events)
         {
+            var brokerName = events.Item2;
+            if (BROKER_NAME != brokerName) return;
+            var eventName = events.Item1;
             var mgr = (IEventBusSubManager)sender;
             var queueName = mgr.QueueName;
-            DoInternalSubscription(queueName, eventName);
+            DoInternalSubscription(queueName, eventName, brokerName);
         }
-        void SubsManager_OnEventRemoved(object sender, string eventName)
+        void SubsManager_OnEventRemoved(object sender, (string, string) events)
         {
+            var brokerName = events.Item2;
+            if (BROKER_NAME != brokerName) return;
+            var eventName = events.Item1;
             var mgr = (IEventBusSubManager)sender;
             var queueName = mgr.QueueName;
-            DoInternalUnSub(queueName, eventName);
+            DoInternalUnSub(queueName, eventName, brokerName);
         }
-        void DoInternalUnSub(string queueName, string eventName)
+        void DoInternalUnSub(string queueName, string eventName, string borokerName)
         {
             if (!_conn.IsConnected)
             {
@@ -83,11 +89,11 @@ namespace YiDian.EventBus.MQ
             using (var channel = _conn.CreateModel())
             {
                 channel.QueueUnbind(queue: queueName,
-                    exchange: BROKER_NAME,
+                    exchange: borokerName,
                     routingKey: eventName);
             }
         }
-        void DoInternalSubscription(string queueName, string eventName)
+        void DoInternalSubscription(string queueName, string eventName, string brokerName)
         {
             if (!_conn.IsConnected)
             {
@@ -97,7 +103,7 @@ namespace YiDian.EventBus.MQ
             using (var channel = _conn.CreateModel())
             {
                 channel.QueueBind(queue: queueName,
-                                  exchange: BROKER_NAME,
+                                  exchange: brokerName,
                                   routingKey: eventName);
             }
         }

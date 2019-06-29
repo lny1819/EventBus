@@ -32,7 +32,7 @@ namespace YiDian.EventBus.MQ
                 {
                     var mgr = item.GetSubMgr();
                     var subkey = mgr.GetEventKey<T>();
-                    mgr.AddSubscription<T, TH>(subkey);
+                    mgr.AddSubscription<T, TH>(subkey, BROKER_NAME);
                     break;
                 }
             }
@@ -60,7 +60,7 @@ namespace YiDian.EventBus.MQ
                 {
                     var mgr = item.GetSubMgr();
                     var subkey = mgr.GetEventKey<T>();
-                    mgr.AddBytesSubscription<T, TH>(subkey);
+                    mgr.AddBytesSubscription<T, TH>(subkey,BROKER_NAME);
                     break;
                 }
             }

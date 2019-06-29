@@ -38,8 +38,8 @@ namespace YiDian.EventBus.MQ
         readonly ILogger<IEventBusSubManager> _logger;
         readonly IAppEventsManager _manager;
 
-        public event EventHandler<string> OnEventRemoved;
-        public event EventHandler<string> OnEventAdd;
+        public event EventHandler<ValueTuple<string, string>> OnEventRemoved;
+        public event EventHandler<ValueTuple<string, string>> OnEventAdd;
 
         static readonly ConcurrentDictionary<string, string> dic = new ConcurrentDictionary<string, string>();
         public InMemoryEventBusSubManager(string name, IAppEventsManager manager, ILogger<IEventBusSubManager> logger)
@@ -51,11 +51,11 @@ namespace YiDian.EventBus.MQ
             QueueName = name;
         }
         public string QueueName { get; }
-        public void AddBytesSubscription<T, TH>(string subkey)
+        public void AddBytesSubscription<T, TH>(string subkey, string brokerName)
             where T : IMQEvent
             where TH : IBytesHandler
         {
-            SubMessage(subkey);
+            SubMessage(subkey, brokerName);
             lock (_subInfos)
             {
                 var count = _subInfos.Where(x => x.IsDynamic && x.SubKey == subkey && x.HandlerType == typeof(TH)).Count();
@@ -63,15 +63,15 @@ namespace YiDian.EventBus.MQ
                 var eventkey = GetEventKey<T>();
                 var flag = eventkey == subkey;
                 var enventkey = GetEventKey<T>();
-                var info = SubscriptionInfo.Dynamic(subkey, enventkey, flag, typeof(TH), null);
+                var info = SubscriptionInfo.Dynamic(subkey, enventkey, flag, typeof(TH), null, brokerName);
                 _subInfos.Add(info);
             }
         }
-        public void AddSubscription<T, TH>(string subkey)
+        public void AddSubscription<T, TH>(string subkey, string brokerName)
           where T : IMQEvent
           where TH : IEventHandler<T>
         {
-            SubMessage(subkey);
+            SubMessage(subkey, brokerName);
             lock (_subInfos)
             {
                 var count = _subInfos.Where(x => !x.IsDynamic && x.SubKey == subkey && x.HandlerType == typeof(TH)).Count();
@@ -80,14 +80,14 @@ namespace YiDian.EventBus.MQ
                 var flag = eventkey == subkey;
                 var method = typeof(TH).GetMethod("Handle", new Type[] { typeof(T) });
                 var handler = FastInvoke.GetMethodInvoker(method);
-                var info = SubscriptionInfo.Typed(subkey, eventkey, flag, typeof(TH), typeof(T), handler);
+                var info = SubscriptionInfo.Typed(subkey, eventkey, flag, typeof(TH), typeof(T), handler, brokerName);
                 _subInfos.Add(info);
             }
         }
 
-        public void RemoveSubscription(string subkey)
+        public void RemoveSubscription(string subkey, string brokerName)
         {
-            UnSubMessage(subkey);
+            UnSubMessage(subkey, brokerName);
             lock (_subInfos)
             {
                 var finds = _subInfos.Where(x => x.SubKey == subkey).ToList();
@@ -104,7 +104,7 @@ namespace YiDian.EventBus.MQ
                 if (one == null || !one.CanRemoveSubByEvent) return;
                 var i = _subInfos.Where(x => x.EventType == typeof(T) && x.IsDynamic).Count();
                 _subInfos.Remove(one);
-                if (i == 0) UnSubMessage(one.SubKey);
+                if (i == 0) UnSubMessage(one.SubKey, one.BrokerName);
             }
         }
         public void RemoveSubscription<T, TH>()
@@ -117,49 +117,49 @@ namespace YiDian.EventBus.MQ
                 if (one == null || !one.CanRemoveSubByEvent) return;
                 var i = _subInfos.Where(x => x.EventType == typeof(T) && !x.IsDynamic).Count();
                 _subInfos.Remove(one);
-                if (i == 0) UnSubMessage(one.SubKey);
+                if (i == 0) UnSubMessage(one.SubKey, one.BrokerName);
             }
         }
         public IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventName)
         {
             return _subInfos.Where(x => x.EventKey == eventName);
         }
-        private void SubMessage(string subkey)
+        private void SubMessage(string subkey, string brokerName)
         {
             lock (_sub_keys)
             {
                 if (!_sub_keys.Contains(subkey))
                 {
                     _sub_keys.Add(subkey);
-                    RaiseOnEventAdd(subkey);
+                    RaiseOnEventAdd(subkey, brokerName);
                 }
             }
         }
-        private void UnSubMessage(string subkey)
+        private void UnSubMessage(string subkey, string brokerName)
         {
             lock (_sub_keys)
             {
                 if (_sub_keys.Contains(subkey))
                 {
                     _sub_keys.Remove(subkey);
-                    RaiseOnEventRemoved(subkey);
+                    RaiseOnEventRemoved(subkey, brokerName);
                 }
             }
         }
-        private void RaiseOnEventRemoved(string eventName)
+        private void RaiseOnEventRemoved(string eventName, string brokerName)
         {
             var handler = OnEventRemoved;
             if (handler != null)
             {
-                OnEventRemoved(this, eventName);
+                OnEventRemoved(this, (eventName, brokerName));
             }
         }
-        private void RaiseOnEventAdd(string eventName)
+        private void RaiseOnEventAdd(string eventName, string brokerName)
         {
             var handler = OnEventAdd;
             if (handler != null)
             {
-                OnEventAdd(this, eventName);
+                OnEventAdd(this, (eventName, brokerName));
             }
         }
         public string GetEventKey<T>() where T : IMQEvent

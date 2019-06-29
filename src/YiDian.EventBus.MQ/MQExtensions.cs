@@ -21,11 +21,15 @@ namespace YiDian.Soa.Sp.Extensions
         /// <returns></returns>
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, IAppEventsManager eventsManager, IEventSeralize seralizer)
         {
-            var service = builder.Services;
-            service.AddSingleton(eventsManager);
-            var factory = CreateConnect(mqConnstr);
-            var defaultconn = new DefaultRabbitMQPersistentConnection(factory, eventsManager, seralizer, 5);
-            service.AddSingleton<IRabbitMQPersistentConnection>(defaultconn);
+            builder.Services.AddSingleton<IRabbitMQPersistentConnection, DefaultRabbitMQPersistentConnection>(sp =>
+            {
+                var service = builder.Services;
+                service.AddSingleton(eventsManager);
+                var factory = CreateConnect(mqConnstr);
+                var sub_logger = sp.GetService<ILogger<IEventBusSubManager>>();
+                var defaultconn = new DefaultRabbitMQPersistentConnection(factory, eventsManager, seralizer, sub_logger, 5);
+                return defaultconn;
+            });
             return builder;
         }
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, string enven_mgr_api, IEventSeralize seralizer)
@@ -118,9 +122,7 @@ namespace YiDian.Soa.Sp.Extensions
                 var conn = sp.GetService<IRabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                 var logger = sp.GetService<ILogger<DirectEventBus>>();
-                var sub_logger = sp.GetService<ILogger<IEventBusSubManager>>();
-                var eventbus = new DirectEventBus(logger, iLifetimeScope, sub_logger, conn);
-                eventbus.EnableHandlerCache(cacheLength);
+                var eventbus = new DirectEventBus(logger, iLifetimeScope, conn, cacheCount: cacheLength);
                 return eventbus;
             });
             return builder;
@@ -132,9 +134,7 @@ namespace YiDian.Soa.Sp.Extensions
                 var conn = sp.GetService<IRabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                 var logger = sp.GetService<ILogger<ITopicEventBus>>();
-                var sub_logger = sp.GetService<ILogger<IEventBusSubManager>>();
-                var eventbus = new TopicEventBusMQ(logger, iLifetimeScope, conn, sub_logger);
-                eventbus.EnableHandlerCache(cacheLength);
+                var eventbus = new TopicEventBusMQ(logger, iLifetimeScope, conn, cacheCount: cacheLength);
                 return eventbus;
             });
             return builder;

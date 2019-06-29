@@ -6,17 +6,17 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;
 using System.IO;
+using System.Linq;
 
 namespace YiDian.EventBus.MQ
 {
     public abstract class EventBusBase<TEventBus, TSub> : IEventBus, IDisposable where TEventBus : IEventBus where TSub : Subscriber<TEventBus>
     {
-        private readonly IRabbitMQPersistentConnection _persistentConnection;
+        private readonly IRabbitMQPersistentConnection _conn;
         private readonly EventHanlerCacheMgr hanlerCacheMgr;
         readonly int _retryCount;
         readonly ILogger<TEventBus> _logger;
         readonly ThreadChannels channels = ThreadChannels.Default;
-        readonly IEventBusSubManagerFactory _subsFactory;
         readonly PublishPool publishPool = null;
         readonly IEventBusSubManager _pub_sub;
 
@@ -25,24 +25,23 @@ namespace YiDian.EventBus.MQ
         protected readonly List<ConsumerConfig<TEventBus, TSub>> consumerInfos;
         protected readonly IEventSeralize __seralize;
 
-        internal EventBusBase(ILogger<TEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection, ILogger<IEventBusSubManager> sub_logger, IEventBusSubManagerFactory factory = null, int retryCount = 5, int cacheCount = 100)
+        internal EventBusBase(ILogger<TEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection,int retryCount = 5, int cacheCount = 100)
         {
-            _persistentConnection = persistentConnection ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
-            _persistentConnection.OnConnectRecovery += _persistentConnection_OnConnectRecovery;
+            _conn = persistentConnection ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
+            _conn.OnConnectRecovery += _persistentConnection_OnConnectRecovery;
             _logger = logger ?? throw new ArgumentNullException(nameof(ILogger<TEventBus>));
             __seralize = persistentConnection.Seralizer;
-            _subsFactory = factory ?? new InMemorySubFactory(persistentConnection.EventsManager, sub_logger);
             consumerInfos = new List<ConsumerConfig<TEventBus, TSub>>();
             hanlerCacheMgr = new EventHanlerCacheMgr(cacheCount, autofac, AUTOFAC_SCOPE_NAME);
-            _pub_sub = _subsFactory.GetOrCreateByQueue("publish");
+            _pub_sub = _conn.SubsFactory.GetOrCreateByQueue("publish");
             ThreadChannels.UnCatchedException = LogError;
             _retryCount = retryCount;
-            publishPool = new PublishPool(_persistentConnection, __seralize, BROKER_NAME);
+            publishPool = new PublishPool(_conn, __seralize, BROKER_NAME);
         }
 
         protected IEventBusSubManager GetSubscriber(string queueName)
         {
-            var submgr = _subsFactory.GetOrCreateByQueue(queueName);
+            var submgr = _conn.SubsFactory.GetOrCreateByQueue(queueName);
             submgr.OnEventRemoved += SubsManager_OnEventRemoved;
             submgr.OnEventAdd += Submgr_OnEventAdd;
             return submgr;
@@ -77,11 +76,11 @@ namespace YiDian.EventBus.MQ
         }
         void DoInternalUnSub(string queueName, string eventName)
         {
-            if (!_persistentConnection.IsConnected)
+            if (!_conn.IsConnected)
             {
-                _persistentConnection.TryConnect();
+                _conn.TryConnect();
             }
-            using (var channel = _persistentConnection.CreateModel())
+            using (var channel = _conn.CreateModel())
             {
                 channel.QueueUnbind(queue: queueName,
                     exchange: BROKER_NAME,
@@ -90,12 +89,12 @@ namespace YiDian.EventBus.MQ
         }
         void DoInternalSubscription(string queueName, string eventName)
         {
-            if (!_persistentConnection.IsConnected)
+            if (!_conn.IsConnected)
             {
-                _persistentConnection.TryConnect();
+                _conn.TryConnect();
             }
 
-            using (var channel = _persistentConnection.CreateModel())
+            using (var channel = _conn.CreateModel())
             {
                 channel.QueueBind(queue: queueName,
                                   exchange: BROKER_NAME,
@@ -142,15 +141,15 @@ namespace YiDian.EventBus.MQ
         }
         protected virtual void CreateConsumerChannel(ConsumerConfig<TEventBus, TSub> config)
         {
-            if (!_persistentConnection.IsConnected)
+            if (!_conn.IsConnected)
             {
-                _persistentConnection.TryConnect();
+                _conn.TryConnect();
             }
             var dic = new Dictionary<string, object>
             {
                 ["x-max-length"] = config.MaxLength
             };
-            var channel = _persistentConnection.CreateModel();
+            var channel = _conn.CreateModel();
             channel.QueueDeclare(queue: config.Name,
                                  durable: config.Durable,
                                  exclusive: false,
@@ -174,7 +173,9 @@ namespace YiDian.EventBus.MQ
             var consumer = item.ConsumerConfig;
             var mgr = consumer.GetSubMgr();
             var handlers = mgr.GetHandlersForEvent(eventName);
-            if (handlers == null) return;
+            var ider = handlers.GetEnumerator();
+            var flag = ider.MoveNext();
+            if (!flag) return;
             ProcessEvent(handlers, item);
         }
         private void AckChannel(object obj)
@@ -194,8 +195,10 @@ namespace YiDian.EventBus.MQ
             var ea = msg.Event;
             int xxx = 0;
             var config = msg.ConsumerConfig;
-            foreach (var subinfo in subInfos)
+            var ider = subInfos.GetEnumerator();
+            while (ider.MoveNext())
             {
+                var subinfo = ider.Current;
                 if (subinfo.IsDynamic)
                 {
                     hanlerCacheMgr.GetDynamicHandler(subinfo.HandlerType, out IBytesHandler handler, out ILifetimeScope scope);
@@ -243,11 +246,11 @@ namespace YiDian.EventBus.MQ
 
         public void DeleteQueue(string queuename, bool force)
         {
-            if (!_persistentConnection.IsConnected)
+            if (!_conn.IsConnected)
             {
-                _persistentConnection.TryConnect();
+                _conn.TryConnect();
             }
-            var channel = _persistentConnection.CreateModel();
+            var channel = _conn.CreateModel();
             if (force)
                 channel.QueueDelete(queuename, false, false);
             else
@@ -263,7 +266,7 @@ namespace YiDian.EventBus.MQ
             }
             consumerInfos.Clear();
             publishPool.Dispose();
-            _persistentConnection.Dispose();
+            _conn.Dispose();
         }
 
     }

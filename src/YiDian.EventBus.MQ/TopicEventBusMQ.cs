@@ -14,7 +14,7 @@ namespace YiDian.EventBus.MQ
     {
         //readonly ThreadChannels<SendItem> sending;
 
-        public TopicEventBusMQ(ILogger<ITopicEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection, ILogger<IEventBusSubManager> sub_logger, IEventBusSubManagerFactory factory = null, int retryCount = 5, int cacheCount = 100) : base(logger, autofac, persistentConnection, sub_logger, factory, retryCount, cacheCount)
+        public TopicEventBusMQ(ILogger<ITopicEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection, int retryCount = 5, int cacheCount = 100) : base(logger, autofac, persistentConnection, retryCount, cacheCount)
         {
             //sending = new ThreadChannels<SendItem>(DoWork, 4)
             //{

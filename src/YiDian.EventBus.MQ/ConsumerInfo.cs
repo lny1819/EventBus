@@ -11,6 +11,7 @@ namespace YiDian.EventBus.MQ
         private readonly TSub _subscriber;
         private readonly IEventBusSubManager __manager;
         private IModel _model;
+        EventingBasicConsumer _consumer;
 
         public ConsumerConfig(TSub subscriber, IEventBusSubManager mgr)
         {
@@ -26,20 +27,24 @@ namespace YiDian.EventBus.MQ
         public Action<TSub> SubAction { get; internal set; }
 
 
-        internal void Start(IModel channel, Action<ConsumerConfig<TEventBus, TSub>, BasicDeliverEventArgs> config_OnReceive)
+        internal void Register(IModel channel, Action<ConsumerConfig<TEventBus, TSub>, BasicDeliverEventArgs> config_OnReceive, bool autoStart)
         {
             var old = _model;
             _model = channel;
             if (old != null && old != channel)
                 old.Dispose();
             if (old == _model) return;
-            var consumer = new EventingBasicConsumer(channel);
-            consumer.Received += (model, ea) =>
+            _consumer = new EventingBasicConsumer(channel);
+            _consumer.Received += (model, ea) =>
             {
                 config_OnReceive(this, ea);
             };
             SubAction.Invoke(_subscriber);
-            _model.BasicConsume(queue: Name, autoAck: AutoAck, consumer: consumer);
+            if (autoStart) Start();
+        }
+        internal void Start()
+        {
+            _model.BasicConsume(Name, AutoAck, _consumer);
         }
         internal IModel GetChannel()
         {

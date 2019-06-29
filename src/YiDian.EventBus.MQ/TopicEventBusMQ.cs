@@ -125,7 +125,7 @@ namespace YiDian.EventBus.MQ
                 if (right != null) GetMembers(right, dic);
             }
         }
-        public void StartConsumer(string queueName, Action<TopicSubscriber> action, ushort fetchCount, int queueLength, bool autodel, bool durable, bool autoAck)
+        public void RegisterConsumer(string queueName, Action<TopicSubscriber> action, ushort fetchCount, int queueLength, bool autodel, bool durable, bool autoAck, bool autoStart)
         {
             if (string.IsNullOrEmpty(queueName)) return;
             var config = consumerInfos.Find(x => x.Name == queueName);
@@ -143,7 +143,7 @@ namespace YiDian.EventBus.MQ
                 SubAction = action
             };
             consumerInfos.Add(config);
-            CreateConsumerChannel(config);
+            CreateConsumerChannel(config, autoStart);
         }
 
         public void Subscribe<T, TH>(string queueName, Expression<Func<T, bool>> where)

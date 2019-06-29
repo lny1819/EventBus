@@ -7,6 +7,7 @@ namespace YiDian.EventBus
         event EventHandler<Exception> OnUncatchException;
         void EnableHandlerCache(int cacheLength);
         void DeleteQueue(string queuename, bool force);
+        void Start(string queueName);
         void Publish<T>(T @event, bool enableTransaction = false) where T : IMQEvent;
         void Subscribe<T, TH>(string queueName)
             where T : IMQEvent
@@ -23,6 +24,6 @@ namespace YiDian.EventBus
         void UnsubscribeBytes<T, TH>(string queueName)
             where T : IMQEvent
             where TH : IBytesHandler;
-        void StartConsumer(string queuename, Action<DirectSubscriber> action, ushort fetchCount = 200, int queueLength = 100000, bool autodel = false, bool durable = true, bool autoAck = false);
+        void RegisterConsumer(string queuename, Action<DirectSubscriber> action, ushort fetchCount = 200, int queueLength = 100000, bool autodel = false, bool durable = true, bool autoAck = false, bool autoStart = false);
     }
 }

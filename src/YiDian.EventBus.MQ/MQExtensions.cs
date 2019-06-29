@@ -21,10 +21,10 @@ namespace YiDian.Soa.Sp.Extensions
         /// <returns></returns>
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, IAppEventsManager eventsManager, IEventSeralize seralizer)
         {
+            var service = builder.Services;
+            service.AddSingleton(eventsManager);
             builder.Services.AddSingleton<IRabbitMQPersistentConnection, DefaultRabbitMQPersistentConnection>(sp =>
             {
-                var service = builder.Services;
-                service.AddSingleton(eventsManager);
                 var factory = CreateConnect(mqConnstr);
                 var sub_logger = sp.GetService<ILogger<IEventBusSubManager>>();
                 var defaultconn = new DefaultRabbitMQPersistentConnection(factory, eventsManager, seralizer, sub_logger, 5);

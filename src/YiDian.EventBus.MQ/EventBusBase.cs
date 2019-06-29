@@ -25,7 +25,7 @@ namespace YiDian.EventBus.MQ
         protected readonly List<ConsumerConfig<TEventBus, TSub>> consumerInfos;
         protected readonly IEventSeralize __seralize;
 
-        internal EventBusBase(ILogger<TEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection,int retryCount = 5, int cacheCount = 100)
+        internal EventBusBase(ILogger<TEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection, int retryCount = 5, int cacheCount = 100)
         {
             _conn = persistentConnection ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
             _conn.OnConnectRecovery += _persistentConnection_OnConnectRecovery;
@@ -126,6 +126,21 @@ namespace YiDian.EventBus.MQ
 
         #region Consumer
 
+        public void Start(string queueName)
+        {
+            if (string.IsNullOrEmpty(queueName))
+            {
+                _logger.LogInformation("the queueName can not be empth");
+                return;
+            }
+            var config = consumerInfos.Find(x => x.Name == queueName);
+            if (config == null)
+            {
+                _logger.LogInformation("can not find the consumerinfo be named " + queueName);
+                return;
+            }
+            config.Start();
+        }
         protected void LogError(Exception ex)
         {
             if (OnUncatchException != null)
@@ -139,7 +154,7 @@ namespace YiDian.EventBus.MQ
             //    CreateConsumerChannel(consumerinfo);
             //}
         }
-        protected virtual void CreateConsumerChannel(ConsumerConfig<TEventBus, TSub> config)
+        protected virtual void CreateConsumerChannel(ConsumerConfig<TEventBus, TSub> config, bool autoStart)
         {
             if (!_conn.IsConnected)
             {
@@ -158,13 +173,13 @@ namespace YiDian.EventBus.MQ
             channel.BasicQos(0, config.FetchCount, false);
             channel.CallbackException += (sender, ea) =>
             {
-                CreateConsumerChannel(config);
+                CreateConsumerChannel(config, true);
             };
-            config.Start(channel, (c, e) =>
+            config.Register(channel, (c, e) =>
             {
                 var item = new QueueItem<TEventBus, TSub>(c, e);
                 channels.QueueWorkItemInternal(StartProcess, item);
-            });
+            }, autoStart);
         }
         private void StartProcess(object obj)
         {

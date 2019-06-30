@@ -7,12 +7,10 @@ namespace YiDian.EventBus.MQ
 {
     internal class EventHanlerCacheMgr
     {
-        readonly IServiceProvider _autofac;
-        readonly string _lifeName;
-        public EventHanlerCacheMgr(int length, IServiceProvider autofac, string lifeName)
+        IServiceProvider _autofac;
+        public EventHanlerCacheMgr(int length, IServiceProvider autofac)
         {
             _autofac = autofac ?? throw new ArgumentNullException(nameof(IServiceProvider));
-            _lifeName = lifeName;
             CacheLength = length;
         }
         readonly ConcurrentDictionary<Type, ConcurrentStack<IBytesHandler>> dynamicDics = new ConcurrentDictionary<Type, ConcurrentStack<IBytesHandler>>();
@@ -53,6 +51,7 @@ namespace YiDian.EventBus.MQ
                 handler = sp.GetService(type) as IBytesHandler;
             }
         }
+
         public void ResteDymaicHandler(IBytesHandler handler, Type type, IServiceScope scope)
         {
             if (CacheLength == 0)

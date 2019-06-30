@@ -1,26 +1,42 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace YiDian.Soa.Sp
 {
-    public class DataQueue<T>
+    public struct DataQueue<T>
     {
-        static int xx_flag = 0;
+        static readonly int per_size = 2000;
+        static readonly int Count = 20;
+        static readonly int TotalLength = Count * per_size;
+        static readonly Stack<int> Stack = new Stack<int>(Count);
+        static readonly T[] orginal = new T[TotalLength];
+        static DataQueue()
+        {
+            for (var i = 0; i < Count; i++)
+            {
+                Stack.Push(i * per_size);
+            }
+        }
+        public static DataQueue<T> Create()
+        {
+            var i = Stack.Pop();
+            return new DataQueue<T>(i);
+        }
         int index;
+        readonly int offset;
         long flag;
         readonly int length;
-        readonly T[] array;
         bool canWrite;
-        public DataQueue(int l)
+        private DataQueue(int l)
         {
-            Id = Interlocked.Increment(ref xx_flag);
+            offset = l;
             length = l;
             index = 0;
             flag = 0;
-            array = new T[length];
             canWrite = true;
         }
-        public int Id { get; }
         public int Length { get { return index; } }
         public bool Enqueue(T t)
         {
@@ -36,7 +52,7 @@ namespace YiDian.Soa.Sp
                     Interlocked.Decrement(ref flag);
                     return false;
                 }
-                array[x - 1] = t;
+                orginal[offset + x - 1] = t;
                 Interlocked.Decrement(ref flag);
                 return true;
             }
@@ -46,7 +62,7 @@ namespace YiDian.Soa.Sp
                 return false;
             }
         }
-        public void Stop()
+        void Stop()
         {
             if (!canWrite) return;
             canWrite = false;
@@ -59,21 +75,15 @@ namespace YiDian.Soa.Sp
                 }
             }
         }
-        public void Restart()
-        {
-            canWrite = true;
-        }
-        public T[] GetData()
+        public ReadOnlySpan<T> GetData()
         {
             Stop();
             if (index == 0) return null;
-            if (index == length) return array;
-            else
-            {
-                var des = new T[index];
-                Array.Copy(array, des, index);
-                return des;
-            }
+            return new ReadOnlySpan<T>(orginal, offset, index);
+        }
+        public void Reset()
+        {
+            Stack.Push(offset);
         }
     }
 }

@@ -24,7 +24,6 @@ namespace YiDian.EventBus.MQ
 
         public override string BROKER_NAME => "amq.topic";
 
-        public override string AUTOFAC_SCOPE_NAME => "TopicEventBus";
         private void DoWork(SendItem item)
         {
             var fix = GetPubKey(item.Event);

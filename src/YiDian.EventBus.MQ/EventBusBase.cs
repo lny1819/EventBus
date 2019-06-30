@@ -33,7 +33,7 @@ namespace YiDian.EventBus.MQ
             _logger = logger ?? throw new ArgumentNullException(nameof(ILogger<TEventBus>));
             __seralize = persistentConnection.Seralizer;
             consumerInfos = new List<ConsumerConfig<TEventBus, TSub>>();
-            hanlerCacheMgr = new EventHanlerCacheMgr(cacheCount, autofac, AUTOFAC_SCOPE_NAME);
+            hanlerCacheMgr = new EventHanlerCacheMgr(cacheCount, autofac);
             _pub_sub = _conn.SubsFactory.GetOrCreateByQueue("publish");
             ThreadChannels.UnCatchedException = LogError;
             _retryCount = retryCount;
@@ -49,7 +49,6 @@ namespace YiDian.EventBus.MQ
         }
 
         public abstract string BROKER_NAME { get; }
-        public abstract string AUTOFAC_SCOPE_NAME { get; }
         public abstract void Publish<T>(T @event, bool enableTransaction = false) where T : IMQEvent;
         public abstract string GetEventKeyFromRoutingKey(string routingKey);
         public abstract void Subscribe<T, TH>(string queueName)

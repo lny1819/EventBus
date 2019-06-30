@@ -12,8 +12,6 @@ namespace YiDian.EventBus.MQ
 
         public override string BROKER_NAME => "amq.direct";
 
-        public override string AUTOFAC_SCOPE_NAME => "DirectEventBus";
-
         public override string GetEventKeyFromRoutingKey(string routingKey)
         {
             return routingKey;

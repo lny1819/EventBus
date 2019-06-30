@@ -26,17 +26,19 @@ namespace Consumer
         public void ConfigService(SoaServiceContainerBuilder soa, ContainerBuilder builder)
         {
             var curAssembly = Assembly.GetEntryAssembly();
-            //builder.RegisterAssemblyTypes(curAssembly).Where(e => e.Name.EndsWith("Handler")).PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
-
+            builder.RegisterAssemblyTypes(curAssembly).Where(e => e.Name.EndsWith("Handler")).PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies).SingleInstance();
             builder.Register((e) =>
             {
                 var cct = e.Resolve<IQpsCounter>();
-                return new SleepTaskResult(cct);
+                var tr = new SleepTaskResult(cct);
+                var hdl = new MyHandler()
+                {
+                    TaskResult = tr,
+                    Counter = cct,
+                    Logger = e.Resolve<ILogger<MyHandler>>()
+                };
+                return hdl;
             }).SingleInstance();
-
-            builder.RegisterType<MyHandler2>()
-                .PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies)
-                .AsSelf().SingleInstance();
             soa.UseRabbitMq(Configuration["mqconnstr"], new JsonSeralizer())
                  .UseDirectEventBus(1000)
                  .UseTopicEventBus(1000);
@@ -46,13 +48,12 @@ namespace Consumer
         }
         public void Start(IServiceProvider sp, string[] args)
         {
-
             var channels = ThreadChannels.Default;
-            var direct = sp.GetService<IDirectEventBus>();
+            var direct = sp.GetRequiredService<IDirectEventBus>();
             var topic = sp.GetService<ITopicEventBus>();
             direct.RegisterConsumer("test-direct1", x =>
             {
-                x.Subscribe<MqA, MyHandler2>();
+                x.Subscribe<MqA, MyHandler>();
                 //x.SubscribeBytes<MqA, MyHandler>();
             }, queueLength: 10000000, autodel: false, fetchCount: 2000);
             topic.RegisterConsumer("test-topic-1", x =>
@@ -63,27 +64,26 @@ namespace Consumer
             {
                 x.Subscribe<MqA, My3Handler>("s1.#");
             }, length: 10000000, autodelete: false);
-
         }
     }
-    public class MyHandler2 : IEventHandler<MqA>, IBytesHandler
+    public class MyHandler : IEventHandler<MqA>, IBytesHandler
     {
         readonly Thread thread;
 
-        //readonly DataQueue<MYDDD>[] his_datas;
-        DataQueue<MYDDD> his_data;
+        readonly DataQueue<MYDDD>[] his_datas;
+        //DataQueue<MYDDD> his_data;
         bool quue_flag = false;
-        public ILogger<MyHandler2> Logger { get; set; }
+        public ILogger<MyHandler> Logger { get; set; }
         public SleepTaskResult TaskResult { get; set; }
         public IQpsCounter Counter { get; set; }
-        public MyHandler2()
+        public MyHandler()
         {
-            //his_datas = new DataQueue<MYDDD>[2];
-            //his_datas[0] = TaskSource.NewQueue<MYDDD>();
-            his_data = TaskSource.NewQueue<MYDDD>();
+            his_datas = new DataQueue<MYDDD>[2];
+            his_datas[0] = TaskSource.NewQueue<MYDDD>();
+            //his_data = TaskSource.NewQueue<MYDDD>();
 
             thread = new Thread(CheckQueueDataHandler);
-            //thread.Start();
+            thread.Start();
         }
 
         private void CheckQueueDataHandler(object obj)
@@ -92,40 +92,44 @@ namespace Consumer
             for (; ; )
             {
                 Thread.Sleep(maxsleep);
-                var old_his = his_data;
-                his_data = TaskSource.NewQueue<MYDDD>();
-                //var flag = !quue_flag;
-                //int i = flag ? 0 : 1;
-                //ref var old_his_data = ref his_datas[i];
-                //int x = flag ? 1 : 0;
-                //his_datas[x] = TaskSource.NewQueue<MYDDD>();
-                //quue_flag = flag;
+                //var old_his = his_data;
+                //his_data = TaskSource.NewQueue<MYDDD>();
+                var flag = !quue_flag;
+                int i = flag ? 0 : 1;
+                ref var old_his_data = ref his_datas[i];
+                int x = flag ? 1 : 0;
+                his_datas[x] = TaskSource.NewQueue<MYDDD>();
+                quue_flag = flag;
 
-                //if (old_his_data.Length == 0)
+                if (old_his_data.Length == 0)
+                {
+                    old_his_data.Reset();
+                    Thread.Sleep(maxsleep);
+                    continue;
+                }
+
+                var span = old_his_data.GetData();
+
+                //if (old_his.Length == 0)
                 //{
                 //    Thread.Sleep(maxsleep);
                 //    continue;
                 //}
-
-                //var span = old_his_data.GetData();
-
-                if (old_his.Length == 0)
-                {
-                    Thread.Sleep(maxsleep);
-                    continue;
-                }
-                var span = old_his.GetData();
+                //var span = old_his.GetData();
 
 
                 if (span == null)
                 {
+                    old_his_data.Reset();
                     Thread.Sleep(maxsleep);
                     continue;
                 }
-                for (var zz = 0; zz < span.Length; zz++)
+                var ider = span.GetEnumerator();
+                while (ider.MoveNext())
                 {
-                    span[zz].SetResult(true);
+                    ider.Current.SetResult(true);
                 }
+                old_his_data.Reset();
             }
         }
         public Task<bool> Handle(MqA @event)
@@ -136,13 +140,13 @@ namespace Consumer
 
             //var newhis = his_data;
 
-            //int x = quue_flag ? 1 : 0;
-            //ref var his_data = ref his_datas[x];
-            //his_data.Enqueue(cts);
+            int x = quue_flag ? 1 : 0;
+            ref var his_data = ref his_datas[x];
+            his_data.Enqueue(cts);
 
             //newhis.Enqueue(cts);
 
-            TaskResult.Push(cts);
+            //TaskResult.Push(cts);
             return task;
         }
 
@@ -211,7 +215,7 @@ namespace Consumer
         /// <param name="options">The options to apply to the task</param>
         public static MYDDD Create(object asyncState, TaskCreationOptions options = TaskCreationOptions.None)
             => new MYDDD(asyncState, options);
-        public static DataQueue<T> NewQueue<T>() => new DataQueue<T>(4000);
+        public static DataQueue<T> NewQueue<T>() => DataQueue<T>.Create();
     }
     public class MYDDD : TaskCompletionSource<bool>
     {

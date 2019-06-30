@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Concurrent;
 
@@ -6,11 +7,11 @@ namespace YiDian.EventBus.MQ
 {
     internal class EventHanlerCacheMgr
     {
-        readonly ILifetimeScope _autofac;
+        readonly IServiceProvider _autofac;
         readonly string _lifeName;
-        public EventHanlerCacheMgr(int length, ILifetimeScope autofac, string lifeName)
+        public EventHanlerCacheMgr(int length, IServiceProvider autofac, string lifeName)
         {
-            _autofac = autofac ?? throw new ArgumentNullException(nameof(ILifetimeScope));
+            _autofac = autofac ?? throw new ArgumentNullException(nameof(IServiceProvider));
             _lifeName = lifeName;
             CacheLength = length;
         }
@@ -26,13 +27,14 @@ namespace YiDian.EventBus.MQ
         /// <param name="handler"></param>
         /// <param name="scope"></param>
         /// <returns>是否是从缓存中获取</returns>
-        public void GetDynamicHandler(Type type, out IBytesHandler handler, out ILifetimeScope scope)
+        public void GetDynamicHandler(Type type, out IBytesHandler handler, out IServiceScope scope)
         {
             scope = null;
             if (CacheLength == 0)
             {
-                scope = _autofac.BeginLifetimeScope(_lifeName);
-                handler = scope.ResolveOptional(type) as IBytesHandler;
+                scope = _autofac.CreateScope();
+                var sp = scope.ServiceProvider;
+                handler = sp.GetService(type) as IBytesHandler;
                 return;
             }
             if (!dynamicDics.ContainsKey(type))
@@ -46,11 +48,12 @@ namespace YiDian.EventBus.MQ
             var flag = stack.TryPop(out handler);
             if (!flag)
             {
-                scope = _autofac.BeginLifetimeScope(_lifeName);
-                handler = scope.ResolveOptional(type) as IBytesHandler;
+                scope = _autofac.CreateScope();
+                var sp = scope.ServiceProvider;
+                handler = sp.GetService(type) as IBytesHandler;
             }
         }
-        public void ResteDymaicHandler(IBytesHandler handler, Type type, ILifetimeScope scope)
+        public void ResteDymaicHandler(IBytesHandler handler, Type type, IServiceScope scope)
         {
             if (CacheLength == 0)
             {
@@ -61,13 +64,14 @@ namespace YiDian.EventBus.MQ
             if (stack.Count < CacheLength) stack.Push(handler);
             else scope?.Dispose();
         }
-        public void GetIIntegrationEventHandler(Type type, out IEventHandler handler, out ILifetimeScope scope)
+        public void GetIIntegrationEventHandler(Type type, out IEventHandler handler, out IServiceScope scope)
         {
             scope = null;
             if (CacheLength == 0)
             {
-                scope = _autofac.BeginLifetimeScope(_lifeName);
-                handler = scope.ResolveOptional(type) as IEventHandler;
+                scope = _autofac.CreateScope();
+                var sp = scope.ServiceProvider;
+                handler = sp.GetService(type) as IEventHandler;
                 return;
             }
             if (!typeDics.ContainsKey(type))
@@ -81,11 +85,12 @@ namespace YiDian.EventBus.MQ
             var flag = stack.TryPop(out handler);
             if (!flag)
             {
-                scope = _autofac.BeginLifetimeScope(_lifeName);
-                handler = scope.ResolveOptional(type) as IEventHandler;
+                scope = _autofac.CreateScope();
+                var sp = scope.ServiceProvider;
+                handler = sp.GetService(type) as IEventHandler;
             }
         }
-        public void ResteTypeHandler(IEventHandler handler, Type type, ILifetimeScope scope)
+        public void ResteTypeHandler(IEventHandler handler, Type type, IServiceScope scope)
         {
             if (CacheLength == 0)
             {

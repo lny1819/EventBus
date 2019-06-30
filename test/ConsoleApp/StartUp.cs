@@ -22,7 +22,7 @@ namespace ConsoleApp
         {
             var curAssembly = Assembly.GetEntryAssembly();
             builder.RegisterAssemblyTypes(curAssembly).Where(e => e.Name.EndsWith("Handler")).PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
-            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"]).UseTopicEventBus<JsonSeralizer>();
+            soa.UseRabbitMq(Configuration["mqconnstr"], new JsonSeralizer()).UseTopicEventBus();
 #if DEBUG
             soa.AutoCreateAppEvents("es_quote");
 #endif
@@ -30,7 +30,7 @@ namespace ConsoleApp
         public void Start(IServiceProvider sp, string[] args)
         {
             var top = sp.GetService<ITopicEventBus>();
-            top.StartConsumer("rec_quote_bytes", (x) =>
+            top.RegisterConsumer("rec_quote_bytes", (x) =>
             {
                 x.SubscribeBytes<QuoteBytes, BytesHandler>("#.QuoteBytes");
             }, 100, 3000, true, false, true);

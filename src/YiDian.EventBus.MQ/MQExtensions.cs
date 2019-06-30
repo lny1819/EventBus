@@ -37,6 +37,11 @@ namespace YiDian.Soa.Sp.Extensions
             var mgr = new HttpEventsManager(enven_mgr_api);
             return UseRabbitMq(builder, mqConnstr, mgr, seralizer);
         }
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr,  IEventSeralize seralizer)
+        {
+            var mgr = new DefaultEventsManager();
+            return UseRabbitMq(builder, mqConnstr, mgr, seralizer);
+        }
         /// <summary>
         /// 创建系统所依赖的消息总线中的消息类型
         /// </summary>
@@ -122,7 +127,7 @@ namespace YiDian.Soa.Sp.Extensions
                 var conn = sp.GetService<IRabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                 var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                 var logger = sp.GetService<ILogger<DirectEventBus>>();
-                var eventbus = new DirectEventBus(logger, iLifetimeScope, conn, cacheCount: cacheLength);
+                var eventbus = new DirectEventBus(logger, sp, conn, cacheCount: cacheLength);
                 return eventbus;
             });
             return builder;
@@ -132,9 +137,8 @@ namespace YiDian.Soa.Sp.Extensions
             builder.Services.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
             {
                 var conn = sp.GetService<IRabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
-                var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
                 var logger = sp.GetService<ILogger<ITopicEventBus>>();
-                var eventbus = new TopicEventBusMQ(logger, iLifetimeScope, conn, cacheCount: cacheLength);
+                var eventbus = new TopicEventBusMQ(logger, sp, conn, cacheCount: cacheLength);
                 return eventbus;
             });
             return builder;

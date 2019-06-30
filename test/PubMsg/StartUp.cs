@@ -22,7 +22,7 @@ namespace ConsoleApp
         }
         public void ConfigService(SoaServiceContainerBuilder soa, ContainerBuilder builder)
         {
-            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"], new JsonSeralizer())
+            soa.UseRabbitMq(Configuration["mqconnstr"], new JsonSeralizer())
                  .UseDirectEventBus()
                  .UseTopicEventBus();
         }
@@ -97,13 +97,14 @@ namespace ConsoleApp
 
         public byte[] ToBytes()
         {
-            var encode = System.Text.Encoding.UTF8;
-            var a = encode.GetByteCount(C);
-            foreach (var s in D)
-            {
-                a += encode.GetByteCount(s);
-            }
-            var datas = new byte[a];
+            return null;
+            //var encode = System.Text.Encoding.UTF8;
+            //var a = encode.GetByteCount(C);
+            //foreach (var s in D)
+            //{
+            //    a += encode.GetByteCount(s);
+            //}
+            //var datas = new byte[a];
         }
     }
 }

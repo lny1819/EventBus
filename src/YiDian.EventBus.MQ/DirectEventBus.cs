@@ -6,7 +6,7 @@ namespace YiDian.EventBus.MQ
 {
     public class DirectEventBus : EventBusBase<IDirectEventBus, DirectSubscriber>, IDirectEventBus
     {
-        public DirectEventBus(ILogger<IDirectEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection = null, int retryCount = 5, int cacheCount = 100) : base(logger, autofac, persistentConnection, retryCount, cacheCount)
+        public DirectEventBus(ILogger<IDirectEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection = null, int retryCount = 5, int cacheCount = 100) : base(logger, autofac, persistentConnection, retryCount, cacheCount)
         {
         }
 

@@ -24,6 +24,6 @@ namespace YiDian.EventBus
         void UnsubscribeBytes<T, TH>(string queueName)
             where T : IMQEvent
             where TH : IBytesHandler;
-        void RegisterConsumer(string queuename, Action<DirectSubscriber> action, ushort fetchCount = 200, int queueLength = 100000, bool autodel = false, bool durable = true, bool autoAck = false, bool autoStart = false);
+        void RegisterConsumer(string queuename, Action<DirectSubscriber> action, ushort fetchCount = 200, int queueLength = 100000, bool autodel = false, bool durable = true, bool autoAck = false, bool autoStart = true);
     }
 }

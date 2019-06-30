@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using PubMessage.Models;
 using YiDian.Soa.Sp;
 using YiDian.Soa.Sp.Extensions;
 

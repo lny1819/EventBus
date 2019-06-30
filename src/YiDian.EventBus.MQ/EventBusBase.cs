@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.IO;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace YiDian.EventBus.MQ
 {
@@ -25,7 +26,7 @@ namespace YiDian.EventBus.MQ
         protected readonly List<ConsumerConfig<TEventBus, TSub>> consumerInfos;
         protected readonly IEventSeralize __seralize;
 
-        internal EventBusBase(ILogger<TEventBus> logger, ILifetimeScope autofac, IRabbitMQPersistentConnection persistentConnection, int retryCount = 5, int cacheCount = 100)
+        internal EventBusBase(ILogger<TEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, int retryCount = 5, int cacheCount = 100)
         {
             _conn = persistentConnection ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
             _conn.OnConnectRecovery += _persistentConnection_OnConnectRecovery;
@@ -222,14 +223,14 @@ namespace YiDian.EventBus.MQ
                 var subinfo = ider.Current;
                 if (subinfo.IsDynamic)
                 {
-                    hanlerCacheMgr.GetDynamicHandler(subinfo.HandlerType, out IBytesHandler handler, out ILifetimeScope scope);
+                    hanlerCacheMgr.GetDynamicHandler(subinfo.HandlerType, out IBytesHandler handler, out IServiceScope scope);
                     var task = handler.Handle(ea.RoutingKey, ea.Body);
                     var res = task.ConfigureAwait(false);
                     var waiter = res.GetAwaiter();
                     waiter.OnCompleted(() =>
                     {
                         hanlerCacheMgr.ResteDymaicHandler(handler, subinfo.HandlerType, scope);
-                        if (task.IsFaulted) LogError(task.Exception);
+                        //if (task.IsFaulted) LogError(task.Exception);
                         if (!config.AutoAck && task.IsCompletedSuccessfully)
                         {
                             if (waiter.IsCompleted && waiter.GetResult())
@@ -243,7 +244,7 @@ namespace YiDian.EventBus.MQ
                 else
                 {
                     var integrationEvent = __seralize.DeserializeObject(ea.Body, subinfo.EventType);
-                    hanlerCacheMgr.GetIIntegrationEventHandler(subinfo.HandlerType, out IEventHandler handler, out ILifetimeScope scope);
+                    hanlerCacheMgr.GetIIntegrationEventHandler(subinfo.HandlerType, out IEventHandler handler, out IServiceScope scope);
                     var task = (Task<bool>)subinfo.Handler(handler, new object[] { integrationEvent });
                     var res = task.ConfigureAwait(false);
                     var waiter = res.GetAwaiter();

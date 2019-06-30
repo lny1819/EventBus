@@ -179,7 +179,7 @@ namespace YiDian.EventBus.MQ
         int _limit;
         int _state = 0;
         readonly int _allRun = 0;
-        internal ThreadChannels(Action<T> action, int limit, bool highlvl = false)
+        public ThreadChannels(Action<T> action, int limit, bool highlvl = false)
         {
             _limit = Math.Min(limit, Environment.ProcessorCount);
             dowork = action;

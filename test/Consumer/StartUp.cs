@@ -83,7 +83,7 @@ namespace Consumer
             //his_data = TaskSource.NewQueue<MYDDD>();
 
             thread = new Thread(CheckQueueDataHandler);
-            thread.Start();
+            //thread.Start();
         }
 
         private void CheckQueueDataHandler(object obj)
@@ -140,13 +140,13 @@ namespace Consumer
 
             //var newhis = his_data;
 
-            int x = quue_flag ? 1 : 0;
-            ref var his_data = ref his_datas[x];
-            his_data.Enqueue(cts);
+            //int x = quue_flag ? 1 : 0;
+            //ref var his_data = ref his_datas[x];
+            //his_data.Enqueue(cts);
 
             //newhis.Enqueue(cts);
 
-            //TaskResult.Push(cts);
+            TaskResult.Push(cts);
             return task;
         }
 

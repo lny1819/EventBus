@@ -53,34 +53,35 @@ namespace Consumer
             var topic = sp.GetService<ITopicEventBus>();
             direct.RegisterConsumer("test-direct1", x =>
             {
-                x.Subscribe<MqA, MyHandler>();
-                //x.SubscribeBytes<MqA, MyHandler>();
+                //x.Subscribe<MqA, MyHandler>();
+                x.SubscribeBytes<MqA, MyHandler>();
             }, queueLength: 10000000, autodel: false, fetchCount: 2000);
-            topic.RegisterConsumer("test-topic-1", x =>
-             {
-                 x.Subscribe<MqA, My2Handler>(m => m.A == "a");
-             }, length: 10000000, autodelete: false);
-            topic.RegisterConsumer("test-topic-2", x =>
-            {
-                x.Subscribe<MqA, My3Handler>("s1.#");
-            }, length: 10000000, autodelete: false);
+            //topic.RegisterConsumer("test-topic-1", x =>
+            // {
+            //     x.Subscribe<MqA, My2Handler>(m => m.A == "a");
+            // }, length: 10000000, autodelete: false);
+            //topic.RegisterConsumer("test-topic-2", x =>
+            //{
+            //    x.Subscribe<MqA, My3Handler>("s1.#");
+            //}, length: 10000000, autodelete: false);
         }
     }
     public class MyHandler : IEventHandler<MqA>, IBytesHandler
     {
         readonly Thread thread;
 
-        readonly DataQueue<MYDDD>[] his_datas;
-        //DataQueue<MYDDD> his_data;
+        readonly DataQueue<TaskCompletionSource<bool>>[] his_datas;
+        //DataQueue<TaskCompletionSource<bool>> his_data;
         bool quue_flag = false;
         public ILogger<MyHandler> Logger { get; set; }
         public SleepTaskResult TaskResult { get; set; }
         public IQpsCounter Counter { get; set; }
         public MyHandler()
         {
-            his_datas = new DataQueue<MYDDD>[2];
-            his_datas[0] = DataQueue<MYDDD>.Create();
-            //his_data = TaskSource.NewQueue<MYDDD>();
+            his_datas = new DataQueue<TaskCompletionSource<bool>>[2];
+            his_datas[0] = DataQueue<TaskCompletionSource<bool>>.Create();
+
+            //his_data = DataQueue<TaskCompletionSource<bool>>.Create();
 
             thread = new Thread(CheckQueueDataHandler);
             thread.Start();
@@ -92,13 +93,15 @@ namespace Consumer
             for (; ; )
             {
                 Thread.Sleep(maxsleep);
-                //var old_his = his_data;
-                //his_data = TaskSource.NewQueue<MYDDD>();
+
+                //var old_his_data = his_data;
+                //his_data = DataQueue<TaskCompletionSource<bool>>.Create();
+
                 var flag = !quue_flag;
                 int i = flag ? 0 : 1;
                 ref var old_his_data = ref his_datas[i];
                 int x = flag ? 1 : 0;
-                his_datas[x] = DataQueue<MYDDD>.Create();
+                his_datas[x] = DataQueue<TaskCompletionSource<bool>>.Create();
                 quue_flag = flag;
 
                 if (old_his_data.Length == 0)
@@ -109,13 +112,6 @@ namespace Consumer
                 }
 
                 var span = old_his_data.GetData();
-
-                //if (old_his.Length == 0)
-                //{
-                //    Thread.Sleep(maxsleep);
-                //    continue;
-                //}
-                //var span = old_his.GetData();
 
 
                 if (span == null)
@@ -134,7 +130,7 @@ namespace Consumer
         }
         public Task<bool> Handle(MqA @event)
         {
-            var cts = TaskSource.Create(@event);
+            var cts = TaskSource.Create<bool>(@event);
 
             var task = cts.Task;
 
@@ -143,8 +139,8 @@ namespace Consumer
             ref var his_data = ref his_datas[x];
             his_data.Enqueue(cts);
 
-            //newhis.Enqueue(cts);
             //var newhis = his_data;
+            //newhis.Enqueue(cts);
 
             //TaskResult.Push(cts);
             return task;
@@ -152,55 +148,65 @@ namespace Consumer
 
         public ValueTask<bool> Handle(string routingKey, byte[] datas)
         {
-            Counter.Add("c2");
-            return new ValueTask<bool>(Task.FromResult(true));
-        }
-    }
-    public class My3Handler : IEventHandler<MqA>, IBytesHandler
-    {
-        public ILogger<My3Handler> Logger { get; set; }
-        public SleepTaskResult TaskResult { get; set; }
-        public IQpsCounter Counter { get; set; }
-        public Task<bool> Handle(MqA @event)
-        {
-            var cts = TaskSource.Create(@event);
-            var task = cts.Task;
-            TaskResult.Push(cts);
-            return task;
-        }
+            var cts = TaskSource.Create<bool>(datas);
 
-        public ValueTask<bool> Handle(string routingKey, byte[] datas)
-        {
-            return new ValueTask<bool>(Task.FromResult(true));
-        }
-    }
-    public class My2Handler : IEventHandler<MqA>
-    {
-        public ILogger<My2Handler> Logger { get; set; }
-        public SleepTaskResult TaskResult { get; set; }
-        public Task<bool> Handle(MqA @event)
-        {
-            var cts = TaskSource.Create(@event);
             var task = cts.Task;
-            TaskResult.Push(cts);
-            return task;
+
+            //var newhis = his_data;
+            //newhis.Enqueue(cts);
+
+            int x = quue_flag ? 1 : 0;
+            ref var his_data = ref his_datas[x];
+            his_data.Enqueue(cts);
+
+            return new ValueTask<bool>(task);
         }
     }
+    //public class My3Handler : IEventHandler<MqA>, IBytesHandler
+    //{
+    //    public ILogger<My3Handler> Logger { get; set; }
+    //    public SleepTaskResult TaskResult { get; set; }
+    //    public IQpsCounter Counter { get; set; }
+    //    public Task<bool> Handle(MqA @event)
+    //    {
+    //        var cts = TaskSource.Create(@event);
+    //        var task = cts.Task;
+    //        TaskResult.Push(cts);
+    //        return task;
+    //    }
+
+    //    public ValueTask<bool> Handle(string routingKey, byte[] datas)
+    //    {
+    //        return new ValueTask<bool>(Task.FromResult(true));
+    //    }
+    //}
+    //public class My2Handler : IEventHandler<MqA>
+    //{
+    //    public ILogger<My2Handler> Logger { get; set; }
+    //    public SleepTaskResult TaskResult { get; set; }
+    //    public Task<bool> Handle(MqA @event)
+    //    {
+    //        var cts = TaskSource.Create(@event);
+    //        var task = cts.Task;
+    //        TaskResult.Push(cts);
+    //        return task;
+    //    }
+    //}
     public class SleepTaskResult
     {
-        readonly ThreadChannels<MYDDD> channels;
+        readonly ThreadChannels<TaskCompletionSource<bool>> channels;
         readonly IQpsCounter counter;
         public SleepTaskResult(IQpsCounter counter)
         {
             //channels = ThreadChannels.Create(8);
-            channels = new ThreadChannels<MYDDD>(DoWork, 4);
+            channels = new ThreadChannels<TaskCompletionSource<bool>>(DoWork, 4);
             this.counter = counter;
         }
-        public void Push(MYDDD tcs)
+        public void Push(TaskCompletionSource<bool> tcs)
         {
             channels.QueueWorkItemInternal(tcs);
         }
-        private void DoWork(MYDDD obj)
+        private void DoWork(TaskCompletionSource<bool> obj)
         {
             obj.TrySetResult(true);
         }
@@ -213,14 +219,8 @@ namespace Consumer
         /// <typeparam name="T">The type for the created <see cref="TaskCompletionSource{TResult}"/>.</typeparam>
         /// <param name="asyncState">The state for the created <see cref="TaskCompletionSource{TResult}"/>.</param>
         /// <param name="options">The options to apply to the task</param>
-        public static MYDDD Create(object asyncState, TaskCreationOptions options = TaskCreationOptions.None)
-            => new MYDDD(asyncState, options);
-    }
-    public class MYDDD : TaskCompletionSource<bool>
-    {
-        public MYDDD(object state, TaskCreationOptions creationOptions) : base(state, creationOptions)
-        {
-        }
+        public static TaskCompletionSource<T> Create<T>(object asyncState, TaskCreationOptions options = TaskCreationOptions.None)
+            => new TaskCompletionSource<T>(asyncState, options);
     }
     public class MyAwait : ICriticalNotifyCompletion, IAsyncResult
     {

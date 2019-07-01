@@ -28,6 +28,7 @@ namespace YiDian.Soa.Sp
             {
                 list.Add(i * per_size);
             }
+            Stack = new ConcurrentStack<int>(list);
         }
         public static bool Create(out DataQueue<T> flag)
         {

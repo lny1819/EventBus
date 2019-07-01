@@ -7,7 +7,7 @@ namespace YiDian.Soa.Sp
 {
     public struct DataQueue<T>
     {
-        static DataQueue<T> Null;
+        public static DataQueue<T> Null;
         static int per_size = 0;
         static int Count = 0;
         static int TotalLength;

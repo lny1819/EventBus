@@ -10,13 +10,24 @@ namespace ConsoleApp
 {
     class Program
     {
-        class XA
+        struct XA
         {
+            public int IA { get; set; }
             public string Name { get; set; }
             public List<Tuple<string, string>> List { get; set; }
         }
         static void Main(string[] args)
         {
+            XA x = new XA
+            {
+                List = new List<Tuple<string, string>>()
+            };
+            x.IA = 2;
+            x.List.Add(new Tuple<string, string>("zs", "ls"));
+            XA y = x;
+            y.IA = 3;
+            y.List.Add(new Tuple<string, string>("zs2", "ls2"));
+            Console.WriteLine();
             //List<Tuple<string, string>> list = new List<Tuple<string, string>>
             //{
             //    new Tuple<string, string>("zs", "ls"),

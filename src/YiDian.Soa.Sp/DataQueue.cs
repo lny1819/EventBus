@@ -7,13 +7,25 @@ namespace YiDian.Soa.Sp
 {
     public struct DataQueue<T>
     {
-        static readonly int per_size = 2000;
-        static readonly int Count = 20;
-        static readonly int TotalLength = Count * per_size;
-        static readonly Stack<int> Stack = new Stack<int>(Count);
-        static readonly T[] orginal = new T[TotalLength];
+        static int per_size = 2000;
+        static int Count = 20;
+        static int TotalLength = Count * per_size;
+        static Stack<int> Stack = new Stack<int>(Count);
+        static T[] orginal = new T[TotalLength];
         static DataQueue()
         {
+            for (var i = 0; i < Count; i++)
+            {
+                Stack.Push(i * per_size);
+            }
+        }
+        public static void Reload(int persize, int count)
+        {
+            per_size = persize;
+            Count = count;
+            Stack = new Stack<int>(Count);
+            TotalLength = Count * per_size;
+            orginal = new T[TotalLength];
             for (var i = 0; i < Count; i++)
             {
                 Stack.Push(i * per_size);

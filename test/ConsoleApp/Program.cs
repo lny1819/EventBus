@@ -17,25 +17,25 @@ namespace ConsoleApp
         }
         static void Main(string[] args)
         {
-            List<Tuple<string, string>> list = new List<Tuple<string, string>>
-            {
-                new Tuple<string, string>("zs", "ls"),
-                new Tuple<string, string>("zs2", "ls2"),
-                new Tuple<string, string>("zs3", "ls3"),
-            };
-            XA xa = new XA
-            {
-                List = list,
-                Name = "zs"
-            };
-            var arr = xa.List.ToJson();
-            var obj = JsonString.Unpack(arr);
-            Console.WriteLine();
-            //ServiceHost.CreateBuilder(args)
-            //     .ConfigApp(e => e.AddJsonFile("appsettings.json"))
-            //     .UserStartUp<StartUp>()
-            //     .Build()
-            //     .Run(e => e["sysname"]);
+            //List<Tuple<string, string>> list = new List<Tuple<string, string>>
+            //{
+            //    new Tuple<string, string>("zs", "ls"),
+            //    new Tuple<string, string>("zs2", "ls2"),
+            //    new Tuple<string, string>("zs3", "ls3"),
+            //};
+            //XA xa = new XA
+            //{
+            //    List = list,
+            //    Name = "zs"
+            //};
+            //var arr = xa.List.ToJson();
+            //var obj = JsonString.Unpack(arr);
+            //Console.WriteLine();
+            ServiceHost.CreateBuilder(args)
+                 .ConfigApp(e => e.AddJsonFile("appsettings.json"))
+                 .UserStartUp<StartUp>()
+                 .Build()
+                 .Run(e => e["sysname"]);
 
             //var task = WithTask();
             //var awaiter = task.GetAwaiter();

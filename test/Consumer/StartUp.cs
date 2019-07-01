@@ -40,8 +40,8 @@ namespace Consumer
                 return hdl;
             }).SingleInstance();
             soa.UseRabbitMq(Configuration["mqconnstr"], new JsonSeralizer())
-                 .UseDirectEventBus(1000)
-                 .UseTopicEventBus(1000);
+                 .UseDirectEventBus(0)
+                 .UseTopicEventBus(0);
 #if DEBUG
             //soa.AutoCreateAppEvents("pub_test");
 #endif
@@ -79,11 +79,11 @@ namespace Consumer
         public MyHandler()
         {
             his_datas = new DataQueue<MYDDD>[2];
-            his_datas[0] = TaskSource.NewQueue<MYDDD>();
+            his_datas[0] = DataQueue<MYDDD>.Create();
             //his_data = TaskSource.NewQueue<MYDDD>();
 
             thread = new Thread(CheckQueueDataHandler);
-            //thread.Start();
+            thread.Start();
         }
 
         private void CheckQueueDataHandler(object obj)
@@ -98,7 +98,7 @@ namespace Consumer
                 int i = flag ? 0 : 1;
                 ref var old_his_data = ref his_datas[i];
                 int x = flag ? 1 : 0;
-                his_datas[x] = TaskSource.NewQueue<MYDDD>();
+                his_datas[x] = DataQueue<MYDDD>.Create();
                 quue_flag = flag;
 
                 if (old_his_data.Length == 0)
@@ -138,15 +138,15 @@ namespace Consumer
 
             var task = cts.Task;
 
-            //var newhis = his_data;
 
-            //int x = quue_flag ? 1 : 0;
-            //ref var his_data = ref his_datas[x];
-            //his_data.Enqueue(cts);
+            int x = quue_flag ? 1 : 0;
+            ref var his_data = ref his_datas[x];
+            his_data.Enqueue(cts);
 
             //newhis.Enqueue(cts);
+            //var newhis = his_data;
 
-            TaskResult.Push(cts);
+            //TaskResult.Push(cts);
             return task;
         }
 
@@ -215,7 +215,6 @@ namespace Consumer
         /// <param name="options">The options to apply to the task</param>
         public static MYDDD Create(object asyncState, TaskCreationOptions options = TaskCreationOptions.None)
             => new MYDDD(asyncState, options);
-        public static DataQueue<T> NewQueue<T>() => DataQueue<T>.Create();
     }
     public class MYDDD : TaskCompletionSource<bool>
     {

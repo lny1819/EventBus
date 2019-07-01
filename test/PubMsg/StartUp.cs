@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils.Seralize;
@@ -92,11 +93,15 @@ namespace ConsoleApp
     }
     public class MqB
     {
+        [SeralizeIndex(0)]
         public string C { get; set; }
+        [SeralizeIndex(1)]
         public string[] D { get; set; }
 
-        public byte[] ToBytes()
+        public Stream ToBytes()
         {
+            //int32 Int64 UInt32 UInt64 double date bool string other
+            var i = C.Length;
             return null;
             //var encode = System.Text.Encoding.UTF8;
             //var a = encode.GetByteCount(C);

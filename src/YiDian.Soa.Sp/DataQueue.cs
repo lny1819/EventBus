@@ -35,7 +35,7 @@ namespace YiDian.Soa.Sp
             flag = Null;
             var f = Stack.TryPop(out int i);
             if (!f) return f;
-            flag = new DataQueue<T>(i);
+            flag = new DataQueue<T>(i, per_size);
             return true;
         }
         int index;
@@ -43,10 +43,10 @@ namespace YiDian.Soa.Sp
         long flag;
         readonly int length;
         bool canWrite;
-        private DataQueue(int l)
+        private DataQueue(int off, int size)
         {
-            offset = l;
-            length = l;
+            offset = off;
+            length = size;
             index = 0;
             flag = 0;
             canWrite = true;

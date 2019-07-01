@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -7,34 +8,35 @@ namespace YiDian.Soa.Sp
 {
     public struct DataQueue<T>
     {
-        static int per_size = 2000;
-        static int Count = 20;
-        static int TotalLength = Count * per_size;
-        static Stack<int> Stack = new Stack<int>(Count);
-        static T[] orginal = new T[TotalLength];
+        static DataQueue<T> Null;
+        static int per_size = 0;
+        static int Count = 0;
+        static int TotalLength;
+        static ConcurrentStack<int> Stack;
+        static T[] orginal;
         static DataQueue()
         {
-            for (var i = 0; i < Count; i++)
-            {
-                Stack.Push(i * per_size);
-            }
+            Reload(100, 20);
         }
         public static void Reload(int persize, int count)
         {
             per_size = persize;
             Count = count;
-            Stack = new Stack<int>(Count);
             TotalLength = Count * per_size;
             orginal = new T[TotalLength];
+            var list = new List<int>(Count);
             for (var i = 0; i < Count; i++)
             {
-                Stack.Push(i * per_size);
+                list.Add(i * per_size);
             }
         }
-        public static DataQueue<T> Create()
+        public static bool Create(out DataQueue<T> flag)
         {
-            var i = Stack.Pop();
-            return new DataQueue<T>(i);
+            flag = Null;
+            var f = Stack.TryPop(out int i);
+            if (!f) return f;
+            flag = new DataQueue<T>(i);
+            return true;
         }
         int index;
         readonly int offset;

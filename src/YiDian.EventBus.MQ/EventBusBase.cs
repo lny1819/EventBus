@@ -229,7 +229,7 @@ namespace YiDian.EventBus.MQ
                     waiter.OnCompleted(() =>
                     {
                         hanlerCacheMgr.ResteDymaicHandler(handler, subinfo.HandlerType, scope);
-                        //if (task.IsFaulted) LogError(task.Exception);
+                        if (task.IsFaulted) LogError(task.Exception);
                         if (!config.AutoAck && task.IsCompletedSuccessfully)
                         {
                             if (waiter.IsCompleted && waiter.GetResult())

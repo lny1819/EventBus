@@ -7,7 +7,7 @@ namespace YiDian.Soa.Sp
 {
     public struct DataQueue<T>
     {
-        public static DataQueue<T> Null;
+        private static DataQueue<T> Null = default(DataQueue<T>);
         static int per_size = 0;
         static int Count = 0;
         static int TotalLength;
@@ -38,19 +38,25 @@ namespace YiDian.Soa.Sp
             flag = new DataQueue<T>(i, per_size);
             return true;
         }
+
+        public static bool IsNull(DataQueue<T> queue)
+        {
+            if (queue.Size == 0) return true;
+            return false;
+        }
         int index;
         readonly int offset;
         long flag;
-        readonly int length;
         bool canWrite;
         private DataQueue(int off, int size)
         {
             offset = off;
-            length = size;
+            this.Size = size;
             index = 0;
             flag = 0;
             canWrite = true;
         }
+        public int Size { get; }
         public int Length { get { return index; } }
         public bool Enqueue(T t)
         {
@@ -59,7 +65,7 @@ namespace YiDian.Soa.Sp
                 if (!canWrite) return false;
                 Interlocked.Increment(ref flag);
                 var x = Interlocked.Increment(ref index);
-                if (x > length)
+                if (x > Size)
                 {
                     canWrite = false;
                     Interlocked.Decrement(ref index);

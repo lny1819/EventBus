@@ -49,7 +49,7 @@ namespace YiDian.EventBus
             res[1] = B;
             return res;
         }
-        public short GetValue()
+        public ushort GetValue()
         {
             return BitConverter.ToUInt16(new byte[] { A, B });
         }

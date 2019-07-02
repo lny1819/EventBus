@@ -257,7 +257,7 @@ namespace ConsoleApp
     }
     public interface IDefaultEventModelSeralize
     {
-        void ToBytes(WriteStream stream);
+        int ToBytes(WriteStream stream);
     }
     public class WriteStream
     {
@@ -335,12 +335,11 @@ namespace ConsoleApp
             string v = value.ToString("yyyy-MM-dd HH:mm:ss.fff");
             WriteString(v);
         }
-        public void WriteArrayByte(IEnumerable<byte> value, short count)
+        public void WriteArrayByte(IEnumerable<byte> value, uint count)
         {
-            WriteByte((byte)EventPropertyType.L_8);
-            WriteInt16(count);
             var span = Advance(4);
             int size = 0;
+            WriteUInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
@@ -349,12 +348,11 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayString(IEnumerable<string> value, int count)
+        public void WriteArrayString(IEnumerable<string> value, uint count)
         {
-            WriteByte((byte)EventPropertyType.L_Str);
-            WriteInt16(count);
             var span = Advance(4);
             int size = 0;
+            WriteUInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
@@ -362,12 +360,11 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayInt16(IEnumerable<short> value, short count)
+        public void WriteArrayInt16(IEnumerable<short> value, uint count)
         {
-            WriteByte((byte)EventPropertyType.L_16);
-            WriteInt16(count);
             var span = Advance(4);
             int size = 0;
+            WriteUInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
@@ -376,12 +373,11 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayUInt16(IEnumerable<ushort> value, short count)
+        public void WriteArrayUInt16(IEnumerable<ushort> value, uint count)
         {
-            WriteByte((byte)EventPropertyType.L_16);
-            WriteInt16(count);
             var span = Advance(4);
             int size = 0;
+            WriteUInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
@@ -390,12 +386,11 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayInt32(IEnumerable<int> value, short count)
+        public void WriteArrayInt32(IEnumerable<int> value, uint count)
         {
-            WriteByte((byte)EventPropertyType.L_32);
-            WriteInt16(count);
             var span = Advance(4);
             int size = 0;
+            WriteUInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
@@ -404,12 +399,11 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayUInt32(IEnumerable<uint> value, short count)
+        public void WriteArrayUInt32(IEnumerable<uint> value, uint count)
         {
-            WriteByte((byte)EventPropertyType.L_32);
-            WriteInt16(count);
             var span = Advance(4);
             int size = 0;
+            WriteUInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
@@ -418,12 +412,11 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayInt64(IEnumerable<long> value, short count)
+        public void WriteArrayInt64(IEnumerable<long> value, uint count)
         {
-            WriteByte((byte)EventPropertyType.L_64);
-            WriteInt16(count);
             var span = Advance(4);
             int size = 0;
+            WriteUInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
@@ -432,12 +425,11 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayUInt64(IEnumerable<ulong> value, short count)
+        public void WriteArrayUInt64(IEnumerable<ulong> value, uint count)
         {
-            WriteByte((byte)EventPropertyType.L_64);
-            WriteInt16(count);
             var span = Advance(4);
             int size = 0;
+            WriteUInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
@@ -446,12 +438,11 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayDouble(IEnumerable<double> value, short count)
+        public void WriteArrayDouble(IEnumerable<double> value, uint count)
         {
-            WriteByte((byte)EventPropertyType.L_64);
-            WriteInt16(count);
             var span = Advance(4);
             int size = 0;
+            WriteUInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
@@ -460,40 +451,21 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArray<T>(IEnumerable<T> value, short count, EventPropertyType type) where T : IDefaultEventModelSeralize
+        public void WriteEventArray<T>(IEnumerable<T> value, uint count) where T : IDefaultEventModelSeralize
         {
-            WriteByte((byte)type);
-            WriteInt16(count);
             var span = Advance(4);
             int size = 0;
+            WriteUInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
-                if (type == EventPropertyType.L_Str)
-                    WriteString(ider.Current.ToString());
+                size += WriteEventObj(ider.Current));
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayEventObj<T>(IEnumerable<T> value, int count) where T : IDefaultEventModelSeralize
+        public int WriteEventObj(IDefaultEventModelSeralize obj)
         {
-            WriteInt32(count);
-            var ider = value.GetEnumerator();
-            while (ider.MoveNext())
-            {
-                WriteEventObj(ider.Current);
-            }
-        }
-        public void WriteArrayInt32(IEnumerable<int> value)
-        {
-            var ider = value.GetEnumerator();
-            while (ider.MoveNext())
-            {
-                WriteInt32(ider.Current);
-            }
-        }
-        public void WriteEventObj(IDefaultEventModelSeralize obj)
-        {
-            obj.ToBytes(this);
+            return obj.ToBytes(this);
         }
         public byte[] GetBytes()
         {

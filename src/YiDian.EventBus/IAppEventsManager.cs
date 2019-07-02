@@ -33,8 +33,9 @@ namespace YiDian.EventBus
         public static readonly string P_UInt64 = "UInt64";
         public static readonly string P_String = "string";
         public static readonly string P_Date = "DateTime";
+        public static readonly string P_Byte = "Byte";
         public static readonly string P_Boolean = "Boolean";
-        public static string[] MetaTypeValues = new string[] { P_Int32, P_Int64, P_UInt32, P_UInt64, P_String, P_Boolean, P_Double, P_Date };
+        public static string[] MetaTypeValues = new string[] { P_Int32, P_Int64, P_UInt32, P_UInt64, P_String, P_Boolean, P_Double, P_Date, P_Byte };
 
         public string Name { get; set; }
         public string Type { get; set; }
@@ -50,7 +51,7 @@ namespace YiDian.EventBus
             if (Attr == null) sb.Append("null");
             else Attr.ToJson(sb);
             sb.Append("}");
-        }
+        } 
     }
     public class EnumMeta
     {
@@ -130,7 +131,7 @@ namespace YiDian.EventBus
         }
         public List<EnumMeta> Enums { get; set; }
         public List<ClassMeta> MetaInfos { get; set; }
-        public string Version { get; set; }
+        public Version Version { get; set; }
         public string Name { get; set; }
         public string ToJson()
         {
@@ -138,7 +139,7 @@ namespace YiDian.EventBus
             sb.Append("{\"Name\":\"");
             sb.Append(Name);
             sb.Append("\",\"Version\":\"");
-            sb.Append(Version);
+            sb.Append(Version.ToString());
             sb.Append("\",\"MetaInfos\":[");
             for (var i = 0; i < MetaInfos.Count; i++)
             {

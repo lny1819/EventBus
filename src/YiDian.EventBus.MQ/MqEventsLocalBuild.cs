@@ -176,7 +176,7 @@ namespace YiDian.EventBus.MQ
                     file?.Close();
                 }
             }
-            var versionFile = Path.Combine(dir, appmeta.Version + ".v");
+            var versionFile = Path.Combine(dir, appmeta.Version.ToString() + ".v");
             var v_file = File.OpenWrite(versionFile);
             var json = appmeta.ToJson();
             v_file.Write(json);

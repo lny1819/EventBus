@@ -272,7 +272,7 @@ namespace YiDian.EventBus.MQ
             var appmetas = new AppMetas
             {
                 Name = ht["Name"].ToString(),
-                Version = ht["Version"].ToString(),
+                Version = Version.Parse(ht["Version"].ToString()),
             };
             var list = (ArrayList)ht["MetaInfos"];
             foreach (var item in list)

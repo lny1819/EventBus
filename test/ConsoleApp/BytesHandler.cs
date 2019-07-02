@@ -6,10 +6,10 @@ namespace ConsoleApp
 {
     internal class BytesHandler : IBytesHandler
     {
-        public ValueTask<bool> Handle(string routingKey, byte[] datas)
+        public Task<bool> Handle(string routingKey, byte[] datas)
         {
             var info = datas.ByteToEsQuote();
-            return new ValueTask<bool>(Task.FromResult(true));
+            return Task.FromResult(true);
         }
 
     }

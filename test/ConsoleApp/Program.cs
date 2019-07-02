@@ -18,16 +18,24 @@ namespace ConsoleApp
         }
         static void Main(string[] args)
         {
-            XA x = new XA
-            {
-                List = new List<Tuple<string, string>>()
-            };
-            x.IA = 2;
-            x.List.Add(new Tuple<string, string>("zs", "ls"));
-            XA y = x;
-            y.IA = 3;
-            y.List.Add(new Tuple<string, string>("zs2", "ls2"));
-            Console.WriteLine();
+            var a = new byte[2] { 5, 1 };
+            var b = new byte[2] { 2, 1 };
+
+            var sa = BitConverter.ToInt16(a);
+            var sb = BitConverter.ToInt16(b);
+
+            var sa1 = BitConverter.ToUInt16(a);
+            var sb2 = BitConverter.ToUInt16(b);
+            //XA x = new XA
+            //{
+            //    List = new List<Tuple<string, string>>()
+            //};
+            //x.IA = 2;
+            //x.List.Add(new Tuple<string, string>("zs", "ls"));
+            //XA y = x;
+            //y.IA = 3;
+            //y.List.Add(new Tuple<string, string>("zs2", "ls2"));
+            //Console.WriteLine();
             //List<Tuple<string, string>> list = new List<Tuple<string, string>>
             //{
             //    new Tuple<string, string>("zs", "ls"),

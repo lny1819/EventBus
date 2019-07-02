@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -32,9 +33,29 @@ namespace ConsoleApp
         public void Start(IServiceProvider sp, string[] args)
         {
 
-            MqA xa = new MqA() { A = "a", B = "b", LC = new List<string>() { "22", "hello" }, Type = MqType.LS, D = new string[2] { "a", "b" }, QB = new MqB() { D = new string[] { "e", "f" }, C = "zs" } };
+            MqA xa = new MqA()
+            {
+                A = "a",
+                B = "b",
+                LC = new List<string>() { "22", "hello" },
+                Type = MqType.LS,
+                D = new string[2] { "a", "b" },
+                QB = new MqB() { D = new string[] { "e1", "f1" }, C = "zs1" },
+                Date = DateTime.Now,
+                Flag = false,
+                QBS = new List<MqB>()
+                {
+                       new MqB(){ D = new string[] { "e2", "f2" }, C = "zs2" },
+                       new MqB(){ D = new string[] { "e3", "f3" }, C = "zs3" },
+                       new MqB(){ D = new string[] { "e4", "f4" }, C = "zs4" }
+                }
+            };
             var stream = new WriteStream();
             xa.ToBytes(stream);
+            var datas = stream.GetBytes();
+            var reads = new ReadStream(datas);
+            MqA xb = new MqA();
+            xb.BytesTo(reads);
 
             var eventsMgr = sp.GetRequiredService<IAppEventsManager>();
             var res = eventsMgr.RegisterEvent<MqA>("pub_test", "1.2");
@@ -98,24 +119,93 @@ namespace ConsoleApp
         public string[] D { get; set; }
         [SeralizeIndex(5)]
         public MqType Type { get; set; }
+        [SeralizeIndex(6)]
+        public bool Flag { get; set; }
+        [SeralizeIndex(7)]
+        public DateTime Date { get; set; }
+        [SeralizeIndex(8)]
+        public List<MqB> QBS { get; set; }
+        [SeralizeIndex(9)]
+        public int Index { get; set; }
+        [SeralizeIndex(10)]
+        public double Amount { get; set; }
         public void ToBytes(WriteStream stream)
         {
-            //int32 Int64 UInt32 UInt64 double date bool string other
-            stream.WriteByte(4);
-            stream.WriteHeader(EventPropertyType.L_32, 1);
-            stream.WriteHeader(EventPropertyType.L_Str, 2);
-            stream.WriteHeader(EventPropertyType.L_Array, 2);
+            stream.WriteByte(5);
+            stream.WriteHeader(EventPropertyType.L_8, 1);
+            stream.WriteHeader(EventPropertyType.L_32, 2);
+            stream.WriteHeader(EventPropertyType.L_64, 1);
+            stream.WriteHeader(EventPropertyType.L_Str, 3);
+            stream.WriteHeader(EventPropertyType.L_Array, 3);
             stream.WriteHeader(EventPropertyType.L_N, 1);
             stream.WriteInt32((int)Type);
+            stream.WriteInt32(Index);
+            stream.WriteDouble(Amount);
             stream.WriteString(A);
             stream.WriteString(B);
-            stream.WriteArrayString(D);
-            stream.WriteArrayString(LC);
+            stream.WriteDate(Date);
+            stream.WriteArrayString(LC, LC.Count);
+            stream.WriteArrayString(D, D.Length);
+            stream.WriteArrayEventObj(QBS, QBS.Count);
             stream.WriteEventObj(QB);
         }
-        public MqA BytesTo(ReadStream datas)
+        public void BytesTo(ReadStream stream)
         {
+            var headers = stream.ReadHeaders();
+            if (headers.TryGetValue(EventPropertyType.L_8, out byte count))
+            {
+                Flag = stream.ReadByte() == 1;
+                for (var i = 0; i < count - 1; i++)
+                {
+                    stream.ReadByte();
+                }
+            }
+            if (headers.TryGetValue(EventPropertyType.L_32, out count))
+            {
+                Type = (MqType)stream.ReadInt32();
+                Index = stream.ReadInt32();
+                for (var i = 0; i < count - 1; i++)
+                {
+                    stream.ReadInt32();
+                }
+            }
+            if (headers.TryGetValue(EventPropertyType.L_64, out count))
+            {
+                Amount = stream.ReadDouble();
+                for (var i = 0; i < count; i++)
+                {
+                    stream.ReadInt64();
+                }
+            }
+            if (headers.TryGetValue(EventPropertyType.L_Str, out count))
+            {
+                A = stream.ReadString();
+                B = stream.ReadString();
+                Date = stream.ReadDate();
+                for (var i = 0; i < count - 2; i++)
+                {
+                    stream.ReadString();
+                }
+            }
+            if (headers.TryGetValue(EventPropertyType.L_Array, out count))
+            {
+                LC = stream.ReadArrayString().ToList();
+                D = stream.ReadArrayString();
+                QBS = stream.ReadArray<QB>().ToList()
+                for (var i = 0; i < count - 2; i++)
+                {
+                    stream.ReadInt32();
+                }
+            }
+            if (headers.TryGetValue(EventPropertyType.L_N, out count))
+            {
+                QB = new MqB();
+                QB.BytesTo(stream);
+                for (var i = 0; i < count - 1; i++)
+                {
 
+                }
+            }
         }
     }
     public enum MqType : byte
@@ -123,7 +213,7 @@ namespace ConsoleApp
         ZS = 1,
         LS = 2
     }
-    public class MqB : IMQSeralize
+    public class MqB : IDefaultEventModelSeralize
     {
         [SeralizeIndex(0)]
         public string C { get; set; }
@@ -136,15 +226,36 @@ namespace ConsoleApp
             stream.WriteHeader(EventPropertyType.L_Str, 1);
             stream.WriteHeader(EventPropertyType.L_Array, 1);
             stream.WriteString(C);
-            stream.WriteArrayString(D);
+            stream.WriteArrayString(D, (short)D.Length);
         }
-        public MqB BytesTo(ReadStream stream)
+        public void BytesTo(ReadStream stream)
         {
             var headers = stream.ReadHeaders();
-
+            if (headers.TryGetValue(EventPropertyType.L_32, out byte count))
+            {
+                for (var i = 0; i < count; i++)
+                {
+                    stream.ReadInt32();
+                }
+            }
+            if (headers.TryGetValue(EventPropertyType.L_64, out count))
+            {
+                for (var i = 0; i < count; i++)
+                {
+                    stream.ReadInt64();
+                }
+            }
+            if (headers.TryGetValue(EventPropertyType.L_Str, out count))
+            {
+                C = stream.ReadString();
+            }
+            if (headers.TryGetValue(EventPropertyType.L_Array, out count))
+            {
+                D = stream.ReadArrayString();
+            }
         }
     }
-    public interface IMQSeralize
+    public interface IDefaultEventModelSeralize
     {
         void ToBytes(WriteStream stream);
     }
@@ -164,7 +275,7 @@ namespace ConsoleApp
             span[0] = (byte)type;
             span[1] = length;
         }
-        unsafe public void WriteString(string value)
+        unsafe public int WriteString(string value)
         {
             var l = Encoding.UTF8.GetByteCount(value);
             var span = Advance(4);
@@ -177,11 +288,22 @@ namespace ConsoleApp
                     Encoding.UTF8.GetBytes(cPtr, value.Length, bPtr, l);
                 }
             }
+            return l;
         }
         public void WriteByte(byte value)
         {
             var span = Advance(1);
             span[0] = value;
+        }
+        public void WriteInt16(short value)
+        {
+            var span = Advance(2);
+            BitConverter.TryWriteBytes(span, value);
+        }
+        public void WriteUInt16(ushort value)
+        {
+            var span = Advance(2);
+            BitConverter.TryWriteBytes(span, value);
         }
         public void WriteInt32(int value)
         {
@@ -203,12 +325,162 @@ namespace ConsoleApp
             var span = Advance(8);
             BitConverter.TryWriteBytes(span, value);
         }
-        public void WriteArrayString(IEnumerable<string> value)
+        public void WriteDouble(double value)
         {
+            var span = Advance(8);
+            BitConverter.TryWriteBytes(span, value);
+        }
+        public void WriteDate(DateTime value)
+        {
+            string v = value.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            WriteString(v);
+        }
+        public void WriteArrayByte(IEnumerable<byte> value, short count)
+        {
+            WriteByte((byte)EventPropertyType.L_8);
+            WriteInt16(count);
+            var span = Advance(4);
+            int size = 0;
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
-                WriteString(ider.Current);
+                WriteByte(ider.Current);
+                size += 1;
+            }
+            BitConverter.TryWriteBytes(span, size);
+        }
+        public void WriteArrayString(IEnumerable<string> value, int count)
+        {
+            WriteByte((byte)EventPropertyType.L_Str);
+            WriteInt16(count);
+            var span = Advance(4);
+            int size = 0;
+            var ider = value.GetEnumerator();
+            while (ider.MoveNext())
+            {
+                size += WriteString(ider.Current);
+            }
+            BitConverter.TryWriteBytes(span, size);
+        }
+        public void WriteArrayInt16(IEnumerable<short> value, short count)
+        {
+            WriteByte((byte)EventPropertyType.L_16);
+            WriteInt16(count);
+            var span = Advance(4);
+            int size = 0;
+            var ider = value.GetEnumerator();
+            while (ider.MoveNext())
+            {
+                WriteInt16(ider.Current);
+                size += 2;
+            }
+            BitConverter.TryWriteBytes(span, size);
+        }
+        public void WriteArrayUInt16(IEnumerable<ushort> value, short count)
+        {
+            WriteByte((byte)EventPropertyType.L_16);
+            WriteInt16(count);
+            var span = Advance(4);
+            int size = 0;
+            var ider = value.GetEnumerator();
+            while (ider.MoveNext())
+            {
+                WriteUInt16(ider.Current);
+                size += 2;
+            }
+            BitConverter.TryWriteBytes(span, size);
+        }
+        public void WriteArrayInt32(IEnumerable<int> value, short count)
+        {
+            WriteByte((byte)EventPropertyType.L_32);
+            WriteInt16(count);
+            var span = Advance(4);
+            int size = 0;
+            var ider = value.GetEnumerator();
+            while (ider.MoveNext())
+            {
+                WriteInt32(ider.Current);
+                size += 4;
+            }
+            BitConverter.TryWriteBytes(span, size);
+        }
+        public void WriteArrayUInt32(IEnumerable<uint> value, short count)
+        {
+            WriteByte((byte)EventPropertyType.L_32);
+            WriteInt16(count);
+            var span = Advance(4);
+            int size = 0;
+            var ider = value.GetEnumerator();
+            while (ider.MoveNext())
+            {
+                WriteUInt32(ider.Current);
+                size += 4;
+            }
+            BitConverter.TryWriteBytes(span, size);
+        }
+        public void WriteArrayInt64(IEnumerable<long> value, short count)
+        {
+            WriteByte((byte)EventPropertyType.L_64);
+            WriteInt16(count);
+            var span = Advance(4);
+            int size = 0;
+            var ider = value.GetEnumerator();
+            while (ider.MoveNext())
+            {
+                WriteInt64(ider.Current);
+                size += 8;
+            }
+            BitConverter.TryWriteBytes(span, size);
+        }
+        public void WriteArrayUInt64(IEnumerable<ulong> value, short count)
+        {
+            WriteByte((byte)EventPropertyType.L_64);
+            WriteInt16(count);
+            var span = Advance(4);
+            int size = 0;
+            var ider = value.GetEnumerator();
+            while (ider.MoveNext())
+            {
+                WriteUInt64(ider.Current);
+                size += 8;
+            }
+            BitConverter.TryWriteBytes(span, size);
+        }
+        public void WriteArrayDouble(IEnumerable<double> value, short count)
+        {
+            WriteByte((byte)EventPropertyType.L_64);
+            WriteInt16(count);
+            var span = Advance(4);
+            int size = 0;
+            var ider = value.GetEnumerator();
+            while (ider.MoveNext())
+            {
+                WriteDouble(ider.Current);
+                size += 8;
+            }
+            BitConverter.TryWriteBytes(span, size);
+        }
+        public void WriteArray<T>(IEnumerable<T> value, short count, EventPropertyType type) where T : IDefaultEventModelSeralize
+        {
+            WriteByte((byte)type);
+            WriteInt16(count);
+            var span = Advance(4);
+            int size = 0;
+            var ider = value.GetEnumerator();
+            while (ider.MoveNext())
+            {
+                if (type == EventPropertyType.L_Str)
+                    WriteString(ider.Current.ToString());
+            }
+            BitConverter.TryWriteBytes(span, size);
+        }
+        public void WriteArrayEventObj<T>(IEnumerable<T> value, int count) where T : IDefaultEventModelSeralize
+        {
+            WriteInt32(count);
+            var ider = value.GetEnumerator();
+            while (ider.MoveNext())
+            {
+                WriteEventObj(ider.Current);
             }
         }
         public void WriteArrayInt32(IEnumerable<int> value)
@@ -219,9 +491,15 @@ namespace ConsoleApp
                 WriteInt32(ider.Current);
             }
         }
-        public void WriteEventObj(IMQSeralize obj)
+        public void WriteEventObj(IDefaultEventModelSeralize obj)
         {
             obj.ToBytes(this);
+        }
+        public byte[] GetBytes()
+        {
+            var res = new byte[offset];
+            Array.Copy(orginal, res, offset);
+            return res;
         }
     }
     public class ReadStream
@@ -232,18 +510,81 @@ namespace ConsoleApp
         {
             orginal = datas;
         }
-        public Header[] ReadHeaders()
+        public Dictionary<EventPropertyType, byte> ReadHeaders()
         {
             byte count = ReadByte();
-            var headers = new Header[count];
+            var headers = new Dictionary<EventPropertyType, byte>(count);
             for (var i = 0; i < count; i++)
             {
                 var type = (EventPropertyType)ReadByte();
                 var c = ReadByte();
-                var h = new Header() { Count = c, Type = type };
-                headers[i] = h;
+                headers.Add(type, c);
             }
             return headers;
+        }
+        public int ReadInt32()
+        {
+            var i = BitConverter.ToInt32(orginal, offset);
+            offset += 4;
+            return i;
+        }
+        public uint ReadUInt32()
+        {
+            var i = BitConverter.ToUInt32(orginal, offset);
+            offset += 4;
+            return i;
+        }
+        public long ReadInt64()
+        {
+            var i = BitConverter.ToInt64(orginal, offset);
+            offset += 8;
+            return i;
+        }
+        public ulong ReadUInt64()
+        {
+            var i = BitConverter.ToUInt64(orginal, offset);
+            offset += 8;
+            return i;
+        }
+        public double ReadDouble()
+        {
+            var i = BitConverter.ToDouble(orginal, offset);
+            offset += 8;
+            return i;
+        }
+        public string[] ReadArrayString()
+        {
+            var count = ReadInt32();
+            var arrs = new string[count];
+            for (var i = 0; i < count; i++)
+            {
+                arrs[i] = ReadString();
+            }
+            return arrs;
+        }
+        public T[] ReadArray<T>() where T : IDefaultEventModelSeralize
+        {
+            var count = ReadInt32();
+            var arrs = new T[count];
+            for (var i = 0; i < count; i++)
+            {
+                arrs[i] = READ();
+            }
+            return arrs;
+        }
+        public string ReadString()
+        {
+            var count = ReadInt32();
+            var value = Encoding.UTF8.GetString(orginal, offset, count);
+            offset += count;
+            return value;
+        }
+        public DateTime ReadDate()
+        {
+            const int datecount = 23;
+            var value = Encoding.UTF8.GetString(orginal, offset, datecount);
+            offset += datecount;
+            return DateTime.Parse(value);
         }
         public byte ReadByte()
         {
@@ -259,10 +600,11 @@ namespace ConsoleApp
     }
     public enum EventPropertyType : byte
     {
+        L_8,
+        L_16,
         L_32,
         L_64,
         L_Str,
-        L_Date,
         L_Array,
         L_N
     }

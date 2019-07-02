@@ -39,23 +39,23 @@ namespace ConsoleApp
         }
         public void Start(IServiceProvider sp, string[] args)
         {
-            DataQueue<SSAA>.Reload(200, 100);
-            var e = DataQueue<SSAA>.Create();
-            while (true)
-            {
-                for (var i = 0; i < 200; i++)
-                {
-                    var x = new SSAA() { P = i + 1, SA = "zs" };
-                    e.Enqueue(x);
-                }
-                var b = e.GetData();
-                var dd = b.GetEnumerator();
-                while (dd.MoveNext())
-                {
-                    var x = dd.Current;
-                    x.SetP(1);
-                }
-            }
+            //DataQueue<SSAA>.Reload(200, 100);
+            //var e = DataQueue<SSAA>.Create();
+            //while (true)
+            //{
+            //    for (var i = 0; i < 200; i++)
+            //    {
+            //        var x = new SSAA() { P = i + 1, SA = "zs" };
+            //        e.Enqueue(x);
+            //    }
+            //    var b = e.GetData();
+            //    var dd = b.GetEnumerator();
+            //    while (dd.MoveNext())
+            //    {
+            //        var x = dd.Current;
+            //        x.SetP(1);
+            //    }
+            //}
 
             var top = sp.GetService<ITopicEventBus>();
             top.RegisterConsumer("rec_quote_bytes", (x) =>

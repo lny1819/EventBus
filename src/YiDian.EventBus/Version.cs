@@ -18,7 +18,7 @@ namespace YiDian.EventBus
             v.B = temp;
             return v;
         }
-        public static Version Parse(int version)
+        public static Version Parse(short version)
         {
             Version v = new Version
             {
@@ -49,7 +49,10 @@ namespace YiDian.EventBus
             res[1] = B;
             return res;
         }
-
+        public short GetValue()
+        {
+            return BitConverter.ToInt16(new byte[] { A, B });
+        }
         public override bool Equals(object obj)
         {
             return base.Equals(obj);

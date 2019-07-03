@@ -86,10 +86,18 @@ namespace YiDian.EventBus.MQ
             var span = Advance(8);
             BitConverter.TryWriteBytes(span, value);
         }
-        public uint WriteDate(DateTime value)
+        public unsafe uint WriteDate(DateTime value)
         {
             var v = value.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            return WriteString(v);
+            var span = Advance(23);
+            fixed (char* cPtr = v)
+            {
+                fixed (byte* bPtr = &MemoryMarshal.GetReference(span))
+                {
+                    Encoding.UTF8.GetBytes(cPtr, 23, bPtr, 23);
+                }
+            }
+            return 23;
         }
         public void WriteArrayByte(IEnumerable<byte> value)
         {
@@ -344,6 +352,8 @@ namespace YiDian.EventBus.MQ
         }
         public static uint GetArrayStringSize(IEnumerable<string> arr)
         {
+            var count = arr == null ? 0 : (uint)arr.Count();
+            if (count == 0) return 8;
             uint size = 0;
             var ider = arr.GetEnumerator();
             while (ider.MoveNext())
@@ -359,6 +369,8 @@ namespace YiDian.EventBus.MQ
         }
         public static uint GetArrayEventObjSize<T>(IEnumerable<T> arr) where T : IYiDianSeralize
         {
+            var count = arr == null ? 0 : (uint)arr.Count();
+            if (count == 0) return 8;
             uint size = 0;
             var ider = arr.GetEnumerator();
             while (ider.MoveNext())

@@ -670,7 +670,7 @@ namespace YiDian.EventBus.MQ
                 {
                     foreach (var s_pty in lstr_props)
                     {
-                        if (s_pty.Type == PropertyMetaInfo.P_Date) file.Write("23+");
+                        if (s_pty.Type == PropertyMetaInfo.P_Date) file.Write("27+");
                         else file.Write($"WriteStream.GetStringSize({s_pty.Name})+");
                     }
                 }
@@ -685,7 +685,7 @@ namespace YiDian.EventBus.MQ
                         }
                         else if (arrtype == PropertyMetaInfo.P_Date)
                         {
-                            file.Write("23+");
+                            file.Write("27+");
                         }
                         else if (arrtype == PropertyMetaInfo.P_Double)
                         {

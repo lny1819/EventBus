@@ -5,19 +5,19 @@ using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.KeyAttribute;
 namespace EventModels.MyTest
 {
-    public partial class MqA: IYiDianSeralize
+    public partial class MqA : IYiDianSeralize
     {
         public uint ToBytes(WriteStream stream)
         {
             var size = Size();
             stream.WriteUInt32(size);
             stream.WriteByte(6);
-            stream.WriteHeader(EventPropertyType.L_8,1);
-            stream.WriteHeader(EventPropertyType.L_32,2);
-            stream.WriteHeader(EventPropertyType.L_64,1);
-            stream.WriteHeader(EventPropertyType.L_Str,3);
-            stream.WriteHeader(EventPropertyType.L_Array,4);
-            stream.WriteHeader(EventPropertyType.L_N,1);
+            stream.WriteHeader(EventPropertyType.L_8, 1);
+            stream.WriteHeader(EventPropertyType.L_32, 2);
+            stream.WriteHeader(EventPropertyType.L_64, 1);
+            stream.WriteHeader(EventPropertyType.L_Str, 3);
+            stream.WriteHeader(EventPropertyType.L_Array, 4);
+            stream.WriteHeader(EventPropertyType.L_N, 1);
             stream.WriteIndex(6);
             stream.WriteByte(Flag ? (byte)1 : (byte)0);
             stream.WriteIndex(5);
@@ -52,7 +52,7 @@ namespace EventModels.MyTest
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 6){ Flag = stream.ReadByte() == 1;continue;}
+                    if (index == 6) { Flag = stream.ReadByte() == 1; continue; }
                     stream.Advance(1);
                 }
             }
@@ -69,8 +69,8 @@ namespace EventModels.MyTest
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 5){ Type = (MqType)stream.ReadInt32();continue;}
-                    if (index == 9){ Index = stream.ReadInt32();continue;}
+                    if (index == 5) { Type = (MqType)stream.ReadInt32(); continue; }
+                    if (index == 9) { Index = stream.ReadInt32(); continue; }
                     stream.Advance(4);
                 }
             }
@@ -79,7 +79,7 @@ namespace EventModels.MyTest
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 10){ Amount = stream.ReadDouble();continue;}
+                    if (index == 10) { Amount = stream.ReadDouble(); continue; }
                     stream.Advance(8);
                 }
             }
@@ -88,10 +88,10 @@ namespace EventModels.MyTest
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 0){ PropertyA = stream.ReadString();continue;}
-                    if (index == 1){ PropertyB = stream.ReadString();continue;}
-                    if (index == 7){ Date = stream.ReadDate();continue;}
-                     var c = stream.ReadInt32();stream.Advance(c);
+                    if (index == 0) { PropertyA = stream.ReadString(); continue; }
+                    if (index == 1) { PropertyB = stream.ReadString(); continue; }
+                    if (index == 7) { Date = stream.ReadDate(); continue; }
+                    var c = stream.ReadInt32(); stream.Advance(c);
                 }
             }
             if (headers.TryGetValue(EventPropertyType.L_Array, out count))
@@ -99,11 +99,11 @@ namespace EventModels.MyTest
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 3){ PropertyLC = stream.ReadArrayString();continue;}
-                    if (index == 4){ PropertyD = stream.ReadArrayString();continue;}
-                    if (index == 8){ QBS = stream.ReadArray<MqB>();continue;}
-                    if (index == 11){ Amounts = stream.ReadArrayDouble();continue;}
-                    var c = stream.ReadInt32();stream.Advance(c);
+                    if (index == 3) { PropertyLC = stream.ReadArrayString(); continue; }
+                    if (index == 4) { PropertyD = stream.ReadArrayString(); continue; }
+                    if (index == 8) { QBS = stream.ReadArray<MqB>(); continue; }
+                    if (index == 11) { Amounts = stream.ReadArrayDouble(); continue; }
+                    var c = stream.ReadInt32(); stream.Advance(c);
                 }
             }
             if (headers.TryGetValue(EventPropertyType.L_N, out count))
@@ -111,7 +111,7 @@ namespace EventModels.MyTest
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 2){ PropertyQB = new MqB(); PropertyQB.BytesTo(stream);continue;}
+                    if (index == 2) { PropertyQB = new MqB(); PropertyQB.BytesTo(stream); continue; }
                     var l = stream.ReadInt32();
                     stream.Advance(l);
                 }
@@ -119,8 +119,8 @@ namespace EventModels.MyTest
         }
         public uint Size()
         {
-                var size=46+WriteStream.GetStringSize(PropertyA)+WriteStream.GetStringSize(PropertyB)+23+WriteStream.GetArrayStringSize(PropertyLC)+WriteStream.GetArrayStringSize(PropertyD)+WriteStream.GetArrayEventObjSize(QBS)+WriteStream.GetValueArraySize(8,Amounts)+PropertyQB.Size()+ 0;
-                return size;
+            var size = 46 + WriteStream.GetStringSize(PropertyA) + WriteStream.GetStringSize(PropertyB) + 23 + WriteStream.GetArrayStringSize(PropertyLC) + WriteStream.GetArrayStringSize(PropertyD) + WriteStream.GetArrayEventObjSize(QBS) + WriteStream.GetValueArraySize(8, Amounts) + PropertyQB.Size() + 0;
+            return size;
         }
     }
 }

@@ -37,25 +37,34 @@ namespace ConsoleApp
         {
             MqA xa = new MqA()
             {
-                PropertyA = "hello mr li",
-                PropertyB = "i am very happy",
-                PropertyLC = new string[2] { "2hellohello2hello", "hello very good" },
+                PropertyA = "a",
+                PropertyB = "a",
+                PropertyLC = new string[2] { "a", "a" },
                 Type = MqType.LS,
-                PropertyD = new string[2] { "2hellohello2hello", "2hellohello2hello" },
-                PropertyQB = new MqB() { D = new string[] { "2hellohello2hello", "2hellohello2hello" }, C = "zs1" },
+                PropertyD = new string[2] { "a", "a" },
+                PropertyQB = new MqB() { D = new string[] { "a", "a" }, C = "a" },
                 Date = DateTime.Now,
                 Flag = false,
                 QBS = new MqB[]
                 {
-                       new MqB(){ D = new string[] { "2hellohello2helloe2", "2hellohello2hello2" }, C = "zs2hellohello2hello2" },
-                       new MqB(){ D = new string[] { "2hellohello2helloe3", "2hellohello2hellof3" }, C = "z2hellohello2hellos3" },
-                       new MqB(){ D = new string[] { "2hellohello2helloe4", "2hellohello2hellof4" }, C = "z2hellohello2hellos4" }
+                       new MqB(){ D = new string[] { "a", "a" }, C = "a" },
+                       new MqB(){ D = new string[] { "a", "a" }, C = "a" },
+                       new MqB(){ D = new string[] { "a", "a" }, C = "a" }
                 }
             };
 
             var json222 = xa.ToJson();
             var l1 = Encoding.UTF8.GetBytes(json222).Length;
             var l2 = xa.Size();
+
+            var size = xa.Size();
+            var stream = new WriteStream(size);
+            xa.ToBytes(stream);
+            var datas = stream.GetBytes();
+            var reads = new ReadStream(datas);
+            MqA xb = new MqA();
+            xb.BytesTo(reads);
+
             Console.ReadKey();
             GC.Collect(2);
 
@@ -76,12 +85,12 @@ namespace ConsoleApp
             watch.Restart();
             for (var xx = 0; xx < count; xx++)
             {
-                var size = xa.Size();
-                var stream = new WriteStream(size);
+                size = xa.Size();
+                stream = new WriteStream(size);
                 xa.ToBytes(stream);
-                var datas = stream.GetBytes();
-                var reads = new ReadStream(datas);
-                MqA xb = new MqA();
+                datas = stream.GetBytes();
+                reads = new ReadStream(datas);
+                 xb = new MqA();
                 xb.BytesTo(reads);
             }
             Console.WriteLine("mystream test:" + watch.ElapsedMilliseconds.ToString());

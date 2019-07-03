@@ -21,7 +21,7 @@ namespace EventModels.MyTest
             stream.WriteIndex(6);
             stream.WriteByte(Flag ? (byte)1 : (byte)0);
             stream.WriteIndex(5);
-            stream.WriteInt32(Type);
+            stream.WriteInt32((int)Type);
             stream.WriteIndex(9);
             stream.WriteInt32(Index);
             stream.WriteIndex(10);
@@ -69,7 +69,7 @@ namespace EventModels.MyTest
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 5){ Type = stream.ReadUInt32();continue;}
+                    if (index == 5){ Type = (MqType)stream.ReadInt32();continue;}
                     if (index == 9){ Index = stream.ReadInt32();continue;}
                     stream.Advance(4);
                 }

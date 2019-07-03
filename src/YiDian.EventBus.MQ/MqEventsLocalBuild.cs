@@ -281,7 +281,7 @@ namespace YiDian.EventBus.MQ
                         {
                             file.WriteLine(string.Format("            stream.WriteUInt32({0});", item.Name));
                         }
-                        else if (item.Type == PropertyMetaInfo.P_Enum)
+                        else if (item.Type.StartsWith(PropertyMetaInfo.P_Enum))
                         {
                             file.WriteLine(string.Format("            stream.WriteInt32((int){0});", item.Name));
                         }
@@ -440,7 +440,7 @@ namespace YiDian.EventBus.MQ
                             file.Write($" {item.Name} = stream.ReadInt32();continue;");
                             file.WriteLine("}");
                         }
-                        else if (item.Type == PropertyMetaInfo.P_Enum)
+                        else if (item.Type.StartsWith(PropertyMetaInfo.P_Enum))
                         {
                             var type = item.Type.Substring(5);
                             file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");

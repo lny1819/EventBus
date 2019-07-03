@@ -83,8 +83,8 @@ namespace YiDian.EventBus.MQ
                     else if (p.PropertyType.IsArray)
                     {
                         var pname = p.PropertyType.Name;
-                        var name = pname.Substring(0, pname.IndexOf('['));
-                        name = GetBaseTypeName(name);
+                        pname = pname.Substring(0, pname.IndexOf('['));
+                        var name = GetBaseTypeName(pname);
                         if (string.IsNullOrEmpty(name)) name = pname;
                         pinfo.Type = PropertyMetaInfo.P_Array + separator + name;
                     }

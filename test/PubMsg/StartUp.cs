@@ -39,13 +39,13 @@ namespace ConsoleApp
             {
                 PropertyA = "hello mr li",
                 PropertyB = "i am very happy",
-                PropertyLC = new List<string>() { "2hellohello2hello", "hello very good" },
+                PropertyLC = new string[2] { "2hellohello2hello", "hello very good" },
                 Type = MqType.LS,
                 PropertyD = new string[2] { "2hellohello2hello", "2hellohello2hello" },
                 PropertyQB = new MqB() { D = new string[] { "2hellohello2hello", "2hellohello2hello" }, C = "zs1" },
                 Date = DateTime.Now,
                 Flag = false,
-                QBS = new List<MqB>()
+                QBS = new MqB[]
                 {
                        new MqB(){ D = new string[] { "2hellohello2helloe2", "2hellohello2hello2" }, C = "zs2hellohello2hello2" },
                        new MqB(){ D = new string[] { "2hellohello2helloe3", "2hellohello2hellof3" }, C = "z2hellohello2hellos3" },

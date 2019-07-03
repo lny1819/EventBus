@@ -23,7 +23,7 @@ namespace YiDian.EventBus.MQ
         }
     }
 
-    internal class MqEventsLocalBuild : IAppRun
+    public class MqEventsLocalBuild : IAppRun
     {
         const string s_property = "        public {0} {1} ";
         const string list_property = "        public {0}[] {1} ";
@@ -138,7 +138,7 @@ namespace YiDian.EventBus.MQ
             v_file.Write(json);
             v_file.Close();
         }
-        private void CreateMainClassFile(string dir, string s_namespace, ClassMeta meta)
+        public void CreateMainClassFile(string dir, string s_namespace, ClassMeta meta)
         {
             FileStream file = null;
             try
@@ -173,7 +173,7 @@ namespace YiDian.EventBus.MQ
                     else if (p.Type.StartsWith(PropertyMetaInfo.P_Enum))
                     {
                         var type = p.Type.Substring(5);
-                        file.Write(string.Format(list_property, type, p.Name));
+                        file.Write(string.Format(s_property, type, p.Name));
                     }
                     else file.Write(string.Format(s_property, p.Type, p.Name));
                     file.WriteLine("{ get; set; }");
@@ -190,7 +190,7 @@ namespace YiDian.EventBus.MQ
                 file?.Close();
             }
         }
-        private void CreateSeralizeClassFile(string dir, string s_namespace, ClassMeta meta)
+        public void CreateSeralizeClassFile(string dir, string s_namespace, ClassMeta meta)
         {
             FileStream file = null;
             try
@@ -199,6 +199,7 @@ namespace YiDian.EventBus.MQ
                 file.WriteLine("using System;");
                 file.WriteLine("using System.Collections.Generic;");
                 file.WriteLine("using YiDian.EventBus;");
+                file.WriteLine("using YiDian.EventBus.MQ;");
                 file.WriteLine("using YiDian.EventBus.MQ.KeyAttribute;");
                 file.WriteLine("namespace EventModels." + s_namespace);
                 file.WriteLine("{");
@@ -206,7 +207,7 @@ namespace YiDian.EventBus.MQ
                 file.WriteLine("    {");
                 file.WriteLine("        public uint ToBytes(WriteStream stream)");
                 file.WriteLine("        {");
-                file.WriteLine("            var size = Size;");
+                file.WriteLine("            var size = Size();");
                 file.WriteLine("            stream.WriteUInt32(size);");
                 var dic = PropertyGroup(meta.Properties);
                 file.WriteLine(string.Format("            stream.WriteByte({0});", dic.Count.ToString()));
@@ -316,7 +317,8 @@ namespace YiDian.EventBus.MQ
                     foreach (var item in lstr_props)
                     {
                         file.WriteLine(string.Format("            stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
-                        file.WriteLine(string.Format("            stream.WriteString({0});", item.Name));
+                        if (item.Type == PropertyMetaInfo.P_Date) file.WriteLine(string.Format("            stream.WriteDate({0});", item.Name));
+                        else file.WriteLine(string.Format("            stream.WriteString({0});", item.Name));
                     }
                 }
                 if (larr_props != null)
@@ -349,6 +351,315 @@ namespace YiDian.EventBus.MQ
                         file.WriteLine(string.Format("            stream.WriteEventObj({0});", item.Name));
                     }
                 }
+                file.WriteLine("            return size;");
+                file.WriteLine("        }");
+
+                file.WriteLine("        public uint BytesTo(ReadStream stream)");
+                file.WriteLine("        {");
+                file.WriteLine("            var headers = stream.ReadHeaders();");
+
+                #region L8
+                file.WriteLine("            if (headers.TryGetValue(EventPropertyType.L_8, out byte count))");
+                file.WriteLine("            {");
+                file.WriteLine("                for (var i = 0; i < count; i++)");
+                file.WriteLine("                {");
+                file.WriteLine("                    var index = stream.ReadByte();");
+                if (l8_props != null)
+                {
+                    l8_props = l8_props.OrderBy(x => x.SeralizeIndex).ToList();
+                    foreach (var item in l8_props)
+                    {
+                        if (item.Type == PropertyMetaInfo.P_Boolean)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadByte() == 1;continue;");
+                            file.WriteLine("}");
+                        }
+                        else
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadByte();continue;");
+                            file.WriteLine("}");
+                        }
+                    }
+                }
+                file.WriteLine("                    stream.Advance(1);");
+                file.WriteLine("                }");
+                file.WriteLine("            }");
+                #endregion
+
+                #region L16
+                file.WriteLine("            if (headers.TryGetValue(EventPropertyType.L_16, out count))");
+                file.WriteLine("            {");
+                file.WriteLine("                for (var i = 0; i < count; i++)");
+                file.WriteLine("                {");
+                file.WriteLine("                    var index = stream.ReadByte();");
+                if (l16_props != null)
+                {
+                    l16_props = l16_props.OrderBy(x => x.SeralizeIndex).ToList();
+                    foreach (var item in l16_props)
+                    {
+                        if (item.Type == PropertyMetaInfo.P_Int16)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadInt16();continue;");
+                            file.WriteLine("}");
+                        }
+                        else
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadUInt16();continue;");
+                            file.WriteLine("}");
+                        }
+                    }
+                }
+                file.WriteLine("                    stream.Advance(2);");
+                file.WriteLine("                }");
+                file.WriteLine("            }");
+                #endregion
+
+                #region L32
+                file.WriteLine("            if (headers.TryGetValue(EventPropertyType.L_32, out count))");
+                file.WriteLine("            {");
+                file.WriteLine("                for (var i = 0; i < count; i++)");
+                file.WriteLine("                {");
+                file.WriteLine("                    var index = stream.ReadByte();");
+                if (l32_props != null)
+                {
+                    l32_props = l32_props.OrderBy(x => x.SeralizeIndex).ToList();
+                    foreach (var item in l32_props)
+                    {
+                        if (item.Type == PropertyMetaInfo.P_Int32)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadInt32();continue;");
+                            file.WriteLine("}");
+                        }
+                        else if (item.Type == PropertyMetaInfo.P_Enum)
+                        {
+                            var type = item.Type.Substring(5);
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = ({type})stream.ReadInt32();continue;");
+                            file.WriteLine("}");
+                        }
+                        else
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadUInt32();continue;");
+                            file.WriteLine("}");
+                        }
+                    }
+                }
+                file.WriteLine("                    stream.Advance(4);");
+                file.WriteLine("                }");
+                file.WriteLine("            }");
+                #endregion
+
+                #region L_64
+                file.WriteLine("            if (headers.TryGetValue(EventPropertyType.L_64, out count))");
+                file.WriteLine("            {");
+                file.WriteLine("                for (var i = 0; i < count; i++)");
+                file.WriteLine("                {");
+                file.WriteLine("                    var index = stream.ReadByte();");
+                if (l64_props != null)
+                {
+                    l64_props = l64_props.OrderBy(x => x.SeralizeIndex).ToList();
+                    foreach (var item in l64_props)
+                    {
+                        if (item.Type == PropertyMetaInfo.P_Int64)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadInt64();continue;");
+                            file.WriteLine("}");
+                        }
+                        else if (item.Type == PropertyMetaInfo.P_Double)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadDouble();continue;");
+                            file.WriteLine("}");
+                        }
+                        else if (item.Type == PropertyMetaInfo.P_UInt64)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadUInt64();continue;");
+                            file.WriteLine("}");
+                        }
+                    }
+                }
+                file.WriteLine("                    stream.Advance(8);");
+                file.WriteLine("                }");
+                file.WriteLine("            }");
+                #endregion
+
+                #region L_Str
+                file.WriteLine("            if (headers.TryGetValue(EventPropertyType.L_Str, out count))");
+                file.WriteLine("            {");
+                file.WriteLine("                for (var i = 0; i < count; i++)");
+                file.WriteLine("                {");
+                file.WriteLine("                    var index = stream.ReadByte();");
+                if (lstr_props != null)
+                {
+                    lstr_props = lstr_props.OrderBy(x => x.SeralizeIndex).ToList();
+                    foreach (var item in lstr_props)
+                    {
+                        if (item.Type == PropertyMetaInfo.P_Date)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadDate();continue;");
+                            file.WriteLine("}");
+                        }
+                        else
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadString();continue;");
+                            file.WriteLine("}");
+                        }
+                    }
+                }
+                file.WriteLine("                     var c = stream.ReadInt32();stream.Advance(c);");
+                file.WriteLine("                }");
+                file.WriteLine("            }");
+                #endregion
+
+                #region L_Array
+                file.WriteLine("            if (headers.TryGetValue(EventPropertyType.L_Array, out count))");
+                file.WriteLine("            {");
+                file.WriteLine("                for (var i = 0; i < count; i++)");
+                file.WriteLine("                {");
+                file.WriteLine("                    var index = stream.ReadByte();");
+                if (larr_props != null)
+                {
+                    larr_props = larr_props.OrderBy(x => x.SeralizeIndex).ToList();
+                    foreach (var item in larr_props)
+                    {
+                        var arrtype = item.Type.Substring(6);
+                        if (arrtype == PropertyMetaInfo.P_Byte)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadArrayByte();continue;");
+                            file.WriteLine("}");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_Date)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadArrayDate();continue;");
+                            file.WriteLine("}");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_Boolean)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadArrayBool();continue;");
+                            file.WriteLine("}");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_Double)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadArrayDouble();continue;");
+                            file.WriteLine("}");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_Int16)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadArrayInt16();continue;");
+                            file.WriteLine("}");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_UInt16)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadArrayUInt16();continue;");
+                            file.WriteLine("}");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_Int32)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadArrayInt32();continue;");
+                            file.WriteLine("}");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_UInt32)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadArrayUInt32();continue;");
+                            file.WriteLine("}");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_Int64)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadArrayInt64();continue;");
+                            file.WriteLine("}");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_UInt64)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadArrayUInt64();continue;");
+                            file.WriteLine("}");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_String)
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadArrayString();continue;");
+                            file.WriteLine("}");
+                        }
+                        else
+                        {
+                            file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                            file.Write("{");
+                            file.Write($" {item.Name} = stream.ReadArray<{arrtype}>();continue;");
+                            file.WriteLine("}");
+                        }
+                    }
+                }
+                file.WriteLine("                    var c = stream.ReadInt32();stream.Advance(c);");
+                file.WriteLine("                }");
+                file.WriteLine("            }");
+                #endregion
+
+                #region L_N
+                file.WriteLine("            if (headers.TryGetValue(EventPropertyType.L_N, out count))");
+                file.WriteLine("            {");
+                file.WriteLine("                for (var i = 0; i < count; i++)");
+                file.WriteLine("                {");
+                file.WriteLine("                    var index = stream.ReadByte();");
+                if (ln_props != null)
+                {
+                    ln_props = ln_props.OrderBy(x => x.SeralizeIndex).ToList();
+                    foreach (var item in ln_props)
+                    {
+                        file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                        file.Write("{");
+                        file.Write($" {item.Name} = new {item.Type}();");
+                        file.Write($" {item.Name}.BytesTo(stream);continue;");
+                        file.WriteLine("}");
+                    }
+                }
+                file.WriteLine("                    var l = stream.ReadInt32();");
+                file.WriteLine("                    stream.Advance(l);");
+                file.WriteLine("                }");
+                file.WriteLine("            }");
+                #endregion
+
                 file.WriteLine("        }");
                 file.WriteLine("    }");
                 file.WriteLine("}");
@@ -365,43 +676,44 @@ namespace YiDian.EventBus.MQ
 
         private Dictionary<EventPropertyType, List<PropertyMetaInfo>> PropertyGroup(List<PropertyMetaInfo> properties)
         {
-            var dic = new Dictionary<EventPropertyType, List<PropertyMetaInfo>>
-            {
-                { EventPropertyType.L_8, new List<PropertyMetaInfo>() },
-                { EventPropertyType.L_16, new List<PropertyMetaInfo>() },
-                { EventPropertyType.L_32, new List<PropertyMetaInfo>() },
-                { EventPropertyType.L_64, new List<PropertyMetaInfo>() },
-                { EventPropertyType.L_Str, new List<PropertyMetaInfo>() },
-                { EventPropertyType.L_Array, new List<PropertyMetaInfo>() },
-                { EventPropertyType.L_N, new List<PropertyMetaInfo>() }
-            };
+            var dic = new Dictionary<EventPropertyType, List<PropertyMetaInfo>>();
             foreach (var p in properties)
             {
                 if (p.Type == PropertyMetaInfo.P_Boolean || p.Type == PropertyMetaInfo.P_Byte)
                 {
+                    dic.TryAdd(EventPropertyType.L_8, new List<PropertyMetaInfo>());
                     dic[EventPropertyType.L_8].Add(p);
                 }
                 else if (p.Type == PropertyMetaInfo.P_Int16 || p.Type == PropertyMetaInfo.P_UInt16)
                 {
+                    dic.TryAdd(EventPropertyType.L_16, new List<PropertyMetaInfo>());
                     dic[EventPropertyType.L_16].Add(p);
                 }
                 else if (p.Type == PropertyMetaInfo.P_Int32 || p.Type == PropertyMetaInfo.P_UInt32 || p.Type.StartsWith(PropertyMetaInfo.P_Enum))
                 {
+                    dic.TryAdd(EventPropertyType.L_32, new List<PropertyMetaInfo>());
                     dic[EventPropertyType.L_32].Add(p);
                 }
                 else if (p.Type == PropertyMetaInfo.P_Int64 || p.Type == PropertyMetaInfo.P_UInt64 || p.Type == PropertyMetaInfo.P_Double)
                 {
-                    dic[EventPropertyType.L_32].Add(p);
+                    dic.TryAdd(EventPropertyType.L_64, new List<PropertyMetaInfo>());
+                    dic[EventPropertyType.L_64].Add(p);
                 }
                 else if (p.Type == PropertyMetaInfo.P_Date || p.Type == PropertyMetaInfo.P_String)
                 {
+                    dic.TryAdd(EventPropertyType.L_Str, new List<PropertyMetaInfo>());
                     dic[EventPropertyType.L_Str].Add(p);
                 }
                 else if (p.Type.StartsWith(PropertyMetaInfo.P_Array))
                 {
+                    dic.TryAdd(EventPropertyType.L_Array, new List<PropertyMetaInfo>());
                     dic[EventPropertyType.L_Array].Add(p);
                 }
-                else dic[EventPropertyType.L_N].Add(p);
+                else
+                {
+                    dic.TryAdd(EventPropertyType.L_N, new List<PropertyMetaInfo>());
+                    dic[EventPropertyType.L_N].Add(p);
+                }
             }
             return dic;
         }

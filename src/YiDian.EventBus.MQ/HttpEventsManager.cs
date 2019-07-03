@@ -41,9 +41,26 @@ namespace YiDian.EventBus.MQ
 
         private CheckResult SendClassMeta(Type type, string appName, string version)
         {
+            var meta = CreateClassMeta(type, appName, out List<Type> list);
+            var res = RegisterClassEvent(appName, version, meta);
+            if (!res.IsVaild) return res;
+            foreach (var not_event_type in list)
+            {
+                res = IfExistNotEventType(appName, not_event_type, version);
+                if (!res.IsVaild)
+                {
+                    res = SendTypeMeta(not_event_type, appName, version);
+                    if (!res.IsVaild) return res;
+                }
+            }
+            return res;
+        }
+        public ClassMeta CreateClassMeta(Type type, string appName, out List<Type> types)
+        {
             var isEventType = type.GetInterfaces().Where(x => x == typeof(IMQEvent)).Count() > 0;
             var meta = new ClassMeta() { Name = type.Name, IsEventType = isEventType };
-            var list = new List<Type>();
+
+            types = new List<Type>();
             foreach (var p in type.GetProperties())
             {
                 var pinfo = new PropertyMetaInfo() { Name = p.Name, Type = GetBaseTypeName(p.PropertyType.Name), SeralizeIndex = ((SeralizeIndex)p.GetCustomAttribute(typeof(SeralizeIndex), false)).Index };
@@ -73,7 +90,7 @@ namespace YiDian.EventBus.MQ
                     }
                     else
                     {
-                        if (!p.PropertyType.IsSubclassOf(typeof(IMQEvent))) list.Add(p.PropertyType);
+                        if (!p.PropertyType.IsSubclassOf(typeof(IMQEvent))) types.Add(p.PropertyType);
                         pinfo.Type = p.PropertyType.Name;
                     }
                 }
@@ -81,18 +98,8 @@ namespace YiDian.EventBus.MQ
                 if (attrs.Length != 0) pinfo.Attr = new MetaAttr() { AttrType = AttrType.Index, Value = ((KeyIndex)attrs[0]).Index.ToString() };
                 meta.Properties.Add(pinfo);
             }
-            var res = RegisterClassEvent(appName, version, meta);
-            if (!res.IsVaild) return res;
-            foreach (var not_event_type in list)
-            {
-                res = IfExistNotEventType(appName, not_event_type, version);
-                if (!res.IsVaild)
-                {
-                    res = SendTypeMeta(not_event_type, appName, version);
-                    if (!res.IsVaild) return res;
-                }
-            }
-            return res;
+
+            return meta;
         }
         private string GetBaseTypeName(string typename)
         {

@@ -78,6 +78,28 @@ namespace YiDian.EventBus.MQ
             }
             return arrs;
         }
+        public bool[] ReadArrayBool()
+        {
+            Advance(4);
+            var count = ReadInt32();
+            var arrs = new bool[count];
+            for (var i = 0; i < count; i++)
+            {
+                arrs[i] = ReadByte() == 1;
+            }
+            return arrs;
+        }
+        public DateTime[] ReadArrayDate()
+        {
+            Advance(4);
+            var count = ReadInt32();
+            var arrs = new DateTime[count];
+            for (var i = 0; i < count; i++)
+            {
+                arrs[i] = ReadDate();
+            }
+            return arrs;
+        }
         public double[] ReadArrayDouble()
         {
             Advance(4);

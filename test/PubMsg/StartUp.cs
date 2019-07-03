@@ -52,7 +52,11 @@ namespace ConsoleApp
                 }
             };
             HttpEventsManager mgr = new HttpEventsManager("http://192.168.1.220:5000/api/event");
-            mgr.RegisterEvent<MqA>("test", "1.4");
+            var meta = mgr.CreateClassMeta(typeof(MqA), "zs", out List<Type> list);
+            var load = new MqEventsLocalBuild();
+            var dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "test");
+            load.CreateMainClassFile(dir, "MyTest", meta);
+            load.CreateSeralizeClassFile(dir, "MyTest", meta);
             //var json222 = xa.ToJson(); 
             //var l1 = Encoding.UTF8.GetBytes(json222).Length;
             //var l2 = xa.Size;
@@ -169,8 +173,8 @@ namespace ConsoleApp
             stream.WriteByte(6);
             stream.WriteHeader(EventPropertyType.L_8, 1);
             stream.WriteHeader(EventPropertyType.L_32, 2);
-            stream.WriteHeader(EventPropertyType.L_64, 2);
-            stream.WriteHeader(EventPropertyType.L_Str, 2);
+            stream.WriteHeader(EventPropertyType.L_64, 1);
+            stream.WriteHeader(EventPropertyType.L_Str, 3);
             stream.WriteHeader(EventPropertyType.L_Array, 4);
             stream.WriteHeader(EventPropertyType.L_N, 1);
             stream.WriteIndex(6);
@@ -252,13 +256,10 @@ namespace ConsoleApp
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 0) PropertyA = stream.ReadString();
-                    else if (index == 1) PropertyB = stream.ReadString();
-                    else
-                    {
-                        var c = stream.ReadInt32();
-                        stream.Advance(c);
-                    }
+                    if (index == 0) { PropertyA = stream.ReadString(); continue; }
+                    if (index == 1) { PropertyB = stream.ReadString(); continue; }
+                    var c = stream.ReadInt32();
+                    stream.Advance(c);
                 }
             }
             if (headers.TryGetValue(EventPropertyType.L_Array, out count))
@@ -286,6 +287,11 @@ namespace ConsoleApp
                     {
                         PropertyQB = new MqB();
                         PropertyQB.BytesTo(stream);
+                    }
+                    else
+                    {
+                        var l = stream.ReadInt32();
+                        stream.Advance(l);
                     }
                 }
             }

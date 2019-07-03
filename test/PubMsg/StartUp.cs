@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using EventModels.MyTest;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -53,10 +54,15 @@ namespace ConsoleApp
             };
             HttpEventsManager mgr = new HttpEventsManager("http://192.168.1.220:5000/api/event");
             var meta = mgr.CreateClassMeta(typeof(MqA), "zs", out List<Type> list);
+            var meta2 = mgr.CreateClassMeta(typeof(MqB), "zs", out list);
             var load = new MqEventsLocalBuild();
-            var dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "test");
+            var dir = @"D:\EventBus\test\PubMsg\test";
             load.CreateMainClassFile(dir, "MyTest", meta);
             load.CreateSeralizeClassFile(dir, "MyTest", meta);
+
+            load.CreateMainClassFile(dir, "MyTest", meta2);
+            load.CreateSeralizeClassFile(dir, "MyTest", meta2);
+
             //var json222 = xa.ToJson(); 
             //var l1 = Encoding.UTF8.GetBytes(json222).Length;
             //var l2 = xa.Size;
@@ -137,265 +143,6 @@ namespace ConsoleApp
                     Thread.Sleep(sleep);
                 }
             });
-        }
-    }
-    public partial class MqA : IMQEvent, IYiDianSeralize
-    {
-        [KeyIndex(0)]
-        [SeralizeIndex(0)]
-        public string PropertyA { get; set; }
-        [SeralizeIndex(1)]
-        public string PropertyB { get; set; }
-        [SeralizeIndex(2)]
-        public MqB PropertyQB { get; set; }
-        [SeralizeIndex(3)]
-        public List<string> PropertyLC { get; set; }
-        [SeralizeIndex(4)]
-        public string[] PropertyD { get; set; }
-        [SeralizeIndex(5)]
-        public MqType Type { get; set; }
-        [SeralizeIndex(6)]
-        public bool Flag { get; set; }
-        [SeralizeIndex(7)]
-        public DateTime Date { get; set; }
-        [SeralizeIndex(8)]
-        public List<MqB> QBS { get; set; }
-        [SeralizeIndex(9)]
-        public int Index { get; set; }
-        [SeralizeIndex(10)]
-        public double Amount { get; set; }
-        [SeralizeIndex(11)]
-        public double[] Amounts { get; set; }
-        public uint ToBytes(WriteStream stream)
-        {
-            var size = Size();
-            stream.WriteUInt32(size);
-            stream.WriteByte(6);
-            stream.WriteHeader(EventPropertyType.L_8, 1);
-            stream.WriteHeader(EventPropertyType.L_32, 2);
-            stream.WriteHeader(EventPropertyType.L_64, 1);
-            stream.WriteHeader(EventPropertyType.L_Str, 3);
-            stream.WriteHeader(EventPropertyType.L_Array, 4);
-            stream.WriteHeader(EventPropertyType.L_N, 1);
-            stream.WriteIndex(6);
-            stream.WriteByte(Flag ? (byte)1 : (byte)0);
-            stream.WriteIndex(5);
-            stream.WriteInt32((int)Type);
-            stream.WriteIndex(9);
-            stream.WriteInt32(Index);
-            stream.WriteIndex(7);
-            stream.WriteDate(Date);
-            stream.WriteIndex(10);
-            stream.WriteDouble(Amount);
-            stream.WriteIndex(0);
-            stream.WriteString(PropertyA);
-            stream.WriteIndex(1);
-            stream.WriteString(PropertyB);
-            stream.WriteIndex(3);
-            stream.WriteArrayString(PropertyLC);
-            stream.WriteIndex(4);
-            stream.WriteArrayString(PropertyD);
-            stream.WriteIndex(8);
-            stream.WriteEventArray(QBS);
-            stream.WriteIndex(11);
-            stream.WriteArrayDouble(Amounts);
-            stream.WriteIndex(2);
-            stream.WriteEventObj(PropertyQB);
-            return size;
-        }
-        public uint Size()
-        {
-            var size = 5 + 6 * 2 + 12 + (1 * 1 + 4 * 2 + 8 * 2) + WriteStream.GetStringSize(PropertyA)
-                     + WriteStream.GetStringSize(PropertyB) + WriteStream.GetArrayStringSize(PropertyLC) + WriteStream.GetArrayStringSize(PropertyD)
-                     + WriteStream.GetArrayEventObjSize(QBS) + WriteStream.GetValueArraySize(8, Amounts)
-                    + PropertyQB.Size();
-            return size;
-        }
-        public void BytesTo(ReadStream stream)
-        {
-            var headers = stream.ReadHeaders();
-            if (headers.TryGetValue(EventPropertyType.L_8, out byte count))
-            {
-                for (var i = 0; i < count; i++)
-                {
-                    var index = stream.ReadByte();
-                    if (index == 6) Flag = stream.ReadByte() == 1;
-                    else stream.Advance(1);
-                }
-            }
-            if (headers.TryGetValue(EventPropertyType.L_16, out count))
-            {
-                for (var i = 0; i < count; i++)
-                {
-                    var index = stream.ReadByte();
-                    stream.Advance(2);
-                }
-            }
-            if (headers.TryGetValue(EventPropertyType.L_32, out count))
-            {
-                for (var i = 0; i < count; i++)
-                {
-                    var index = stream.ReadByte();
-                    if (index == 5) Type = (MqType)stream.ReadInt32();
-                    else if (index == 9) Index = stream.ReadInt32();
-                    else stream.Advance(4);
-                }
-            }
-            if (headers.TryGetValue(EventPropertyType.L_64, out count))
-            {
-                for (var i = 0; i < count; i++)
-                {
-                    var index = stream.ReadByte();
-                    if (index == 10) Amount = stream.ReadDouble();
-                    else if (index == 7) Date = stream.ReadInt64().UnixTimestampToDate();
-                    else stream.Advance(8);
-                }
-            }
-            if (headers.TryGetValue(EventPropertyType.L_Str, out count))
-            {
-                for (var i = 0; i < count; i++)
-                {
-                    var index = stream.ReadByte();
-                    if (index == 0) { PropertyA = stream.ReadString(); continue; }
-                    if (index == 1) { PropertyB = stream.ReadString(); continue; }
-                    var c = stream.ReadInt32();
-                    stream.Advance(c);
-                }
-            }
-            if (headers.TryGetValue(EventPropertyType.L_Array, out count))
-            {
-                for (var i = 0; i < count; i++)
-                {
-                    var index = stream.ReadByte();
-                    if (index == 3) PropertyLC = stream.ReadArrayString().ToList();
-                    else if (index == 4) PropertyD = stream.ReadArrayString();
-                    else if (index == 8) QBS = stream.ReadArray<MqB>().ToList();
-                    else if (index == 11) Amounts = stream.ReadArrayDouble();
-                    else
-                    {
-                        var l = stream.ReadInt32();
-                        stream.Advance(l);
-                    }
-                }
-            }
-            if (headers.TryGetValue(EventPropertyType.L_N, out count))
-            {
-                for (var i = 0; i < count; i++)
-                {
-                    var index = stream.ReadByte();
-                    if (index == 2)
-                    {
-                        PropertyQB = new MqB();
-                        PropertyQB.BytesTo(stream);
-                    }
-                    else
-                    {
-                        var l = stream.ReadInt32();
-                        stream.Advance(l);
-                    }
-                }
-            }
-        }
-    }
-    public enum MqType : byte
-    {
-        ZS = 1,
-        LS = 2
-    }
-    public class MqB : IYiDianSeralize
-    {
-        [SeralizeIndex(0)]
-        public string C { get; set; }
-        [SeralizeIndex(1)]
-        public string[] D { get; set; }
-
-        public uint ToBytes(WriteStream stream)
-        {
-            var size = Size();
-            stream.WriteUInt32(size);
-            stream.WriteByte(2);
-            stream.WriteHeader(EventPropertyType.L_Str, 1);
-            stream.WriteHeader(EventPropertyType.L_Array, 1);
-            stream.WriteIndex(0);
-            stream.WriteString(C);
-            stream.WriteIndex(1);
-            stream.WriteArrayString(D);
-            return size;
-        }
-        public void BytesTo(ReadStream stream)
-        {
-            var headers = stream.ReadHeaders();
-            if (headers.TryGetValue(EventPropertyType.L_8, out byte count))
-            {
-                for (var i = 0; i < count; i++)
-                {
-                    var index = stream.ReadByte();
-                    stream.Advance(1);
-                }
-            }
-            if (headers.TryGetValue(EventPropertyType.L_16, out count))
-            {
-                for (var i = 0; i < count; i++)
-                {
-                    var index = stream.ReadByte();
-                    stream.Advance(2);
-                }
-            }
-            if (headers.TryGetValue(EventPropertyType.L_32, out count))
-            {
-                for (var i = 0; i < count; i++)
-                {
-                    var index = stream.ReadByte();
-                    stream.Advance(4);
-                }
-            }
-            if (headers.TryGetValue(EventPropertyType.L_64, out count))
-            {
-                for (var i = 0; i < count; i++)
-                {
-                    var index = stream.ReadByte();
-                    stream.Advance(8);
-                }
-            }
-            if (headers.TryGetValue(EventPropertyType.L_Str, out count))
-            {
-                for (var i = 0; i < count; i++)
-                {
-                    var index = stream.ReadByte();
-                    if (index == 0) C = stream.ReadString();
-                    else
-                    {
-                        var c = stream.ReadInt32();
-                        stream.Advance(c);
-                    }
-                }
-            }
-            if (headers.TryGetValue(EventPropertyType.L_Array, out count))
-            {
-                for (var i = 0; i < count; i++)
-                {
-                    var index = stream.ReadByte();
-                    if (index == 1) D = stream.ReadArrayString();
-                    else
-                    {
-                        var l = stream.ReadInt32();
-                        stream.Advance(l);
-                    }
-                }
-            }
-            if (headers.TryGetValue(EventPropertyType.L_N, out count))
-            {
-                for (var i = 0; i < count; i++)
-                {
-                    var index = stream.ReadByte();
-                    var l = stream.ReadInt32();
-                    stream.Advance(l);
-                }
-            }
-        }
-        public uint Size()
-        {
-            return 5 + 2 * 2 + 2 + WriteStream.GetStringSize(C) + WriteStream.GetArrayStringSize(D);
         }
     }
 }

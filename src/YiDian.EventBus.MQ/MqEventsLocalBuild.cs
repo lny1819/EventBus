@@ -354,7 +354,7 @@ namespace YiDian.EventBus.MQ
                 file.WriteLine("            return size;");
                 file.WriteLine("        }");
 
-                file.WriteLine("        public uint BytesTo(ReadStream stream)");
+                file.WriteLine("        public void BytesTo(ReadStream stream)");
                 file.WriteLine("        {");
                 file.WriteLine("            var headers = stream.ReadHeaders();");
 
@@ -659,8 +659,72 @@ namespace YiDian.EventBus.MQ
                 file.WriteLine("                }");
                 file.WriteLine("            }");
                 #endregion
-
                 file.WriteLine("        }");
+
+
+                file.WriteLine("        public uint Size()");
+                file.WriteLine("        {");
+                var size = 5 + dic.Count * 2 + meta.Properties.Count + (l8_props == null ? 0 : l8_props.Count) + (l16_props == null ? 0 : l16_props.Count * 2) + (l32_props == null ? 0 : l32_props.Count * 4) + (l64_props == null ? 0 : l64_props.Count * 8);
+                file.Write($"                var size={size}+");
+                if (lstr_props != null)
+                {
+                    foreach (var s_pty in lstr_props)
+                    {
+                        if (s_pty.Type == PropertyMetaInfo.P_Date) file.Write("23+");
+                        else file.Write($"WriteStream.GetStringSize({s_pty.Name})+");
+                    }
+                }
+                if (larr_props != null)
+                {
+                    foreach (var item in larr_props)
+                    {
+                        var arrtype = item.Type.Substring(6);
+                        if (arrtype == PropertyMetaInfo.P_Byte || arrtype == PropertyMetaInfo.P_Boolean)
+                        {
+                            file.Write($"WriteStream.GetValueArraySize(1,{item.Name})+");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_Date)
+                        {
+                            file.Write("23+");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_Double)
+                        {
+                            file.Write($"WriteStream.GetValueArraySize(8,{item.Name})+");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_Int16 || arrtype == PropertyMetaInfo.P_UInt16)
+                        {
+                            file.Write($"WriteStream.GetValueArraySize(2,{item.Name})+");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_Int32 || arrtype == PropertyMetaInfo.P_UInt32 || arrtype.StartsWith(PropertyMetaInfo.P_Enum))
+                        {
+                            file.Write($"WriteStream.GetValueArraySize(4,{item.Name})+");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_Int64 || arrtype == PropertyMetaInfo.P_UInt64 || arrtype == PropertyMetaInfo.P_Double)
+                        {
+                            file.Write($"WriteStream.GetValueArraySize(8,{item.Name})+");
+                        }
+                        else if (arrtype == PropertyMetaInfo.P_String)
+                        {
+                            file.Write($"WriteStream.GetArrayStringSize({item.Name})+");
+                        }
+                        else
+                        {
+                            file.Write($"WriteStream.GetArrayEventObjSize({item.Name})+");
+                        }
+                    }
+                }
+                if (ln_props != null)
+                {
+                    foreach (var item in ln_props)
+                    {
+                        file.Write($"{item.Name}.Size()+");
+                    }
+                }
+                file.WriteLine($" 0;");
+                file.WriteLine($"                return size;");
+                file.WriteLine("        }");
+
+
                 file.WriteLine("    }");
                 file.WriteLine("}");
             }
@@ -673,6 +737,8 @@ namespace YiDian.EventBus.MQ
                 file?.Close();
             }
         }
+
+
 
         private Dictionary<EventPropertyType, List<PropertyMetaInfo>> PropertyGroup(List<PropertyMetaInfo> properties)
         {

@@ -138,7 +138,7 @@ namespace YiDian.EventBus.MQ
             v_file.Write(json);
             v_file.Close();
         }
-        public void CreateMainClassFile(string dir, string s_namespace, ClassMeta meta)
+        void CreateMainClassFile(string dir, string s_namespace, ClassMeta meta)
         {
             FileStream file = null;
             try
@@ -190,7 +190,7 @@ namespace YiDian.EventBus.MQ
                 file?.Close();
             }
         }
-        public void CreateSeralizeClassFile(string dir, string s_namespace, ClassMeta meta)
+        void CreateSeralizeClassFile(string dir, string s_namespace, ClassMeta meta)
         {
             FileStream file = null;
             try
@@ -737,8 +737,6 @@ namespace YiDian.EventBus.MQ
                 file?.Close();
             }
         }
-
-
 
         private Dictionary<EventPropertyType, List<PropertyMetaInfo>> PropertyGroup(List<PropertyMetaInfo> properties)
         {

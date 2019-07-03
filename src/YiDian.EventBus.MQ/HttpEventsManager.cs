@@ -55,7 +55,7 @@ namespace YiDian.EventBus.MQ
             }
             return res;
         }
-        public ClassMeta CreateClassMeta(Type type, string appName, out List<Type> types)
+        ClassMeta CreateClassMeta(Type type, string appName, out List<Type> types)
         {
             var isEventType = type.GetInterfaces().Where(x => x == typeof(IMQEvent)).Count() > 0;
             var meta = new ClassMeta() { Name = type.Name, IsEventType = isEventType };

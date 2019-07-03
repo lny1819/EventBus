@@ -50,7 +50,8 @@ namespace ConsoleApp
                        new MqB(){ D = new string[] { "e4", "f4" }, C = "zs4" }
                 }
             };
-            var stream = new WriteStream();
+            var size = xa.Size;
+            var stream = new WriteStream(size);
             xa.ToBytes(stream);
             var datas = stream.GetBytes();
             var reads = new ReadStream(datas);
@@ -131,8 +132,17 @@ namespace ConsoleApp
         public double Amount { get; set; }
         [SeralizeIndex(11)]
         public double[] Amounts { get; set; }
-        public int ToBytes(WriteStream stream)
+        public uint ToBytes(WriteStream stream)
         {
+            var size = Size;
+            stream.WriteUInt32(size);
+            stream.WriteByte(6);
+            stream.WriteHeader(EventPropertyType.L_8, 1);
+            stream.WriteHeader(EventPropertyType.L_32, 2);
+            stream.WriteHeader(EventPropertyType.L_64, 2);
+            stream.WriteHeader(EventPropertyType.L_Str, 2);
+            stream.WriteHeader(EventPropertyType.L_Array, 4);
+            stream.WriteHeader(EventPropertyType.L_N, 1);
             stream.WriteIndex(6);
             stream.WriteByte(Flag ? (byte)1 : (byte)0);
             stream.WriteIndex(5);
@@ -157,23 +167,36 @@ namespace ConsoleApp
             stream.WriteArrayDouble(Amounts, (uint)Amounts.Length);
             stream.WriteIndex(2);
             stream.WriteEventObj(QB);
-            return 0;
-        }
-        public int Size()
-        {
-            var size = 1 + 6 * 2 + 1 + 4 * 2 + 8 * 2 + WriteStream.GetStringSize(A) + WriteStream.GetStringSize(B);
-
             return size;
+        }
+        public uint Size
+        {
+            get
+            {
+                var size = 5 + 6 * 2 + 12 + (1 * 1 + 4 * 2 + 8 * 2) + WriteStream.GetStringSize(A)
+                    + WriteStream.GetStringSize(B) + WriteStream.GetArrayStringSize(LC) + WriteStream.GetArrayStringSize(D)
+                    + WriteStream.GetValueEventObjSize(QBS) + WriteStream.GetValueArraySize(8, (uint)Amounts.Length)
+                   + QB.Size;
+                return size;
+            }
         }
         public void BytesTo(ReadStream stream)
         {
             var headers = stream.ReadHeaders();
             if (headers.TryGetValue(EventPropertyType.L_8, out byte count))
             {
-                var index = stream.ReadByte();
-                if (index == 6) Flag = stream.ReadByte() == 1;
                 for (var i = 0; i < count; i++)
                 {
+                    var index = stream.ReadByte();
+                    if (index == 6) Flag = stream.ReadByte() == 1;
+                    else stream.Advance(1);
+                }
+            }
+            if (headers.TryGetValue(EventPropertyType.L_16, out count))
+            {
+                for (var i = 0; i < count; i++)
+                {
+                    var index = stream.ReadByte();
                     stream.Advance(2);
                 }
             }
@@ -219,10 +242,11 @@ namespace ConsoleApp
                     if (index == 3) LC = stream.ReadArrayString().ToList();
                     else if (index == 4) D = stream.ReadArrayString();
                     else if (index == 8) QBS = stream.ReadArray<MqB>().ToList();
+                    else if (index == 11) Amounts = stream.ReadArrayDouble();
                     else
                     {
-                        var l = stream.ReadUInt32();
-                        stream.Advance((int)l);
+                        var l = stream.ReadInt32();
+                        stream.Advance(l);
                     }
                 }
             }
@@ -252,39 +276,95 @@ namespace ConsoleApp
         [SeralizeIndex(1)]
         public string[] D { get; set; }
 
-        public int ToBytes(WriteStream stream)
+        public uint ToBytes(WriteStream stream)
         {
+            var size = Size;
+            stream.WriteUInt32(size);
             stream.WriteByte(2);
             stream.WriteHeader(EventPropertyType.L_Str, 1);
             stream.WriteHeader(EventPropertyType.L_Array, 1);
+            stream.WriteIndex(0);
             stream.WriteString(C);
+            stream.WriteIndex(1);
             stream.WriteArrayString(D, (uint)D.Length);
-            return 0;
+            return size;
         }
         public void BytesTo(ReadStream stream)
         {
             var headers = stream.ReadHeaders();
-            if (headers.TryGetValue(EventPropertyType.L_32, out byte count))
+            if (headers.TryGetValue(EventPropertyType.L_8, out byte count))
             {
                 for (var i = 0; i < count; i++)
                 {
-                    stream.ReadInt32();
+                    var index = stream.ReadByte();
+                    stream.Advance(1);
+                }
+            }
+            if (headers.TryGetValue(EventPropertyType.L_16, out count))
+            {
+                for (var i = 0; i < count; i++)
+                {
+                    var index = stream.ReadByte();
+                    stream.Advance(2);
+                }
+            }
+            if (headers.TryGetValue(EventPropertyType.L_32, out count))
+            {
+                for (var i = 0; i < count; i++)
+                {
+                    var index = stream.ReadByte();
+                    stream.Advance(4);
                 }
             }
             if (headers.TryGetValue(EventPropertyType.L_64, out count))
             {
                 for (var i = 0; i < count; i++)
                 {
-                    stream.ReadInt64();
+                    var index = stream.ReadByte();
+                    stream.Advance(8);
                 }
             }
             if (headers.TryGetValue(EventPropertyType.L_Str, out count))
             {
-                C = stream.ReadString();
+                for (var i = 0; i < count; i++)
+                {
+                    var index = stream.ReadByte();
+                    if (index == 0) C = stream.ReadString();
+                    else
+                    {
+                        var c = stream.ReadInt32();
+                        stream.Advance(c);
+                    }
+                }
             }
             if (headers.TryGetValue(EventPropertyType.L_Array, out count))
             {
-                D = stream.ReadArrayString();
+                for (var i = 0; i < count; i++)
+                {
+                    var index = stream.ReadByte();
+                    if (index == 1) D = stream.ReadArrayString();
+                    else
+                    {
+                        var l = stream.ReadInt32();
+                        stream.Advance(l);
+                    }
+                }
+            }
+            if (headers.TryGetValue(EventPropertyType.L_N, out count))
+            {
+                for (var i = 0; i < count; i++)
+                {
+                    var index = stream.ReadByte();
+                    var l = stream.ReadInt32();
+                    stream.Advance(l);
+                }
+            }
+        }
+        public uint Size
+        {
+            get
+            {
+                return 5 + 2 * 2 + 2 + WriteStream.GetStringSize(C) + WriteStream.GetArrayStringSize(D);
             }
         }
     }
@@ -302,13 +382,18 @@ namespace ConsoleApp
     }
     public interface IYiDianSeralize
     {
-        int ToBytes(WriteStream stream);
+        uint ToBytes(WriteStream stream);
         void BytesTo(ReadStream stream);
+        uint Size { get; }
     }
     public class WriteStream
     {
-        readonly byte[] orginal = new byte[2000];
+        readonly byte[] orginal;
         int offset = 0;
+        public WriteStream(uint size)
+        {
+            orginal = new byte[size];
+        }
         Span<byte> Advance(int length)
         {
             var span = new Span<byte>(orginal, offset, length);
@@ -320,11 +405,6 @@ namespace ConsoleApp
             var span = Advance(2);
             span[0] = (byte)type;
             span[1] = length;
-        }
-        public static int GetStringSize(string value)
-        {
-            var l = Encoding.UTF8.GetByteCount(value);
-            return l + 4;
         }
         unsafe public int WriteString(string value)
         {
@@ -509,7 +589,7 @@ namespace ConsoleApp
         public void WriteEventArray<T>(IEnumerable<T> value, uint count) where T : IYiDianSeralize
         {
             var span = Advance(4);
-            int size = 0;
+            uint size = 0;
             WriteUInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
@@ -518,7 +598,7 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public int WriteEventObj(IYiDianSeralize obj)
+        public uint WriteEventObj(IYiDianSeralize obj)
         {
             return obj.ToBytes(this);
         }
@@ -527,6 +607,36 @@ namespace ConsoleApp
             var res = new byte[offset];
             Array.Copy(orginal, res, offset);
             return res;
+        }
+
+        public static uint GetStringSize(string value)
+        {
+            var l = (uint)Encoding.UTF8.GetByteCount(value);
+            return l + 4;
+        }
+        internal static uint GetArrayStringSize(IEnumerable<string> arr)
+        {
+            uint size = 0;
+            var ider = arr.GetEnumerator();
+            while (ider.MoveNext())
+            {
+                size += GetStringSize(ider.Current);
+            }
+            return size;
+        }
+        internal static uint GetValueArraySize(byte perszie, uint count)
+        {
+            return perszie * count + 8;
+        }
+        internal static uint GetValueEventObjSize<T>(IEnumerable<T> arr) where T : IYiDianSeralize
+        {
+            uint size = 0;
+            var ider = arr.GetEnumerator();
+            while (ider.MoveNext())
+            {
+                size += ider.Current.Size;
+            }
+            return size;
         }
     }
     public class ReadStream
@@ -561,6 +671,18 @@ namespace ConsoleApp
             offset += 4;
             return i;
         }
+        public short ReadInt16()
+        {
+            var i = BitConverter.ToInt16(orginal, offset);
+            offset += 2;
+            return i;
+        }
+        public ushort ReadUInt16()
+        {
+            var i = BitConverter.ToUInt16(orginal, offset);
+            offset += 2;
+            return i;
+        }
         public long ReadInt64()
         {
             var i = BitConverter.ToInt64(orginal, offset);
@@ -589,6 +711,92 @@ namespace ConsoleApp
                 arrs[i] = ReadString();
             }
             return arrs;
+        }
+        public double[] ReadArrayDouble()
+        {
+            Advance(4);
+            var count = ReadInt32();
+            var arrs = new double[count];
+            for (var i = 0; i < count; i++)
+            {
+                arrs[i] = ReadDouble();
+            }
+            return arrs;
+        }
+        public int[] ReadArrayInt32()
+        {
+            Advance(4);
+            var count = ReadInt32();
+            var arrs = new int[count];
+            for (var i = 0; i < count; i++)
+            {
+                arrs[i] = ReadInt32();
+            }
+            return arrs;
+        }
+        public uint[] ReadArrayUInt32()
+        {
+            Advance(4);
+            var count = ReadUInt32();
+            var arrs = new uint[count];
+            for (var i = 0; i < count; i++)
+            {
+                arrs[i] = ReadUInt32();
+            }
+            return arrs;
+        }
+        public long[] ReadArrayInt64()
+        {
+            Advance(4);
+            var count = ReadInt32();
+            var arrs = new long[count];
+            for (var i = 0; i < count; i++)
+            {
+                arrs[i] = ReadInt64();
+            }
+            return arrs;
+        }
+        public ulong[] ReadArrayUInt64()
+        {
+            Advance(4);
+            var count = ReadUInt32();
+            var arrs = new ulong[count];
+            for (var i = 0; i < count; i++)
+            {
+                arrs[i] = ReadUInt64();
+            }
+            return arrs;
+        }
+        public short[] ReadArrayInt16()
+        {
+            Advance(4);
+            var count = ReadInt32();
+            var arrs = new short[count];
+            for (var i = 0; i < count; i++)
+            {
+                arrs[i] = ReadInt16();
+            }
+            return arrs;
+        }
+        public ushort[] ReadArrayUInt16()
+        {
+            Advance(4);
+            var count = ReadInt32();
+            var arrs = new ushort[count];
+            for (var i = 0; i < count; i++)
+            {
+                arrs[i] = ReadUInt16();
+            }
+            return arrs;
+        }
+        public ReadOnlySpan<byte> ReadArrayByte()
+        {
+            Advance(4);
+            var count = ReadInt32();
+            var arrs = new short[count];
+            var span = new ReadOnlySpan<byte>(orginal, offset, count);
+            offset += count;
+            return span;
         }
         public T[] ReadArray<T>() where T : IYiDianSeralize, new()
         {

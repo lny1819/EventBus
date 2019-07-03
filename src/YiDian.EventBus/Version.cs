@@ -18,12 +18,12 @@ namespace YiDian.EventBus
             v.B = temp;
             return v;
         }
-        public static Version Parse(short version)
+        public static Version Parse(ushort version)
         {
             Version v = new Version
             {
-                A = (byte)(version >> 24),
-                B = (byte)((version << 8) >> 24),
+                A= (byte)(version >> 8),
+                B = (byte)((version << 8) >> 8),
             };
             return v;
         }

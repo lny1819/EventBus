@@ -68,7 +68,7 @@ namespace ConsoleApp
             Console.ReadKey();
             GC.Collect(2);
 
-            var count = 100000;
+            var count = 1000000;
             var watch = Stopwatch.StartNew();
 
             for (var xx = 0; xx < count; xx++)

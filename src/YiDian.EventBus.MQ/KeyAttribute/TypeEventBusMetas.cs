@@ -40,7 +40,7 @@ namespace YiDian.EventBus.MQ.KeyAttribute
                 var hash = new HashSet<int>();
                 foreach (var p in props)
                 {
-                    var att = p.GetCustomAttribute<KeyIndexAttribute>();
+                    var att = p.GetCustomAttribute<KeyIndex>();
                     if (att != null)
                     {
                         if (hash.Contains(att.Index)) throw new ArgumentException("repeat set KeyIndexAttribute index");

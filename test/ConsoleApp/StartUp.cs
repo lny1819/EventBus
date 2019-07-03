@@ -23,9 +23,9 @@ namespace ConsoleApp
         {
             var curAssembly = Assembly.GetEntryAssembly();
             builder.RegisterAssemblyTypes(curAssembly).Where(e => e.Name.EndsWith("Handler")).PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
-            soa.UseRabbitMq(Configuration["mqconnstr"], new JsonSeralizer()).UseTopicEventBus();
+            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"], new JsonSeralizer()).UseTopicEventBus();
 #if DEBUG
-            //soa.AutoCreateAppEvents("es_quote");
+            soa.AutoCreateAppEvents("test");
 #endif
         }
         public struct SSAA
@@ -57,11 +57,11 @@ namespace ConsoleApp
             //    }
             //}
 
-            var top = sp.GetService<ITopicEventBus>();
-            top.RegisterConsumer("rec_quote_bytes", (x) =>
-            {
-                x.SubscribeBytes<QuoteBytes, BytesHandler>("#.QuoteBytes");
-            }, 100, 3000, true, false, true);
+            //var top = sp.GetService<ITopicEventBus>();
+            //top.RegisterConsumer("rec_quote_bytes", (x) =>
+            //{
+            //    x.SubscribeBytes<QuoteBytes, BytesHandler>("#.QuoteBytes");
+            //}, 100, 3000, true, false, true);
             //B b = new B() { ZA = new A() { D = "zs" }, AV = 2 };
             //C c = new C() { AB = b, SC = "hello" };
             //var json = c.ToJson();

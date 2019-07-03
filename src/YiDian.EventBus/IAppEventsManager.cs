@@ -26,19 +26,24 @@ namespace YiDian.EventBus
     }
     public class PropertyMetaInfo
     {
-        public static readonly string P_Double = "double";
-        public static readonly string P_Int32 = "Int32";
-        public static readonly string P_Int64 = "Int64";
-        public static readonly string P_UInt32 = "UInt32";
-        public static readonly string P_UInt64 = "UInt64";
-        public static readonly string P_String = "string";
-        public static readonly string P_Date = "DateTime";
-        public static readonly string P_Byte = "Byte";
-        public static readonly string P_Boolean = "Boolean";
+        public const string P_Double = "double";
+        public const string P_Int16 = "Int16";
+        public const string P_UInt16 = "UInt16";
+        public const string P_Int32 = "Int32";
+        public const string P_Int64 = "Int64";
+        public const string P_UInt32 = "UInt32";
+        public const string P_UInt64 = "UInt64";
+        public const string P_String = "string";
+        public const string P_Date = "DateTime";
+        public const string P_Byte = "Byte";
+        public const string P_Boolean = "Boolean";
+        public const string P_Enum = "Enum";
+        public const string P_Array = "Array";
         public static string[] MetaTypeValues = new string[] { P_Int32, P_Int64, P_UInt32, P_UInt64, P_String, P_Boolean, P_Double, P_Date, P_Byte };
 
         public string Name { get; set; }
         public string Type { get; set; }
+        public int SeralizeIndex { get; set; }
         public MetaAttr Attr { get; set; }
 
         internal void ToJson(StringBuilder sb)
@@ -47,11 +52,13 @@ namespace YiDian.EventBus
             sb.Append(Name);
             sb.Append("\",\"Type\":\"");
             sb.Append(Type);
-            sb.Append("\",\"Attr\":");
+            sb.Append("\",\"SeralizeIndex\":");
+            sb.Append(SeralizeIndex);
+            sb.Append(",\"Attr\":");
             if (Attr == null) sb.Append("null");
             else Attr.ToJson(sb);
             sb.Append("}");
-        } 
+        }
     }
     public class EnumMeta
     {

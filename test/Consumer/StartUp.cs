@@ -78,56 +78,56 @@ namespace Consumer
         public IQpsCounter Counter { get; set; }
         public MyHandler()
         {
-            his_datas = new DataQueue<TaskCompletionSource<bool>>[2];
-            his_datas[0] = DataQueue<TaskCompletionSource<bool>>.Create();
+            //his_datas = new DataQueue<TaskCompletionSource<bool>>[2];
+            //his_datas[0] = DataQueue<TaskCompletionSource<bool>>.Create();
 
             //his_data = DataQueue<TaskCompletionSource<bool>>.Create();
 
-            thread = new Thread(CheckQueueDataHandler);
-            thread.Start();
+            //thread = new Thread(CheckQueueDataHandler);
+            //thread.Start();
         }
 
-        private void CheckQueueDataHandler(object obj)
-        {
-            int maxsleep = 333;
-            for (; ; )
-            {
-                Thread.Sleep(maxsleep);
+        //private void CheckQueueDataHandler(object obj)
+        //{
+        //    int maxsleep = 333;
+        //    for (; ; )
+        //    {
+        //        Thread.Sleep(maxsleep);
 
-                //var old_his_data = his_data;
-                //his_data = DataQueue<TaskCompletionSource<bool>>.Create();
+        //        //var old_his_data = his_data;
+        //        //his_data = DataQueue<TaskCompletionSource<bool>>.Create();
 
-                var flag = !quue_flag;
-                int i = flag ? 0 : 1;
-                ref var old_his_data = ref his_datas[i];
-                int x = flag ? 1 : 0;
-                his_datas[x] = DataQueue<TaskCompletionSource<bool>>.Create();
-                quue_flag = flag;
+        //        var flag = !quue_flag;
+        //        int i = flag ? 0 : 1;
+        //        ref var old_his_data = ref his_datas[i];
+        //        int x = flag ? 1 : 0;
+        //        his_datas[x] = DataQueue<TaskCompletionSource<bool>>.Create();
+        //        quue_flag = flag;
 
-                if (old_his_data.Length == 0)
-                {
-                    old_his_data.Reset();
-                    Thread.Sleep(maxsleep);
-                    continue;
-                }
+        //        if (old_his_data.Length == 0)
+        //        {
+        //            old_his_data.Reset();
+        //            Thread.Sleep(maxsleep);
+        //            continue;
+        //        }
 
-                var span = old_his_data.GetData();
+        //        var span = old_his_data.GetData();
 
 
-                if (span == null)
-                {
-                    old_his_data.Reset();
-                    Thread.Sleep(maxsleep);
-                    continue;
-                }
-                var ider = span.GetEnumerator();
-                while (ider.MoveNext())
-                {
-                    ider.Current.SetResult(true);
-                }
-                old_his_data.Reset();
-            }
-        }
+        //        if (span == null)
+        //        {
+        //            old_his_data.Reset();
+        //            Thread.Sleep(maxsleep);
+        //            continue;
+        //        }
+        //        var ider = span.GetEnumerator();
+        //        while (ider.MoveNext())
+        //        {
+        //            ider.Current.SetResult(true);
+        //        }
+        //        old_his_data.Reset();
+        //    }
+        //}
         public Task<bool> Handle(MqA @event)
         {
             var cts = TaskSource.Create<bool>(@event);
@@ -146,7 +146,7 @@ namespace Consumer
             return task;
         }
 
-        public ValueTask<bool> Handle(string routingKey, byte[] datas)
+        public Task<bool> Handle(string routingKey, byte[] datas)
         {
             var cts = TaskSource.Create<bool>(datas);
 
@@ -158,8 +158,7 @@ namespace Consumer
             int x = quue_flag ? 1 : 0;
             ref var his_data = ref his_datas[x];
             his_data.Enqueue(cts);
-
-            return new ValueTask<bool>(task);
+            return task;
         }
     }
     //public class My3Handler : IEventHandler<MqA>, IBytesHandler

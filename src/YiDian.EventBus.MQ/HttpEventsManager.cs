@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using YiDian.EventBus.MQ.KeyAttribute;
@@ -24,6 +25,7 @@ namespace YiDian.EventBus.MQ
     /// </summary>
     public class HttpEventsManager : IAppEventsManager
     {
+        const char separator = '#';
         readonly Uri web_host;
         public HttpEventsManager(string web_api_address)
         {
@@ -44,36 +46,39 @@ namespace YiDian.EventBus.MQ
             var list = new List<Type>();
             foreach (var p in type.GetProperties())
             {
-                if (isEventType && (p.Name == "ErrorCode" || p.Name == "ErrorMsg")) continue;
-                var pinfo = new PropertyMetaInfo() { Name = p.Name };
-                if (p.PropertyType == typeof(Int16) || p.PropertyType == typeof(Int32)) pinfo.Type = PropertyMetaInfo.P_Int32;
-                else if (p.PropertyType == typeof(Int64)) pinfo.Type = PropertyMetaInfo.P_Int64;
-                else if (p.PropertyType == typeof(Boolean)) pinfo.Type = PropertyMetaInfo.P_Boolean;
-                else if (p.PropertyType == typeof(string)) pinfo.Type = PropertyMetaInfo.P_String;
-                else if (p.PropertyType == typeof(UInt32) || p.PropertyType == typeof(UInt16)) pinfo.Type = PropertyMetaInfo.P_UInt32;
-                else if (p.PropertyType == typeof(UInt64)) pinfo.Type = PropertyMetaInfo.P_UInt64;
-                else if (p.PropertyType == typeof(Int64)) pinfo.Type = PropertyMetaInfo.P_Int64;
-                else if (p.PropertyType == typeof(Double) || p.PropertyType == typeof(Decimal)) pinfo.Type = PropertyMetaInfo.P_Double;
-                else if (p.PropertyType == typeof(DateTime)) pinfo.Type = PropertyMetaInfo.P_Date;
-                else if (p.PropertyType.IsGenericType && p.PropertyType.GetInterfaces().Contains(typeof(IList)))
+                var pinfo = new PropertyMetaInfo() { Name = p.Name, Type = GetBaseTypeName(p.PropertyType.Name), SeralizeIndex = ((SeralizeIndex)p.GetCustomAttribute(typeof(SeralizeIndex), false)).Index };
+                if (pinfo.Type == string.Empty)
                 {
-                    var s_list = "list#";
-                    var t_args = p.PropertyType.GenericTypeArguments;
-                    for (var i = 0; i < t_args.Length; i++)
+                    if (p.PropertyType.IsEnum) pinfo.Type = PropertyMetaInfo.P_Enum + separator + p.PropertyType.Name;
+                    else if (p.PropertyType.IsGenericType && p.PropertyType.GetInterfaces().Contains(typeof(IList)))
                     {
-                        s_list += t_args[i].Name;
-                        if (i != t_args.Length - 1) s_list += "#";
+                        var s_list = PropertyMetaInfo.P_Array + separator;
+                        var t_args = p.PropertyType.GenericTypeArguments;
+                        for (var i = 0; i < t_args.Length; i++)
+                        {
+                            var pname = GetBaseTypeName(t_args[i].Name);
+                            if (string.IsNullOrEmpty(pname)) pname = t_args[i].Name;
+                            s_list += pname;
+                            if (i != t_args.Length - 1) s_list += separator;
+                        }
+                        pinfo.Type = s_list;
                     }
-                    pinfo.Type = s_list;
+                    else if (p.PropertyType.IsArray)
+                    {
+                        var pname = p.PropertyType.Name;
+                        var name = pname.Substring(0, pname.IndexOf('['));
+                        name = GetBaseTypeName(name);
+                        if (string.IsNullOrEmpty(name)) name = pname;
+                        pinfo.Type = PropertyMetaInfo.P_Array + separator + name;
+                    }
+                    else
+                    {
+                        if (!p.PropertyType.IsSubclassOf(typeof(IMQEvent))) list.Add(p.PropertyType);
+                        pinfo.Type = p.PropertyType.Name;
+                    }
                 }
-                else if (p.PropertyType.IsArray) pinfo.Type = p.PropertyType.Name;
-                else
-                {
-                    if (!p.PropertyType.IsSubclassOf(typeof(IMQEvent))) list.Add(p.PropertyType);
-                    pinfo.Type = p.PropertyType.Name;
-                }
-                var attrs = p.GetCustomAttributes(typeof(KeyIndexAttribute), false);
-                if (attrs.Length != 0) pinfo.Attr = new MetaAttr() { AttrType = AttrType.Index, Value = ((KeyIndexAttribute)attrs[0]).Index.ToString() };
+                var attrs = p.GetCustomAttributes(typeof(KeyIndex), false);
+                if (attrs.Length != 0) pinfo.Attr = new MetaAttr() { AttrType = AttrType.Index, Value = ((KeyIndex)attrs[0]).Index.ToString() };
                 meta.Properties.Add(pinfo);
             }
             var res = RegisterClassEvent(appName, version, meta);
@@ -89,7 +94,21 @@ namespace YiDian.EventBus.MQ
             }
             return res;
         }
-
+        private string GetBaseTypeName(string typename)
+        {
+            if (typename == typeof(Byte).Name) return PropertyMetaInfo.P_Byte;
+            else if (typename == typeof(Int16).Name) return PropertyMetaInfo.P_Int16;
+            else if (typename == typeof(UInt16).Name) return PropertyMetaInfo.P_UInt16;
+            else if (typename == typeof(Int32).Name) return PropertyMetaInfo.P_Int32;
+            else if (typename == typeof(UInt32).Name) return PropertyMetaInfo.P_UInt32;
+            else if (typename == typeof(Int64).Name) return PropertyMetaInfo.P_Int64;
+            else if (typename == typeof(UInt64).Name) return PropertyMetaInfo.P_UInt64;
+            else if (typename == typeof(Boolean).Name) return PropertyMetaInfo.P_Boolean;
+            else if (typename == typeof(string).Name) return PropertyMetaInfo.P_String;
+            else if (typename == typeof(Double).Name || typename == typeof(Decimal).Name) return PropertyMetaInfo.P_Double;
+            else if (typename == typeof(DateTime).Name) return PropertyMetaInfo.P_Date;
+            else return string.Empty;
+        }
         private CheckResult SendEnumMeta(Type type, string appName, string version)
         {
             var enumMeta = new EnumMeta() { Name = type.Name };

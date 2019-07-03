@@ -52,7 +52,7 @@ namespace ConsoleApp
                 }
             };
             HttpEventsManager mgr = new HttpEventsManager("http://192.168.1.220:5000/api/event");
-            mgr.RegisterEvent<MqA>("test", "1.3");
+            mgr.RegisterEvent<MqA>("test", "1.4");
             //var json222 = xa.ToJson(); 
             //var l1 = Encoding.UTF8.GetBytes(json222).Length;
             //var l2 = xa.Size;

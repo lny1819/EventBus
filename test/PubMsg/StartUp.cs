@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -32,31 +33,57 @@ namespace ConsoleApp
         }
         public void Start(IServiceProvider sp, string[] args)
         {
-
             MqA xa = new MqA()
             {
-                A = "a",
-                B = "b",
-                LC = new List<string>() { "22", "hello" },
+                A = "hello mr li",
+                B = "i am very happy",
+                LC = new List<string>() { "2hellohello2hello", "hello very good" },
                 Type = MqType.LS,
-                D = new string[2] { "a", "b" },
-                QB = new MqB() { D = new string[] { "e1", "f1" }, C = "zs1" },
+                D = new string[2] { "2hellohello2hello", "2hellohello2hello" },
+                QB = new MqB() { D = new string[] { "2hellohello2hello", "2hellohello2hello" }, C = "zs1" },
                 Date = DateTime.Now,
                 Flag = false,
                 QBS = new List<MqB>()
                 {
-                       new MqB(){ D = new string[] { "e2", "f2" }, C = "zs2" },
-                       new MqB(){ D = new string[] { "e3", "f3" }, C = "zs3" },
-                       new MqB(){ D = new string[] { "e4", "f4" }, C = "zs4" }
+                       new MqB(){ D = new string[] { "2hellohello2helloe2", "2hellohello2hello2" }, C = "zs2hellohello2hello2" },
+                       new MqB(){ D = new string[] { "2hellohello2helloe3", "2hellohello2hellof3" }, C = "z2hellohello2hellos3" },
+                       new MqB(){ D = new string[] { "2hellohello2helloe4", "2hellohello2hellof4" }, C = "z2hellohello2hellos4" }
                 }
             };
-            var size = xa.Size;
-            var stream = new WriteStream(size);
-            xa.ToBytes(stream);
-            var datas = stream.GetBytes();
-            var reads = new ReadStream(datas);
-            MqA xb = new MqA();
-            xb.BytesTo(reads);
+            var json222 = xa.ToJson();
+            var l1= Encoding.UTF8.GetBytes(json222).Length;
+            var l2 = xa.Size;
+            Console.ReadKey();
+            GC.Collect(2);
+
+            var count = 1000;
+            var watch = Stopwatch.StartNew();
+
+            for (var xx = 0; xx < count; xx++)
+            {
+                var json = xa.ToJson();
+                var bytes = Encoding.UTF8.GetBytes(json);
+                var json2 = Encoding.UTF8.GetString(bytes);
+                json2.JsonTo<MqA>();
+            }
+            watch.Stop();
+            Console.WriteLine("json test:" + watch.ElapsedMilliseconds.ToString());
+            GC.Collect(2);
+            Console.ReadKey();
+            watch.Restart();
+            for (var xx = 0; xx < count; xx++)
+            {
+                var size = xa.Size;
+                var stream = new WriteStream(size);
+                xa.ToBytes(stream);
+                var datas = stream.GetBytes();
+                var reads = new ReadStream(datas);
+                MqA xb = new MqA();
+                xb.BytesTo(reads);
+            }
+            Console.WriteLine("mystream test:" + watch.ElapsedMilliseconds.ToString());
+            GC.Collect(2);
+            Console.ReadKey();
 
             var eventsMgr = sp.GetRequiredService<IAppEventsManager>();
             var res = eventsMgr.RegisterEvent<MqA>("pub_test", "1.2");
@@ -158,13 +185,13 @@ namespace ConsoleApp
             stream.WriteIndex(1);
             stream.WriteString(B);
             stream.WriteIndex(3);
-            stream.WriteArrayString(LC, (uint)LC.Count);
+            stream.WriteArrayString(LC);
             stream.WriteIndex(4);
-            stream.WriteArrayString(D, (uint)D.Length);
+            stream.WriteArrayString(D);
             stream.WriteIndex(8);
-            stream.WriteEventArray(QBS, (uint)QBS.Count);
+            stream.WriteEventArray(QBS);
             stream.WriteIndex(11);
-            stream.WriteArrayDouble(Amounts, (uint)Amounts.Length);
+            stream.WriteArrayDouble(Amounts);
             stream.WriteIndex(2);
             stream.WriteEventObj(QB);
             return size;
@@ -175,7 +202,7 @@ namespace ConsoleApp
             {
                 var size = 5 + 6 * 2 + 12 + (1 * 1 + 4 * 2 + 8 * 2) + WriteStream.GetStringSize(A)
                     + WriteStream.GetStringSize(B) + WriteStream.GetArrayStringSize(LC) + WriteStream.GetArrayStringSize(D)
-                    + WriteStream.GetValueEventObjSize(QBS) + WriteStream.GetValueArraySize(8, (uint)Amounts.Length)
+                    + WriteStream.GetArrayEventObjSize(QBS) + WriteStream.GetValueArraySize(8, Amounts)
                    + QB.Size;
                 return size;
             }
@@ -216,7 +243,7 @@ namespace ConsoleApp
                 {
                     var index = stream.ReadByte();
                     if (index == 10) Amount = stream.ReadDouble();
-                    if (index == 7) Date = stream.ReadInt64().UnixTimestampToDate();
+                    else if (index == 7) Date = stream.ReadInt64().UnixTimestampToDate();
                     else stream.Advance(8);
                 }
             }
@@ -286,7 +313,7 @@ namespace ConsoleApp
             stream.WriteIndex(0);
             stream.WriteString(C);
             stream.WriteIndex(1);
-            stream.WriteArrayString(D, (uint)D.Length);
+            stream.WriteArrayString(D);
             return size;
         }
         public void BytesTo(ReadStream stream)
@@ -470,8 +497,15 @@ namespace ConsoleApp
             var v = value.ToUnixTimestamp();
             WriteInt64(v);
         }
-        public void WriteArrayByte(IEnumerable<byte> value, uint count)
+        public void WriteArrayByte(IEnumerable<byte> value)
         {
+            var count = value == null ? 0 : (uint)value.Count();
+            if (count == 0)
+            {
+                WriteInt32(0);
+                WriteUInt32(0);
+                return;
+            }
             var span = Advance(4);
             int size = 0;
             WriteUInt32(count);
@@ -483,8 +517,15 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayString(IEnumerable<string> value, uint count)
+        public void WriteArrayString(IEnumerable<string> value)
         {
+            var count = value == null ? 0 : (uint)value.Count();
+            if (count == 0)
+            {
+                WriteInt32(0);
+                WriteUInt32(0);
+                return;
+            }
             var span = Advance(4);
             int size = 0;
             WriteUInt32(count);
@@ -495,8 +536,15 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayInt16(IEnumerable<short> value, uint count)
+        public void WriteArrayInt16(IEnumerable<short> value)
         {
+            var count = value == null ? 0 : (uint)value.Count();
+            if (count == 0)
+            {
+                WriteInt32(0);
+                WriteUInt32(0);
+                return;
+            }
             var span = Advance(4);
             int size = 0;
             WriteUInt32(count);
@@ -508,8 +556,15 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayUInt16(IEnumerable<ushort> value, uint count)
+        public void WriteArrayUInt16(IEnumerable<ushort> value)
         {
+            var count = value == null ? 0 : (uint)value.Count();
+            if (count == 0)
+            {
+                WriteInt32(0);
+                WriteUInt32(0);
+                return;
+            }
             var span = Advance(4);
             int size = 0;
             WriteUInt32(count);
@@ -521,8 +576,15 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayInt32(IEnumerable<int> value, uint count)
+        public void WriteArrayInt32(IEnumerable<int> value)
         {
+            var count = value == null ? 0 : (uint)value.Count();
+            if (count == 0)
+            {
+                WriteInt32(0);
+                WriteUInt32(0);
+                return;
+            }
             var span = Advance(4);
             int size = 0;
             WriteUInt32(count);
@@ -534,8 +596,15 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayUInt32(IEnumerable<uint> value, uint count)
+        public void WriteArrayUInt32(IEnumerable<uint> value)
         {
+            var count = value == null ? 0 : (uint)value.Count();
+            if (count == 0)
+            {
+                WriteInt32(0);
+                WriteUInt32(0);
+                return;
+            }
             var span = Advance(4);
             int size = 0;
             WriteUInt32(count);
@@ -547,8 +616,15 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayInt64(IEnumerable<long> value, uint count)
+        public void WriteArrayInt64(IEnumerable<long> value)
         {
+            var count = value == null ? 0 : (uint)value.Count();
+            if (count == 0)
+            {
+                WriteInt32(0);
+                WriteUInt32(0);
+                return;
+            }
             var span = Advance(4);
             int size = 0;
             WriteUInt32(count);
@@ -560,8 +636,15 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayUInt64(IEnumerable<ulong> value, uint count)
+        public void WriteArrayUInt64(IEnumerable<ulong> value)
         {
+            var count = value == null ? 0 : (uint)value.Count();
+            if (count == 0)
+            {
+                WriteInt32(0);
+                WriteUInt32(0);
+                return;
+            }
             var span = Advance(4);
             int size = 0;
             WriteUInt32(count);
@@ -573,8 +656,15 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayDouble(IEnumerable<double> value, uint count)
+        public void WriteArrayDouble(IEnumerable<double> value)
         {
+            var count = value == null ? 0 : (uint)value.Count();
+            if (count == 0)
+            {
+                WriteInt32(0);
+                WriteUInt32(0);
+                return;
+            }
             var span = Advance(4);
             int size = 0;
             WriteUInt32(count);
@@ -586,8 +676,15 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteEventArray<T>(IEnumerable<T> value, uint count) where T : IYiDianSeralize
+        public void WriteEventArray<T>(IEnumerable<T> value) where T : IYiDianSeralize
         {
+            var count = value == null ? 0 : (uint)value.Count();
+            if (count == 0)
+            {
+                WriteInt32(0);
+                WriteUInt32(0);
+                return;
+            }
             var span = Advance(4);
             uint size = 0;
             WriteUInt32(count);
@@ -622,13 +719,14 @@ namespace ConsoleApp
             {
                 size += GetStringSize(ider.Current);
             }
-            return size;
+            return size + 8;
         }
-        internal static uint GetValueArraySize(byte perszie, uint count)
+        internal static uint GetValueArraySize<T>(byte perszie, IEnumerable<T> arr)
         {
+            var count = arr == null ? 0 : (uint)arr.Count();
             return perszie * count + 8;
         }
-        internal static uint GetValueEventObjSize<T>(IEnumerable<T> arr) where T : IYiDianSeralize
+        internal static uint GetArrayEventObjSize<T>(IEnumerable<T> arr) where T : IYiDianSeralize
         {
             uint size = 0;
             var ider = arr.GetEnumerator();
@@ -636,7 +734,7 @@ namespace ConsoleApp
             {
                 size += ider.Current.Size;
             }
-            return size;
+            return size + 8;
         }
     }
     public class ReadStream
@@ -649,6 +747,7 @@ namespace ConsoleApp
         }
         public Dictionary<EventPropertyType, byte> ReadHeaders()
         {
+            Advance(4);
             byte count = ReadByte();
             var headers = new Dictionary<EventPropertyType, byte>(count);
             for (var i = 0; i < count; i++)

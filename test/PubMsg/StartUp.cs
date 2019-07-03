@@ -129,81 +129,113 @@ namespace ConsoleApp
         public int Index { get; set; }
         [SeralizeIndex(10)]
         public double Amount { get; set; }
-        public void ToBytes(WriteStream stream)
+        [SeralizeIndex(11)]
+        public double[] Amounts { get; set; }
+        public int ToBytes(WriteStream stream)
         {
-            stream.WriteByte(5);
-            stream.WriteHeader(EventPropertyType.L_8, 1);
-            stream.WriteHeader(EventPropertyType.L_32, 2);
-            stream.WriteHeader(EventPropertyType.L_64, 1);
-            stream.WriteHeader(EventPropertyType.L_Str, 3);
-            stream.WriteHeader(EventPropertyType.L_Array, 3);
-            stream.WriteHeader(EventPropertyType.L_N, 1);
+            stream.WriteIndex(6);
+            stream.WriteByte(Flag ? (byte)1 : (byte)0);
+            stream.WriteIndex(5);
             stream.WriteInt32((int)Type);
+            stream.WriteIndex(9);
             stream.WriteInt32(Index);
-            stream.WriteDouble(Amount);
-            stream.WriteString(A);
-            stream.WriteString(B);
+            stream.WriteIndex(7);
             stream.WriteDate(Date);
-            stream.WriteArrayString(LC, LC.Count);
-            stream.WriteArrayString(D, D.Length);
-            stream.WriteArrayEventObj(QBS, QBS.Count);
+            stream.WriteIndex(10);
+            stream.WriteDouble(Amount);
+            stream.WriteIndex(0);
+            stream.WriteString(A);
+            stream.WriteIndex(1);
+            stream.WriteString(B);
+            stream.WriteIndex(3);
+            stream.WriteArrayString(LC, (uint)LC.Count);
+            stream.WriteIndex(4);
+            stream.WriteArrayString(D, (uint)D.Length);
+            stream.WriteIndex(8);
+            stream.WriteEventArray(QBS, (uint)QBS.Count);
+            stream.WriteIndex(11);
+            stream.WriteArrayDouble(Amounts, (uint)Amounts.Length);
+            stream.WriteIndex(2);
             stream.WriteEventObj(QB);
+            return 0;
+        }
+        public int Size()
+        {
+            var size = 1 + 6 * 2 + 1 + 4 * 2 + 8 * 2 + WriteStream.GetStringSize(A) + WriteStream.GetStringSize(B);
+
+            return size;
         }
         public void BytesTo(ReadStream stream)
         {
             var headers = stream.ReadHeaders();
             if (headers.TryGetValue(EventPropertyType.L_8, out byte count))
             {
-                Flag = stream.ReadByte() == 1;
-                for (var i = 0; i < count - 1; i++)
+                var index = stream.ReadByte();
+                if (index == 6) Flag = stream.ReadByte() == 1;
+                for (var i = 0; i < count; i++)
                 {
-                    stream.ReadByte();
+                    stream.Advance(2);
                 }
             }
             if (headers.TryGetValue(EventPropertyType.L_32, out count))
             {
-                Type = (MqType)stream.ReadInt32();
-                Index = stream.ReadInt32();
-                for (var i = 0; i < count - 1; i++)
+                for (var i = 0; i < count; i++)
                 {
-                    stream.ReadInt32();
+                    var index = stream.ReadByte();
+                    if (index == 5) Type = (MqType)stream.ReadInt32();
+                    else if (index == 9) Index = stream.ReadInt32();
+                    else stream.Advance(4);
                 }
             }
             if (headers.TryGetValue(EventPropertyType.L_64, out count))
             {
-                Amount = stream.ReadDouble();
                 for (var i = 0; i < count; i++)
                 {
-                    stream.ReadInt64();
+                    var index = stream.ReadByte();
+                    if (index == 10) Amount = stream.ReadDouble();
+                    if (index == 7) Date = stream.ReadInt64().UnixTimestampToDate();
+                    else stream.Advance(8);
                 }
             }
             if (headers.TryGetValue(EventPropertyType.L_Str, out count))
             {
-                A = stream.ReadString();
-                B = stream.ReadString();
-                Date = stream.ReadDate();
-                for (var i = 0; i < count - 2; i++)
+                for (var i = 0; i < count; i++)
                 {
-                    stream.ReadString();
+                    var index = stream.ReadByte();
+                    if (index == 0) A = stream.ReadString();
+                    else if (index == 1) B = stream.ReadString();
+                    else
+                    {
+                        var c = stream.ReadInt32();
+                        stream.Advance(c);
+                    }
                 }
             }
             if (headers.TryGetValue(EventPropertyType.L_Array, out count))
             {
-                LC = stream.ReadArrayString().ToList();
-                D = stream.ReadArrayString();
-                QBS = stream.ReadArray<QB>().ToList()
-                for (var i = 0; i < count - 2; i++)
+                for (var i = 0; i < count; i++)
                 {
-                    stream.ReadInt32();
+                    var index = stream.ReadByte();
+                    if (index == 3) LC = stream.ReadArrayString().ToList();
+                    else if (index == 4) D = stream.ReadArrayString();
+                    else if (index == 8) QBS = stream.ReadArray<MqB>().ToList();
+                    else
+                    {
+                        var l = stream.ReadUInt32();
+                        stream.Advance((int)l);
+                    }
                 }
             }
             if (headers.TryGetValue(EventPropertyType.L_N, out count))
             {
-                QB = new MqB();
-                QB.BytesTo(stream);
-                for (var i = 0; i < count - 1; i++)
+                for (var i = 0; i < count; i++)
                 {
-
+                    var index = stream.ReadByte();
+                    if (index == 2)
+                    {
+                        QB = new MqB();
+                        QB.BytesTo(stream);
+                    }
                 }
             }
         }
@@ -213,20 +245,21 @@ namespace ConsoleApp
         ZS = 1,
         LS = 2
     }
-    public class MqB : IDefaultEventModelSeralize
+    public class MqB : IYiDianSeralize
     {
         [SeralizeIndex(0)]
         public string C { get; set; }
         [SeralizeIndex(1)]
         public string[] D { get; set; }
 
-        public void ToBytes(WriteStream stream)
+        public int ToBytes(WriteStream stream)
         {
             stream.WriteByte(2);
             stream.WriteHeader(EventPropertyType.L_Str, 1);
             stream.WriteHeader(EventPropertyType.L_Array, 1);
             stream.WriteString(C);
-            stream.WriteArrayString(D, (short)D.Length);
+            stream.WriteArrayString(D, (uint)D.Length);
+            return 0;
         }
         public void BytesTo(ReadStream stream)
         {
@@ -255,9 +288,22 @@ namespace ConsoleApp
             }
         }
     }
-    public interface IDefaultEventModelSeralize
+    public static class TimeExtensions
+    {
+        static DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        public static long ToUnixTimestamp(this DateTime dateTime)
+        {
+            return Convert.ToInt64((dateTime.ToUniversalTime() - start).TotalSeconds);
+        }
+        public static DateTime UnixTimestampToDate(this long timestamp)
+        {
+            return start.AddSeconds(timestamp).ToLocalTime();
+        }
+    }
+    public interface IYiDianSeralize
     {
         int ToBytes(WriteStream stream);
+        void BytesTo(ReadStream stream);
     }
     public class WriteStream
     {
@@ -275,6 +321,11 @@ namespace ConsoleApp
             span[0] = (byte)type;
             span[1] = length;
         }
+        public static int GetStringSize(string value)
+        {
+            var l = Encoding.UTF8.GetByteCount(value);
+            return l + 4;
+        }
         unsafe public int WriteString(string value)
         {
             var l = Encoding.UTF8.GetByteCount(value);
@@ -289,6 +340,10 @@ namespace ConsoleApp
                 }
             }
             return l;
+        }
+        public void WriteIndex(byte index)
+        {
+            WriteByte(index);
         }
         public void WriteByte(byte value)
         {
@@ -332,8 +387,8 @@ namespace ConsoleApp
         }
         public void WriteDate(DateTime value)
         {
-            string v = value.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            WriteString(v);
+            var v = value.ToUnixTimestamp();
+            WriteInt64(v);
         }
         public void WriteArrayByte(IEnumerable<byte> value, uint count)
         {
@@ -451,7 +506,7 @@ namespace ConsoleApp
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteEventArray<T>(IEnumerable<T> value, uint count) where T : IDefaultEventModelSeralize
+        public void WriteEventArray<T>(IEnumerable<T> value, uint count) where T : IYiDianSeralize
         {
             var span = Advance(4);
             int size = 0;
@@ -459,11 +514,11 @@ namespace ConsoleApp
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
-                size += WriteEventObj(ider.Current));
+                size += WriteEventObj(ider.Current);
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public int WriteEventObj(IDefaultEventModelSeralize obj)
+        public int WriteEventObj(IYiDianSeralize obj)
         {
             return obj.ToBytes(this);
         }
@@ -526,6 +581,7 @@ namespace ConsoleApp
         }
         public string[] ReadArrayString()
         {
+            Advance(4);
             var count = ReadInt32();
             var arrs = new string[count];
             for (var i = 0; i < count; i++)
@@ -534,15 +590,22 @@ namespace ConsoleApp
             }
             return arrs;
         }
-        public T[] ReadArray<T>() where T : IDefaultEventModelSeralize
+        public T[] ReadArray<T>() where T : IYiDianSeralize, new()
         {
+            Advance(4);
             var count = ReadInt32();
             var arrs = new T[count];
             for (var i = 0; i < count; i++)
             {
-                arrs[i] = READ();
+                arrs[i] = ReadEventObj<T>();
             }
             return arrs;
+        }
+        public T ReadEventObj<T>() where T : IYiDianSeralize, new()
+        {
+            var t = new T();
+            t.BytesTo(this);
+            return t;
         }
         public string ReadString()
         {
@@ -563,6 +626,10 @@ namespace ConsoleApp
             var b = orginal[offset];
             offset += 1;
             return b;
+        }
+        public void Advance(int length)
+        {
+            offset += length;
         }
     }
     public struct Header

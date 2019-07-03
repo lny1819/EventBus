@@ -51,7 +51,7 @@ namespace YiDian.EventBus
         }
         public ushort GetValue()
         {
-            return BitConverter.ToUInt16(new byte[] { A, B });
+            return BitConverter.ToUInt16(new byte[] { B, A });
         }
         public override bool Equals(object obj)
         {

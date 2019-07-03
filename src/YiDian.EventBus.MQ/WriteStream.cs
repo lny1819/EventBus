@@ -119,14 +119,14 @@ namespace YiDian.EventBus.MQ
             }
             BitConverter.TryWriteBytes(span, size);
         }
-        public void WriteArrayString(IEnumerable<string> value)
+        public uint WriteArrayString(IEnumerable<string> value)
         {
             var count = value == null ? 0 : (uint)value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
                 WriteUInt32(0);
-                return;
+                return 8;
             }
             var span = Advance(4);
             uint size = 0;
@@ -137,6 +137,7 @@ namespace YiDian.EventBus.MQ
                 size += WriteString(ider.Current);
             }
             BitConverter.TryWriteBytes(span, size);
+            return 8 + size;
         }
         public void WriteArrayDate(IEnumerable<DateTime> value)
         {

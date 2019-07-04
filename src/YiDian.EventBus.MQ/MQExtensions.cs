@@ -19,7 +19,7 @@ namespace YiDian.Soa.Sp.Extensions
         /// <param name="builder"></param>
         /// <param name="getconnstr"></param>
         /// <returns></returns>
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, IAppEventsManager eventsManager, IEventSeralize seralizer)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, IAppEventsManager eventsManager, IEventSeralize seralizer = null)
         {
             var service = builder.Services;
             service.AddSingleton(eventsManager);
@@ -27,17 +27,18 @@ namespace YiDian.Soa.Sp.Extensions
             {
                 var factory = CreateConnect(mqConnstr);
                 var sub_logger = sp.GetService<ILogger<IEventBusSubManager>>();
+                seralizer = seralizer ?? new DefaultSeralizer();
                 var defaultconn = new DefaultRabbitMQPersistentConnection(factory, eventsManager, seralizer, sub_logger, 5);
                 return defaultconn;
             });
             return builder;
         }
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, string enven_mgr_api, IEventSeralize seralizer)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, string enven_mgr_api, IEventSeralize seralizer = null)
         {
             var mgr = new HttpEventsManager(enven_mgr_api);
             return UseRabbitMq(builder, mqConnstr, mgr, seralizer);
         }
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr,  IEventSeralize seralizer)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, IEventSeralize seralizer = null)
         {
             var mgr = new DefaultEventsManager();
             return UseRabbitMq(builder, mqConnstr, mgr, seralizer);

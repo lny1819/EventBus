@@ -365,6 +365,7 @@ namespace YiDian.EventBus.MQ
                         file.WriteLine(string.Format("             size +=stream.WriteEventObj({0});", item.Name));
                     }
                 }
+                file.WriteLine("            BitConverter.TryWriteBytes(span, size);");
                 file.WriteLine("            return size;");
                 file.WriteLine("        }");
 

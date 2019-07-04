@@ -23,6 +23,7 @@ namespace YiDian.Soa.Sp.Extensions
         {
             var service = builder.Services;
             eventsManager = eventsManager ?? new DefaultEventsManager();
+            service.AddSingleton(eventsManager);
             builder.Services.AddSingleton<IRabbitMQPersistentConnection, DefaultRabbitMQPersistentConnection>(sp =>
             {
                 var factory = CreateConnect(mqConnstr);

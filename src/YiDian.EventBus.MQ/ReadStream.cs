@@ -212,10 +212,14 @@ namespace YiDian.EventBus.MQ
         }
         public DateTime ReadDate()
         {
-            const int datecount = 23;
-            var value = Encoding.UTF8.GetString(orginal, offset, datecount);
-            offset += datecount;
-            return DateTime.Parse(value);
+            var year = ReadUInt16();
+            var month = ReadUInt16();
+            var day = ReadUInt16();
+            var hh = ReadByte();
+            var mm = ReadByte();
+            var ss = ReadByte();
+            var sss = ReadUInt16();
+            return new DateTime(year, month, day, hh, mm, ss, sss);
         }
         public byte ReadByte()
         {

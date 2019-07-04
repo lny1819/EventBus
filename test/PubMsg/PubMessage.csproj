@@ -29,7 +29,6 @@
 
   <ItemGroup>
     <Folder Include="test2\" />
-    <Folder Include="test\" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JSONSchema="" /></VisualStudio></ProjectExtensions>

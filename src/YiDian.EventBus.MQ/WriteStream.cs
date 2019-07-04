@@ -15,17 +15,18 @@ namespace YiDian.EventBus.MQ
         {
             orginal = new byte[size];
         }
-        Span<byte> Advance(int length)
+        public Span<byte> Advance(int length)
         {
             var span = new Span<byte>(orginal, offset, length);
             offset += length;
             return span;
         }
-        public void WriteHeader(EventPropertyType type, byte length)
+        public uint WriteHeader(EventPropertyType type, byte length)
         {
             var span = Advance(2);
             span[0] = (byte)type;
             span[1] = length;
+            return 2;
         }
         unsafe public uint WriteString(string value)
         {
@@ -40,76 +41,87 @@ namespace YiDian.EventBus.MQ
                     Encoding.UTF8.GetBytes(cPtr, value.Length, bPtr, l);
                 }
             }
-            return (uint)l;
+            return (uint)l + 4;
         }
-        public void WriteIndex(byte index)
+        public uint WriteIndex(byte index)
         {
-            WriteByte(index);
+            return WriteByte(index);
         }
-        public void WriteByte(byte value)
+        public uint WriteByte(byte value)
         {
             var span = Advance(1);
             span[0] = value;
+            return 1;
         }
-        public void WriteInt16(short value)
+        public uint WriteInt16(short value)
         {
             var span = Advance(2);
             BitConverter.TryWriteBytes(span, value);
+            return 2;
         }
-        public void WriteUInt16(ushort value)
+        public uint WriteUInt16(ushort value)
         {
             var span = Advance(2);
             BitConverter.TryWriteBytes(span, value);
+            return 2;
         }
-        public void WriteInt32(int value)
+        public uint WriteInt32(int value)
         {
             var span = Advance(4);
             BitConverter.TryWriteBytes(span, value);
+            return 4;
         }
-        public void WriteUInt32(uint value)
+        public uint WriteUInt32(uint value)
         {
             var span = Advance(4);
             BitConverter.TryWriteBytes(span, value);
+            return 4;
         }
-        public void WriteInt64(long value)
+        public uint WriteInt64(long value)
         {
             var span = Advance(8);
             BitConverter.TryWriteBytes(span, value);
+            return 8;
         }
-        public void WriteUInt64(ulong value)
+        public uint WriteUInt64(ulong value)
         {
             var span = Advance(8);
             BitConverter.TryWriteBytes(span, value);
+            return 8;
         }
-        public void WriteDouble(double value)
+        public uint WriteDouble(double value)
         {
             var span = Advance(8);
             BitConverter.TryWriteBytes(span, value);
+            return 8;
         }
         public unsafe uint WriteDate(DateTime value)
         {
-            var v = value.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            var span = Advance(23);
-            fixed (char* cPtr = v)
-            {
-                fixed (byte* bPtr = &MemoryMarshal.GetReference(span))
-                {
-                    Encoding.UTF8.GetBytes(cPtr, 23, bPtr, 23);
-                }
-            }
-            return 23;
+            var span = Advance(2);
+            BitConverter.TryWriteBytes(span, (ushort)value.Year);
+            span = Advance(2);
+            BitConverter.TryWriteBytes(span, (ushort)value.Month);
+            span = Advance(2);
+            BitConverter.TryWriteBytes(span, (ushort)value.Day);
+            span = Advance(3);
+            span[0] = (byte)value.Hour;
+            span[1] = (byte)value.Minute;
+            span[2] = (byte)value.Second;
+            span = Advance(2);
+            var f = BitConverter.TryWriteBytes(span, (ushort)value.Millisecond);
+            return 11;
         }
-        public void WriteArrayByte(IEnumerable<byte> value)
+        public uint WriteArrayByte(IEnumerable<byte> value)
         {
             var count = value == null ? 0 : (uint)value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
                 WriteUInt32(0);
-                return;
+                return 8;
             }
             var span = Advance(4);
-            int size = 0;
+            uint size = 0;
             WriteUInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
@@ -118,6 +130,7 @@ namespace YiDian.EventBus.MQ
                 size += 1;
             }
             BitConverter.TryWriteBytes(span, size);
+            return size + 8;
         }
         public uint WriteArrayString(IEnumerable<string> value)
         {
@@ -139,14 +152,14 @@ namespace YiDian.EventBus.MQ
             BitConverter.TryWriteBytes(span, size);
             return 8 + size;
         }
-        public void WriteArrayDate(IEnumerable<DateTime> value)
+        public uint WriteArrayDate(IEnumerable<DateTime> value)
         {
             var count = value == null ? 0 : (uint)value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
                 WriteUInt32(0);
-                return;
+                return 8;
             }
             var span = Advance(4);
             uint size = 0;
@@ -157,15 +170,16 @@ namespace YiDian.EventBus.MQ
                 size += WriteDate(ider.Current);
             }
             BitConverter.TryWriteBytes(span, size);
+            return 8 + size;
         }
-        public void WriteArrayBool(IEnumerable<bool> value)
+        public uint WriteArrayBool(IEnumerable<bool> value)
         {
             var count = value == null ? 0 : (uint)value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
                 WriteUInt32(0);
-                return;
+                return 8;
             }
             var span = Advance(4);
             uint size = count;
@@ -176,15 +190,16 @@ namespace YiDian.EventBus.MQ
                 WriteByte(ider.Current ? (byte)1 : (byte)0);
             }
             BitConverter.TryWriteBytes(span, size);
+            return 8 + size;
         }
-        public void WriteArrayInt16(IEnumerable<short> value)
+        public uint WriteArrayInt16(IEnumerable<short> value)
         {
             var count = value == null ? 0 : (uint)value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
                 WriteUInt32(0);
-                return;
+                return 8;
             }
             var span = Advance(4);
             int size = 0;
@@ -196,15 +211,16 @@ namespace YiDian.EventBus.MQ
                 size += 2;
             }
             BitConverter.TryWriteBytes(span, size);
+            return 8 + (uint)size;
         }
-        public void WriteArrayUInt16(IEnumerable<ushort> value)
+        public uint WriteArrayUInt16(IEnumerable<ushort> value)
         {
             var count = value == null ? 0 : (uint)value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
                 WriteUInt32(0);
-                return;
+                return 8;
             }
             var span = Advance(4);
             int size = 0;
@@ -216,15 +232,16 @@ namespace YiDian.EventBus.MQ
                 size += 2;
             }
             BitConverter.TryWriteBytes(span, size);
+            return 8 + (uint)size;
         }
-        public void WriteArrayInt32(IEnumerable<int> value)
+        public uint WriteArrayInt32(IEnumerable<int> value)
         {
             var count = value == null ? 0 : (uint)value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
                 WriteUInt32(0);
-                return;
+                return 8;
             }
             var span = Advance(4);
             int size = 0;
@@ -236,15 +253,16 @@ namespace YiDian.EventBus.MQ
                 size += 4;
             }
             BitConverter.TryWriteBytes(span, size);
+            return 8 + (uint)size;
         }
-        public void WriteArrayUInt32(IEnumerable<uint> value)
+        public uint WriteArrayUInt32(IEnumerable<uint> value)
         {
             var count = value == null ? 0 : (uint)value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
                 WriteUInt32(0);
-                return;
+                return 8;
             }
             var span = Advance(4);
             int size = 0;
@@ -256,15 +274,16 @@ namespace YiDian.EventBus.MQ
                 size += 4;
             }
             BitConverter.TryWriteBytes(span, size);
+            return 8 + (uint)size;
         }
-        public void WriteArrayInt64(IEnumerable<long> value)
+        public uint WriteArrayInt64(IEnumerable<long> value)
         {
             var count = value == null ? 0 : (uint)value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
                 WriteUInt32(0);
-                return;
+                return 8;
             }
             var span = Advance(4);
             int size = 0;
@@ -276,15 +295,16 @@ namespace YiDian.EventBus.MQ
                 size += 8;
             }
             BitConverter.TryWriteBytes(span, size);
+            return 8 + (uint)size;
         }
-        public void WriteArrayUInt64(IEnumerable<ulong> value)
+        public uint WriteArrayUInt64(IEnumerable<ulong> value)
         {
             var count = value == null ? 0 : (uint)value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
                 WriteUInt32(0);
-                return;
+                return 8;
             }
             var span = Advance(4);
             int size = 0;
@@ -296,15 +316,16 @@ namespace YiDian.EventBus.MQ
                 size += 8;
             }
             BitConverter.TryWriteBytes(span, size);
+            return 8 + (uint)size;
         }
-        public void WriteArrayDouble(IEnumerable<double> value)
+        public uint WriteArrayDouble(IEnumerable<double> value)
         {
             var count = value == null ? 0 : (uint)value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
                 WriteUInt32(0);
-                return;
+                return 8;
             }
             var span = Advance(4);
             int size = 0;
@@ -316,15 +337,16 @@ namespace YiDian.EventBus.MQ
                 size += 8;
             }
             BitConverter.TryWriteBytes(span, size);
+            return 8 + (uint)size;
         }
-        public void WriteEventArray<T>(IEnumerable<T> value) where T : IYiDianSeralize
+        public uint WriteEventArray<T>(IEnumerable<T> value) where T : IYiDianSeralize
         {
             var count = value == null ? 0 : (uint)value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
                 WriteUInt32(0);
-                return;
+                return 8;
             }
             var span = Advance(4);
             uint size = 0;
@@ -335,6 +357,7 @@ namespace YiDian.EventBus.MQ
                 size += WriteEventObj(ider.Current);
             }
             BitConverter.TryWriteBytes(span, size);
+            return 8 + size;
         }
         public uint WriteEventObj(IYiDianSeralize obj)
         {

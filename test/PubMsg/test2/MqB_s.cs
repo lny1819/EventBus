@@ -9,15 +9,15 @@ namespace EventModels.MyTest
     {
         public uint ToBytes(WriteStream stream)
         {
-            var size = Size();
-            stream.WriteUInt32(size);
+            uint size = 5;
+            var span = stream.Advance(4);
             stream.WriteByte(2);
-            stream.WriteHeader(EventPropertyType.L_Str,1);
-            stream.WriteHeader(EventPropertyType.L_Array,1);
-            stream.WriteIndex(0);
-            stream.WriteString(C);
-            stream.WriteIndex(1);
-            stream.WriteArrayString(D);
+             size +=stream.WriteHeader(EventPropertyType.L_Str,1);
+             size +=stream.WriteHeader(EventPropertyType.L_Array,1);
+             size +=stream.WriteIndex(0);
+             size +=stream.WriteString(C);
+             size +=stream.WriteIndex(1);
+             size +=stream.WriteArrayString(D);
             return size;
         }
         public void BytesTo(ReadStream stream)
@@ -29,6 +29,14 @@ namespace EventModels.MyTest
                 {
                     var index = stream.ReadByte();
                     stream.Advance(1);
+                }
+            }
+            if (headers.TryGetValue(EventPropertyType.L_Date, out count))
+            {
+                for (var i = 0; i < count; i++)
+                {
+                    var index = stream.ReadByte();
+                    stream.Advance(11);
                 }
             }
             if (headers.TryGetValue(EventPropertyType.L_16, out count))

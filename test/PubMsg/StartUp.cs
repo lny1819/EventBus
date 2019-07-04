@@ -53,13 +53,25 @@ namespace ConsoleApp
                 }
             };
 
+            //HttpEventsManager mgr = new HttpEventsManager("http://192.168.1.220:5000/api/event");
+            //var meta = mgr.CreateClassMeta(typeof(MqA), "zs", out List<Type> list);
+            //var meta2 = mgr.CreateClassMeta(typeof(MqB), "zs", out list);
+            //var load = new MqEventsLocalBuild();
+            //var dir = @"F:\XHERO\EventBus\test\PubMsg\test2";
+            //load.CreateMainClassFile(dir, "MyTest", meta);
+            //load.CreateSeralizeClassFile(dir, "MyTest", meta);
+            //load.CreateMainClassFile(dir, "MyTest", meta2);
+            //load.CreateSeralizeClassFile(dir, "MyTest", meta2);
+
+
             var json222 = xa.ToJson();
             var l1 = Encoding.UTF8.GetBytes(json222).Length;
             var l2 = xa.Size();
 
-            var size = xa.Size();
+            uint size = 1000;
             var stream = new WriteStream(size);
-            xa.ToBytes(stream);
+            var size1 = xa.ToBytes(stream);
+            var size2 = xa.Size();
             var datas = stream.GetBytes();
             var reads = new ReadStream(datas);
             MqA xb = new MqA();
@@ -68,7 +80,7 @@ namespace ConsoleApp
             Console.ReadKey();
             GC.Collect(2);
 
-            var count = 1000000;
+            var count = 500000;
             var watch = Stopwatch.StartNew();
 
             for (var xx = 0; xx < count; xx++)
@@ -85,12 +97,12 @@ namespace ConsoleApp
             watch.Restart();
             for (var xx = 0; xx < count; xx++)
             {
-                size = xa.Size();
+                size = 1000;
                 stream = new WriteStream(size);
                 xa.ToBytes(stream);
                 datas = stream.GetBytes();
                 reads = new ReadStream(datas);
-                 xb = new MqA();
+                xb = new MqA();
                 xb.BytesTo(reads);
             }
             Console.WriteLine("mystream test:" + watch.ElapsedMilliseconds.ToString());

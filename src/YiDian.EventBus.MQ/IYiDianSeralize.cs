@@ -20,6 +20,7 @@ namespace YiDian.EventBus.MQ
         L_8,
         L_16,
         L_32,
+        L_Date,
         L_64,
         L_Str,
         L_Array,

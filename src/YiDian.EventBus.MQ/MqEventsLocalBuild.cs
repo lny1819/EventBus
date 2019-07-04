@@ -207,52 +207,65 @@ namespace YiDian.EventBus.MQ
                 file.WriteLine("    {");
                 file.WriteLine("        public uint ToBytes(WriteStream stream)");
                 file.WriteLine("        {");
-                file.WriteLine("            var size = Size();");
-                file.WriteLine("            stream.WriteUInt32(size);");
+                file.WriteLine("            uint size = 5;");
+                file.WriteLine("            var span = stream.Advance(4);");
                 var dic = PropertyGroup(meta.Properties);
                 file.WriteLine(string.Format("            stream.WriteByte({0});", dic.Count.ToString()));
                 if (dic.TryGetValue(EventPropertyType.L_8, out List<PropertyMetaInfo> l8_props))
                 {
-                    file.WriteLine(string.Format("            stream.WriteHeader(EventPropertyType.L_8,{0});", l8_props.Count.ToString()));
+                    file.WriteLine(string.Format("             size +=stream.WriteHeader(EventPropertyType.L_8,{0});", l8_props.Count.ToString()));
+                }
+                if (dic.TryGetValue(EventPropertyType.L_Date, out List<PropertyMetaInfo> ldate_props))
+                {
+                    file.WriteLine(string.Format("             size +=stream.WriteHeader(EventPropertyType.L_Date,{0});", l8_props.Count.ToString()));
                 }
                 if (dic.TryGetValue(EventPropertyType.L_16, out List<PropertyMetaInfo> l16_props))
                 {
-                    file.WriteLine(string.Format("            stream.WriteHeader(EventPropertyType.L_16,{0});", l16_props.Count.ToString()));
+                    file.WriteLine(string.Format("             size +=stream.WriteHeader(EventPropertyType.L_16,{0});", l16_props.Count.ToString()));
                 }
                 if (dic.TryGetValue(EventPropertyType.L_32, out List<PropertyMetaInfo> l32_props))
                 {
-                    file.WriteLine(string.Format("            stream.WriteHeader(EventPropertyType.L_32,{0});", l32_props.Count.ToString()));
+                    file.WriteLine(string.Format("             size +=stream.WriteHeader(EventPropertyType.L_32,{0});", l32_props.Count.ToString()));
                 }
                 if (dic.TryGetValue(EventPropertyType.L_64, out List<PropertyMetaInfo> l64_props))
                 {
-                    file.WriteLine(string.Format("            stream.WriteHeader(EventPropertyType.L_64,{0});", l64_props.Count.ToString()));
+                    file.WriteLine(string.Format("             size +=stream.WriteHeader(EventPropertyType.L_64,{0});", l64_props.Count.ToString()));
                 }
                 if (dic.TryGetValue(EventPropertyType.L_Str, out List<PropertyMetaInfo> lstr_props))
                 {
-                    file.WriteLine(string.Format("            stream.WriteHeader(EventPropertyType.L_Str,{0});", lstr_props.Count.ToString()));
+                    file.WriteLine(string.Format("             size +=stream.WriteHeader(EventPropertyType.L_Str,{0});", lstr_props.Count.ToString()));
                 }
                 if (dic.TryGetValue(EventPropertyType.L_Array, out List<PropertyMetaInfo> larr_props))
                 {
-                    file.WriteLine(string.Format("            stream.WriteHeader(EventPropertyType.L_Array,{0});", larr_props.Count.ToString()));
+                    file.WriteLine(string.Format("             size +=stream.WriteHeader(EventPropertyType.L_Array,{0});", larr_props.Count.ToString()));
                 }
                 if (dic.TryGetValue(EventPropertyType.L_N, out List<PropertyMetaInfo> ln_props))
                 {
-                    file.WriteLine(string.Format("            stream.WriteHeader(EventPropertyType.L_N,{0});", ln_props.Count.ToString()));
+                    file.WriteLine(string.Format("             size +=stream.WriteHeader(EventPropertyType.L_N,{0});", ln_props.Count.ToString()));
                 }
                 if (l8_props != null)
                 {
                     l8_props = l8_props.OrderBy(x => x.SeralizeIndex).ToList();
                     foreach (var item in l8_props)
                     {
-                        file.WriteLine(string.Format("            stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
+                        file.WriteLine(string.Format("             size +=stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
                         if (item.Type == PropertyMetaInfo.P_Boolean)
                         {
-                            file.WriteLine(string.Format("            stream.WriteByte({0} ? (byte)1 : (byte)0);", item.Name));
+                            file.WriteLine(string.Format("             size +=stream.WriteByte({0} ? (byte)1 : (byte)0);", item.Name));
                         }
                         else
                         {
-                            file.WriteLine(string.Format("            stream.WriteByte({0});", item.Name));
+                            file.WriteLine(string.Format("             size +=stream.WriteByte({0});", item.Name));
                         }
+                    }
+                }
+                if (ldate_props != null)
+                {
+                    ldate_props = ldate_props.OrderBy(x => x.SeralizeIndex).ToList();
+                    foreach (var item in ldate_props)
+                    {
+                        file.WriteLine(string.Format("             size +=stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
+                        file.WriteLine(string.Format("             size +=stream.WriteDate({0});", item.Name));
                     }
                 }
                 if (l16_props != null)
@@ -260,14 +273,14 @@ namespace YiDian.EventBus.MQ
                     l16_props = l16_props.OrderBy(x => x.SeralizeIndex).ToList();
                     foreach (var item in l16_props)
                     {
-                        file.WriteLine(string.Format("            stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
+                        file.WriteLine(string.Format("             size +=stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
                         if (item.Type == PropertyMetaInfo.P_UInt16)
                         {
-                            file.WriteLine(string.Format("            stream.WriteUInt16({0});", item.Name));
+                            file.WriteLine(string.Format("             size +=stream.WriteUInt16({0});", item.Name));
                         }
                         else
                         {
-                            file.WriteLine(string.Format("            stream.WriteInt16({0});", item.Name));
+                            file.WriteLine(string.Format("             size +=stream.WriteInt16({0});", item.Name));
                         }
                     }
                 }
@@ -276,18 +289,18 @@ namespace YiDian.EventBus.MQ
                     l32_props = l32_props.OrderBy(x => x.SeralizeIndex).ToList();
                     foreach (var item in l32_props)
                     {
-                        file.WriteLine(string.Format("            stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
+                        file.WriteLine(string.Format("             size +=stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
                         if (item.Type == PropertyMetaInfo.P_UInt32)
                         {
-                            file.WriteLine(string.Format("            stream.WriteUInt32({0});", item.Name));
+                            file.WriteLine(string.Format("             size +=stream.WriteUInt32({0});", item.Name));
                         }
                         else if (item.Type.StartsWith(PropertyMetaInfo.P_Enum))
                         {
-                            file.WriteLine(string.Format("            stream.WriteInt32((int){0});", item.Name));
+                            file.WriteLine(string.Format("             size +=stream.WriteInt32((int){0});", item.Name));
                         }
                         else
                         {
-                            file.WriteLine(string.Format("            stream.WriteInt32({0});", item.Name));
+                            file.WriteLine(string.Format("             size +=stream.WriteInt32({0});", item.Name));
                         }
                     }
                 }
@@ -296,18 +309,18 @@ namespace YiDian.EventBus.MQ
                     l64_props = l64_props.OrderBy(x => x.SeralizeIndex).ToList();
                     foreach (var item in l64_props)
                     {
-                        file.WriteLine(string.Format("            stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
+                        file.WriteLine(string.Format("             size +=stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
                         if (item.Type == PropertyMetaInfo.P_UInt64)
                         {
-                            file.WriteLine(string.Format("            stream.WriteUInt64({0});", item.Name));
+                            file.WriteLine(string.Format("             size +=stream.WriteUInt64({0});", item.Name));
                         }
                         else if (item.Type == PropertyMetaInfo.P_Double)
                         {
-                            file.WriteLine(string.Format("            stream.WriteDouble({0});", item.Name));
+                            file.WriteLine(string.Format("             size +=stream.WriteDouble({0});", item.Name));
                         }
                         else
                         {
-                            file.WriteLine(string.Format("            stream.WriteInt64({0});", item.Name));
+                            file.WriteLine(string.Format("             size +=stream.WriteInt64({0});", item.Name));
                         }
                     }
                 }
@@ -316,9 +329,9 @@ namespace YiDian.EventBus.MQ
                     lstr_props = lstr_props.OrderBy(x => x.SeralizeIndex).ToList();
                     foreach (var item in lstr_props)
                     {
-                        file.WriteLine(string.Format("            stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
-                        if (item.Type == PropertyMetaInfo.P_Date) file.WriteLine(string.Format("            stream.WriteDate({0});", item.Name));
-                        else file.WriteLine(string.Format("            stream.WriteString({0});", item.Name));
+                        file.WriteLine(string.Format("             size +=stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
+                        if (item.Type == PropertyMetaInfo.P_Date) file.WriteLine(string.Format("             size +=stream.WriteDate({0});", item.Name));
+                        else file.WriteLine(string.Format("             size +=stream.WriteString({0});", item.Name));
                     }
                 }
                 if (larr_props != null)
@@ -326,20 +339,20 @@ namespace YiDian.EventBus.MQ
                     larr_props = larr_props.OrderBy(x => x.SeralizeIndex).ToList();
                     foreach (var item in larr_props)
                     {
-                        file.WriteLine(string.Format("            stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
+                        file.WriteLine(string.Format("             size +=stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
                         var arrtype = item.Type.Substring(6);
-                        if (arrtype == PropertyMetaInfo.P_Byte) file.WriteLine(string.Format("            stream.WriteArrayByte({0});", item.Name));
-                        else if (arrtype == PropertyMetaInfo.P_Date) file.WriteLine(string.Format("            stream.WriteArrayDate({0});", item.Name));
-                        else if (arrtype == PropertyMetaInfo.P_Boolean) file.WriteLine(string.Format("            stream.WriteArrayBool({0});", item.Name));
-                        else if (arrtype == PropertyMetaInfo.P_Double) file.WriteLine(string.Format("            stream.WriteArrayDouble({0});", item.Name));
-                        else if (arrtype == PropertyMetaInfo.P_Int16) file.WriteLine(string.Format("            stream.WriteArrayInt16({0});", item.Name));
-                        else if (arrtype == PropertyMetaInfo.P_UInt16) file.WriteLine(string.Format("            stream.WriteArrayUInt16({0});", item.Name));
-                        else if (arrtype == PropertyMetaInfo.P_Int32) file.WriteLine(string.Format("            stream.WriteArrayInt32({0});", item.Name));
-                        else if (arrtype == PropertyMetaInfo.P_UInt32) file.WriteLine(string.Format("            stream.WriteArrayUInt32({0});", item.Name));
-                        else if (arrtype == PropertyMetaInfo.P_Int64) file.WriteLine(string.Format("            stream.WriteArrayInt64({0});", item.Name));
-                        else if (arrtype == PropertyMetaInfo.P_UInt64) file.WriteLine(string.Format("            stream.WriteArrayUInt64({0});", item.Name));
-                        else if (arrtype == PropertyMetaInfo.P_String) file.WriteLine(string.Format("            stream.WriteArrayString({0});", item.Name));
-                        else file.WriteLine(string.Format("            stream.WriteEventArray({0});", item.Name));
+                        if (arrtype == PropertyMetaInfo.P_Byte) file.WriteLine(string.Format("             size +=stream.WriteArrayByte({0});", item.Name));
+                        else if (arrtype == PropertyMetaInfo.P_Date) file.WriteLine(string.Format("             size +=stream.WriteArrayDate({0});", item.Name));
+                        else if (arrtype == PropertyMetaInfo.P_Boolean) file.WriteLine(string.Format("             size +=stream.WriteArrayBool({0});", item.Name));
+                        else if (arrtype == PropertyMetaInfo.P_Double) file.WriteLine(string.Format("             size +=stream.WriteArrayDouble({0});", item.Name));
+                        else if (arrtype == PropertyMetaInfo.P_Int16) file.WriteLine(string.Format("             size +=stream.WriteArrayInt16({0});", item.Name));
+                        else if (arrtype == PropertyMetaInfo.P_UInt16) file.WriteLine(string.Format("             size +=stream.WriteArrayUInt16({0});", item.Name));
+                        else if (arrtype == PropertyMetaInfo.P_Int32) file.WriteLine(string.Format("             size +=stream.WriteArrayInt32({0});", item.Name));
+                        else if (arrtype == PropertyMetaInfo.P_UInt32) file.WriteLine(string.Format("             size +=stream.WriteArrayUInt32({0});", item.Name));
+                        else if (arrtype == PropertyMetaInfo.P_Int64) file.WriteLine(string.Format("             size +=stream.WriteArrayInt64({0});", item.Name));
+                        else if (arrtype == PropertyMetaInfo.P_UInt64) file.WriteLine(string.Format("             size +=stream.WriteArrayUInt64({0});", item.Name));
+                        else if (arrtype == PropertyMetaInfo.P_String) file.WriteLine(string.Format("             size +=stream.WriteArrayString({0});", item.Name));
+                        else file.WriteLine(string.Format("             size +=stream.WriteEventArray({0});", item.Name));
                     }
                 }
                 if (ln_props != null)
@@ -347,8 +360,8 @@ namespace YiDian.EventBus.MQ
                     ln_props = ln_props.OrderBy(x => x.SeralizeIndex).ToList();
                     foreach (var item in ln_props)
                     {
-                        file.WriteLine(string.Format("            stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
-                        file.WriteLine(string.Format("            stream.WriteEventObj({0});", item.Name));
+                        file.WriteLine(string.Format("             size +=stream.WriteIndex({0});", item.SeralizeIndex.ToString()));
+                        file.WriteLine(string.Format("             size +=stream.WriteEventObj({0});", item.Name));
                     }
                 }
                 file.WriteLine("            return size;");
@@ -390,6 +403,27 @@ namespace YiDian.EventBus.MQ
                 file.WriteLine("            }");
                 #endregion
 
+                #region LDate
+                file.WriteLine("            if (headers.TryGetValue(EventPropertyType.L_Date, out count))");
+                file.WriteLine("            {");
+                file.WriteLine("                for (var i = 0; i < count; i++)");
+                file.WriteLine("                {");
+                file.WriteLine("                    var index = stream.ReadByte();");
+                if (ldate_props != null)
+                {
+                    ldate_props = ldate_props.OrderBy(x => x.SeralizeIndex).ToList();
+                    foreach (var item in ldate_props)
+                    {
+                        file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
+                        file.Write("{");
+                        file.Write($" {item.Name} = stream.ReadDate();continue;");
+                        file.WriteLine("}");
+                    }
+                }
+                file.WriteLine("                    stream.Advance(11);");
+                file.WriteLine("                }");
+                file.WriteLine("            }");
+                #endregion
                 #region L16
                 file.WriteLine("            if (headers.TryGetValue(EventPropertyType.L_16, out count))");
                 file.WriteLine("            {");
@@ -664,13 +698,13 @@ namespace YiDian.EventBus.MQ
 
                 file.WriteLine("        public uint Size()");
                 file.WriteLine("        {");
-                var size = 5 + dic.Count * 2 + meta.Properties.Count + (l8_props == null ? 0 : l8_props.Count) + (l16_props == null ? 0 : l16_props.Count * 2) + (l32_props == null ? 0 : l32_props.Count * 4) + (l64_props == null ? 0 : l64_props.Count * 8);
+                var size = 5 + dic.Count * 2 + meta.Properties.Count + (l8_props == null ? 0 : l8_props.Count) + (ldate_props == null ? 0 : ldate_props.Count * 11) + (l16_props == null ? 0 : l16_props.Count * 2) + (l32_props == null ? 0 : l32_props.Count * 4) + (l64_props == null ? 0 : l64_props.Count * 8);
                 file.Write($"                var size={size}+");
                 if (lstr_props != null)
                 {
                     foreach (var s_pty in lstr_props)
                     {
-                        if (s_pty.Type == PropertyMetaInfo.P_Date) file.Write("27+");
+                        if (s_pty.Type == PropertyMetaInfo.P_Date) file.Write("11+");
                         else file.Write($"WriteStream.GetStringSize({s_pty.Name})+");
                     }
                 }
@@ -685,7 +719,7 @@ namespace YiDian.EventBus.MQ
                         }
                         else if (arrtype == PropertyMetaInfo.P_Date)
                         {
-                            file.Write("27+");
+                            file.Write("11+");
                         }
                         else if (arrtype == PropertyMetaInfo.P_Double)
                         {
@@ -753,6 +787,11 @@ namespace YiDian.EventBus.MQ
                     dic.TryAdd(EventPropertyType.L_16, new List<PropertyMetaInfo>());
                     dic[EventPropertyType.L_16].Add(p);
                 }
+                else if (p.Type == PropertyMetaInfo.P_Date)
+                {
+                    dic.TryAdd(EventPropertyType.L_Date, new List<PropertyMetaInfo>());
+                    dic[EventPropertyType.L_Date].Add(p);
+                }
                 else if (p.Type == PropertyMetaInfo.P_Int32 || p.Type == PropertyMetaInfo.P_UInt32 || p.Type.StartsWith(PropertyMetaInfo.P_Enum))
                 {
                     dic.TryAdd(EventPropertyType.L_32, new List<PropertyMetaInfo>());
@@ -763,7 +802,7 @@ namespace YiDian.EventBus.MQ
                     dic.TryAdd(EventPropertyType.L_64, new List<PropertyMetaInfo>());
                     dic[EventPropertyType.L_64].Add(p);
                 }
-                else if (p.Type == PropertyMetaInfo.P_Date || p.Type == PropertyMetaInfo.P_String)
+                else if (p.Type == PropertyMetaInfo.P_String)
                 {
                     dic.TryAdd(EventPropertyType.L_Str, new List<PropertyMetaInfo>());
                     dic[EventPropertyType.L_Str].Add(p);

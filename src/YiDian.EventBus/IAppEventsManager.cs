@@ -94,6 +94,7 @@ namespace YiDian.EventBus
         public MetaAttr Attr { get; set; }
         public string Name { get; set; }
         public bool IsEventType { get; set; }
+        public bool DefaultSeralize { get; set; }
         public List<PropertyMetaInfo> Properties { get; set; }
         public void ToJson(StringBuilder sb)
         {
@@ -101,6 +102,8 @@ namespace YiDian.EventBus
             sb.Append(Name);
             sb.Append("\",\"IsEventType\":");
             sb.Append(IsEventType.ToString().ToLower());
+            sb.Append(",\"DefaultSeralize\":");
+            sb.Append(DefaultSeralize.ToString().ToLower());
             sb.Append(",\"Attr\":");
             if (Attr == null) sb.Append("null");
             else Attr.ToJson(sb);

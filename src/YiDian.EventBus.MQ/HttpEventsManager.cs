@@ -43,14 +43,12 @@ namespace YiDian.EventBus.MQ
         {
             var meta = CreateClassMeta(type, appName, out List<Type> list, enableDefaultSeralize);
             var res = RegisterClassEvent(appName, version, meta);
-            if (!res.IsVaild) return res;
             foreach (var not_event_type in list)
             {
                 res = IfExistNotEventType(appName, not_event_type, version);
                 if (!res.IsVaild)
                 {
-                    res = SendTypeMeta(not_event_type, appName, version, enableDefaultSeralize);
-                    if (!res.IsVaild) return res;
+                    SendTypeMeta(not_event_type, appName, version, enableDefaultSeralize);
                 }
             }
             return res;
@@ -66,8 +64,7 @@ namespace YiDian.EventBus.MQ
                 var pinfo = new PropertyMetaInfo() { Name = p.Name, Type = GetBaseTypeName(p.PropertyType.Name), SeralizeIndex = ((SeralizeIndex)p.GetCustomAttribute(typeof(SeralizeIndex), false)).Index };
                 if (pinfo.Type == string.Empty)
                 {
-                    if (p.PropertyType.IsEnum) pinfo.Type = PropertyMetaInfo.P_Enum + separator + p.PropertyType.Name;
-                    else if (p.PropertyType.IsGenericType && p.PropertyType.GetInterfaces().Contains(typeof(IList)))
+                    if (p.PropertyType.IsGenericType && p.PropertyType.GetInterfaces().Contains(typeof(IList)))
                     {
                         var s_list = PropertyMetaInfo.P_Array + separator;
                         var t_args = p.PropertyType.GenericTypeArguments;
@@ -90,8 +87,9 @@ namespace YiDian.EventBus.MQ
                     }
                     else
                     {
+                        if (p.PropertyType.IsEnum) pinfo.Type = PropertyMetaInfo.P_Enum + separator + p.PropertyType.Name;
+                        else pinfo.Type = p.PropertyType.Name;
                         if (!p.PropertyType.IsSubclassOf(typeof(IMQEvent))) types.Add(p.PropertyType);
-                        pinfo.Type = p.PropertyType.Name;
                     }
                 }
                 var attrs = p.GetCustomAttributes(typeof(KeyIndex), false);
@@ -111,7 +109,7 @@ namespace YiDian.EventBus.MQ
             else if (typename == typeof(Int64).Name) return PropertyMetaInfo.P_Int64;
             else if (typename == typeof(UInt64).Name) return PropertyMetaInfo.P_UInt64;
             else if (typename == typeof(Boolean).Name) return PropertyMetaInfo.P_Boolean;
-            else if (typename == typeof(string).Name) return PropertyMetaInfo.P_String;
+            else if (typename == typeof(string).Name || typename == typeof(char).Name) return PropertyMetaInfo.P_String;
             else if (typename == typeof(Double).Name || typename == typeof(Decimal).Name) return PropertyMetaInfo.P_Double;
             else if (typename == typeof(DateTime).Name) return PropertyMetaInfo.P_Date;
             else return string.Empty;
@@ -307,7 +305,8 @@ namespace YiDian.EventBus.MQ
                 var class_meta = new ClassMeta
                 {
                     Name = ht2["Name"].ToString(),
-                    IsEventType = bool.Parse(ht2["IsEventType"].ToString())
+                    IsEventType = bool.Parse(ht2["IsEventType"].ToString()),
+                    DefaultSeralize = bool.Parse(ht2["DefaultSeralize"].ToString())
                 };
                 if (ht2["Attr"] != null)
                 {
@@ -325,6 +324,7 @@ namespace YiDian.EventBus.MQ
                     var p_info = new PropertyMetaInfo()
                     {
                         Name = ps["Name"].ToString(),
+                        SeralizeIndex = int.Parse(ps["SeralizeIndex"].ToString()),
                         Type = ps["Type"].ToString()
                     };
                     if (ps["Attr"] != null)

@@ -218,7 +218,7 @@ namespace YiDian.EventBus.MQ
                 }
                 if (dic.TryGetValue(EventPropertyType.L_Date, out List<PropertyMetaInfo> ldate_props))
                 {
-                    file.WriteLine(string.Format("             size +=stream.WriteHeader(EventPropertyType.L_Date,{0});", l8_props.Count.ToString()));
+                    file.WriteLine(string.Format("             size +=stream.WriteHeader(EventPropertyType.L_Date,{0});", ldate_props.Count.ToString()));
                 }
                 if (dic.TryGetValue(EventPropertyType.L_16, out List<PropertyMetaInfo> l16_props))
                 {
@@ -584,14 +584,14 @@ namespace YiDian.EventBus.MQ
                         {
                             file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
                             file.Write("{");
-                            file.Write($" {item.Name} = stream.ReadArrayByte();continue;");
+                            file.Write($" {item.Name} = stream.ReadArrayByte().ToArray();continue;");
                             file.WriteLine("}");
                         }
                         else if (arrtype == PropertyMetaInfo.P_Date)
                         {
                             file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
                             file.Write("{");
-                            file.Write($" {item.Name} = stream.ReadArrayDate();continue;");
+                            file.Write($" {item.Name} = stream.ReadArrayDate().To;continue;");
                             file.WriteLine("}");
                         }
                         else if (arrtype == PropertyMetaInfo.P_Boolean)

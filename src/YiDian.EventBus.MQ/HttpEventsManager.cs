@@ -33,15 +33,15 @@ namespace YiDian.EventBus.MQ
             if (!flag) throw new ArgumentException("not vaild web api address", nameof(web_api_address));
         }
 
-        private CheckResult SendTypeMeta(Type type, string appName, string version)
+        private CheckResult SendTypeMeta(Type type, string appName, string version, bool enableDefaultSeralize)
         {
-            if (type.IsEnum) return SendEnumMeta(type, appName, version);
-            else return SendClassMeta(type, appName, version);
+            if (type.IsEnum) return SendEnumMeta(type, appName, version, enableDefaultSeralize);
+            else return SendClassMeta(type, appName, version, enableDefaultSeralize);
         }
 
-        private CheckResult SendClassMeta(Type type, string appName, string version)
+        private CheckResult SendClassMeta(Type type, string appName, string version, bool enableDefaultSeralize)
         {
-            var meta = CreateClassMeta(type, appName, out List<Type> list);
+            var meta = CreateClassMeta(type, appName, out List<Type> list, enableDefaultSeralize);
             var res = RegisterClassEvent(appName, version, meta);
             if (!res.IsVaild) return res;
             foreach (var not_event_type in list)
@@ -49,16 +49,16 @@ namespace YiDian.EventBus.MQ
                 res = IfExistNotEventType(appName, not_event_type, version);
                 if (!res.IsVaild)
                 {
-                    res = SendTypeMeta(not_event_type, appName, version);
+                    res = SendTypeMeta(not_event_type, appName, version, enableDefaultSeralize);
                     if (!res.IsVaild) return res;
                 }
             }
             return res;
         }
-        ClassMeta CreateClassMeta(Type type, string appName, out List<Type> types)
+        ClassMeta CreateClassMeta(Type type, string appName, out List<Type> types, bool enableDefaultSeralize)
         {
             var isEventType = type.GetInterfaces().Where(x => x == typeof(IMQEvent)).Count() > 0;
-            var meta = new ClassMeta() { Name = type.Name, IsEventType = isEventType };
+            var meta = new ClassMeta() { Name = type.Name, IsEventType = isEventType, DefaultSeralize = enableDefaultSeralize };
 
             types = new List<Type>();
             foreach (var p in type.GetProperties())
@@ -116,9 +116,9 @@ namespace YiDian.EventBus.MQ
             else if (typename == typeof(DateTime).Name) return PropertyMetaInfo.P_Date;
             else return string.Empty;
         }
-        private CheckResult SendEnumMeta(Type type, string appName, string version)
+        private CheckResult SendEnumMeta(Type type, string appName, string version, bool enableDefaultSeralize)
         {
-            var enumMeta = new EnumMeta() { Name = type.Name };
+            var enumMeta = new EnumMeta() { Name = type.Name, DefaultSeralize = enableDefaultSeralize };
             var values = Enum.GetValues(type);
             foreach (var v in values)
             {
@@ -127,9 +127,9 @@ namespace YiDian.EventBus.MQ
             return RegisterEnumType(appName, version, enumMeta);
         }
 
-        public CheckResult RegisterEvent<T>(string appName, string version) where T : IMQEvent
+        public CheckResult RegisterEvent<T>(string appName, string version, bool enableDefaultSeralize) where T : IMQEvent
         {
-            return SendTypeMeta(typeof(T), appName, version);
+            return SendTypeMeta(typeof(T), appName, version, enableDefaultSeralize);
         }
         //public void RegisterEvents(AppMetas metas)
         //{

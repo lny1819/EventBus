@@ -6,7 +6,7 @@ namespace YiDian.EventBus
 {
     public interface IAppEventsManager
     {
-        CheckResult RegisterEvent<T>(string appName, string version) where T : IMQEvent;
+        CheckResult RegisterEvent<T>(string appName, string version, bool enableDefaultSeralize) where T : IMQEvent;
         CheckResult VaildityTest(string appName, string version);
         CheckResult GetVersion(string appName);
         AppMetas ListEvents(string appName);
@@ -67,12 +67,15 @@ namespace YiDian.EventBus
             Values = new List<(string, int)>();
         }
         public string Name { get; set; }
+        public bool DefaultSeralize { get; set; }
         public List<ValueTuple<string, int>> Values { get; set; }
         public void ToJson(StringBuilder sb)
         {
             sb.Append("{\"Name\":\"");
             sb.Append(Name);
-            sb.Append("\",\"Values\":[");
+            sb.Append("\",\"DefaultSeralize\":");
+            sb.Append(DefaultSeralize.ToString().ToLower());
+            sb.Append(",\"Values\":[");
             for (var i = 0; i < Values.Count; i++)
             {
                 sb.Append("{\"Item1\":\"");

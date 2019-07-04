@@ -144,7 +144,7 @@ namespace YiDian.EventBus
         }
         public List<EnumMeta> Enums { get; set; }
         public List<ClassMeta> MetaInfos { get; set; }
-        public Version Version { get; set; }
+        public string Version { get; set; }
         public string Name { get; set; }
         public string ToJson()
         {
@@ -152,7 +152,7 @@ namespace YiDian.EventBus
             sb.Append("{\"Name\":\"");
             sb.Append(Name);
             sb.Append("\",\"Version\":\"");
-            sb.Append(Version.ToString());
+            sb.Append(Version);
             sb.Append("\",\"MetaInfos\":[");
             for (var i = 0; i < MetaInfos.Count; i++)
             {

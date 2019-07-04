@@ -24,7 +24,7 @@ namespace YiDian.EventBus.MQ
 
         public AppMetas ListEvents(string appName)
         {
-            return new AppMetas() { Enums = new List<EnumMeta>(), MetaInfos = new List<ClassMeta>(), Name = appName, Version =  Version.Parse("0.0") };
+            return new AppMetas() { Enums = new List<EnumMeta>(), MetaInfos = new List<ClassMeta>(), Name = appName, Version = "0.0" };
         }
 
         public CheckResult RegisterEvent<T>(string appName, string version, bool enableDefaultSeralize) where T : IMQEvent

@@ -98,7 +98,8 @@ namespace YiDian.EventBus.MQ
             foreach (var meta in appmeta.MetaInfos)
             {
                 CreateMainClassFile(dir, s_namespace, meta);
-                CreateSeralizeClassFile(dir, s_namespace, meta);
+                if (meta.DefaultSeralize)
+                    CreateSeralizeClassFile(dir, s_namespace, meta);
             }
             foreach (var meta in appmeta.Enums)
             {

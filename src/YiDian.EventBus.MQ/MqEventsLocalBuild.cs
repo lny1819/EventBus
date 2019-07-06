@@ -66,6 +66,7 @@ namespace YiDian.EventBus.MQ
                         if (res.IsVaild)
                         {
                             version = res.InvaildMessage;
+                            if (version == "0.0") continue;
                             res = _eventsManager.VaildityTest(app, version);
                         }
                         if (!res.IsVaild)
@@ -133,7 +134,7 @@ namespace YiDian.EventBus.MQ
                     file?.Close();
                 }
             }
-            var versionFile = Path.Combine(dir, appmeta.Version+ ".v");
+            var versionFile = Path.Combine(dir, appmeta.Version + ".v");
             var v_file = File.OpenWrite(versionFile);
             var json = appmeta.ToJson();
             v_file.Write(json);

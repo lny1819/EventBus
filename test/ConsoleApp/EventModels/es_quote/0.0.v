@@ -1,1 +1,0 @@
-{"Name":"es_quote","Version":"0.0","MetaInfos":[],"Enums":[]}

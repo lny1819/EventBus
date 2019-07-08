@@ -53,7 +53,7 @@ namespace YiDian.Soa.Sp.Extensions
         {
             if (string.IsNullOrEmpty(all_apps)) all_apps = builder.Config["dependApps"];
             if (string.IsNullOrEmpty(fileDir)) fileDir = builder.Project_Dir;
-            if (string.IsNullOrEmpty(fileDir)) throw new ArgumentNullException("Project Dir is null ,Project_Dir depand the commandline '-pj_dir' ", nameof(fileDir));
+            if (string.IsNullOrEmpty(fileDir)) throw new ArgumentNullException(nameof(fileDir), "Project Dir is null ,Project_Dir depand the commandline '-pj_dir'");
             var service = builder.Services;
             builder.RegisterRun(new MqEventsLocalBuild());
             //--loadevents -app history,userapi -path /data/his

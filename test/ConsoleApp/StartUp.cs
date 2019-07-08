@@ -25,7 +25,8 @@ namespace ConsoleApp
             builder.RegisterAssemblyTypes(curAssembly).Where(e => e.Name.EndsWith("Handler")).PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
             soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"], new JsonSeralizer()).UseTopicEventBus();
 #if DEBUG
-            soa.AutoCreateAppEvents("test");
+            //soa.AutoCreateAppEvents("test");
+            soa.AutoCreateAppEvents("es_quote,depthdata");
 #endif
         }
         public struct SSAA

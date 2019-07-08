@@ -4,8 +4,9 @@ using YiDian.EventBus;
 using YiDian.EventBus.MQ.KeyAttribute;
 namespace EventModels.es_quote
 {
-    public class QuoteBytes: IMQEvent
+    public partial class QuoteBytes: IMQEvent
     {
+        [SeralizeIndex(0)]
         public Byte[] Datas { get; set; }
     }
 }

@@ -30,6 +30,12 @@ namespace YiDian.EventBus.MQ
         }
         unsafe public uint WriteString(string value)
         {
+            if (value == string.Empty)
+            {
+                var span2 = Advance(4);
+                BitConverter.TryWriteBytes(span2, 0);
+                return 4;
+            }
             var l = Encoding.UTF8.GetByteCount(value);
             var span = Advance(4);
             BitConverter.TryWriteBytes(span, l);

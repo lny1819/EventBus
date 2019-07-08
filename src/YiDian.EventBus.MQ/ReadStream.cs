@@ -206,6 +206,7 @@ namespace YiDian.EventBus.MQ
         public string ReadString()
         {
             var count = ReadInt32();
+            if (count == 0) return string.Empty;
             var value = Encoding.UTF8.GetString(orginal, offset, count);
             offset += count;
             return value;

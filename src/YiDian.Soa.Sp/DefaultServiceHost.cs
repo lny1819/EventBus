@@ -88,8 +88,7 @@ namespace YiDian.Soa.Sp
                 {
                     run.Run(this, appname, _builder.GetArgs());
                 }
-                if (state != 0) return exitCode;
-                Start();
+                Task.Run(() => Start());
             }
             catch (Exception ex)
             {

@@ -44,9 +44,9 @@ namespace YiDian.EventBus.MQ
         {
             //var item = new SendItem(@event, prefix, enableTransaction);
             //sending.QueueWorkItemInternal(item);
-            var fix = GetPubKey(@event);
-            fix = prefix + "." + fix;
-            Publish(@event, (x) => fix + x, enableTransaction);
+            //var fix = GetPubKey(@event);
+            //fix = prefix + "." + fix;
+            Publish(@event, (x) => prefix + x, enableTransaction);
         }
         public override string GetEventKeyFromRoutingKey(string routingKey)
         {

@@ -88,7 +88,11 @@ namespace YiDian.Soa.Sp
                 {
                     run.Run(this, appname, _builder.GetArgs());
                 }
-                Task.Run(() => Start());
+                if (background)
+                {
+                    Start();
+                    return 0;
+                }
             }
             catch (Exception ex)
             {
@@ -96,6 +100,7 @@ namespace YiDian.Soa.Sp
             }
             if (!background)
             {
+                Task.Run(() => Start());
                 if (exitCode == 0)
                 {
                     waitExit.Reset();

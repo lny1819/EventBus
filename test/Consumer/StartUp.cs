@@ -1,5 +1,5 @@
 ﻿using Autofac;
-using EventModels.pub_test;
+using EventModels.es_quote;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -8,7 +8,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Utils.Seralize;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.Soa.Sp;
@@ -39,11 +38,11 @@ namespace Consumer
                 };
                 return hdl;
             }).SingleInstance();
-            soa.UseRabbitMq(Configuration["mqconnstr"], new JsonSeralizer())
+            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"])
                  .UseDirectEventBus(0)
                  .UseTopicEventBus(0);
 #if DEBUG
-            //soa.AutoCreateAppEvents("pub_test");
+            soa.AutoCreateAppEvents("es_quote");
 #endif
         }
         public void Start(IServiceProvider sp, string[] args)
@@ -53,9 +52,11 @@ namespace Consumer
             var topic = sp.GetService<ITopicEventBus>();
             direct.RegisterConsumer("test-direct1", x =>
             {
-                //x.Subscribe<MqA, MyHandler>();
-                x.SubscribeBytes<MqA, MyHandler>();
+                x.Subscribe<Exchange, MyHandler>();
             }, queueLength: 10000000, autodel: false, fetchCount: 2000);
+            var host = sp.GetService<ISoaServiceHost>();
+            Thread.Sleep(3000);
+            host.Exit(3);
             //topic.RegisterConsumer("test-topic-1", x =>
             // {
             //     x.Subscribe<MqA, My2Handler>(m => m.A == "a");
@@ -66,7 +67,7 @@ namespace Consumer
             //}, length: 10000000, autodelete: false);
         }
     }
-    public class MyHandler : IEventHandler<MqA>, IBytesHandler
+    public class MyHandler : IEventHandler<Exchange>, IBytesHandler
     {
         readonly Thread thread;
 
@@ -128,7 +129,7 @@ namespace Consumer
         //        old_his_data.Reset();
         //    }
         //}
-        public Task<bool> Handle(MqA @event)
+        public Task<bool> Handle(Exchange @event)
         {
             var cts = TaskSource.Create<bool>(@event);
 

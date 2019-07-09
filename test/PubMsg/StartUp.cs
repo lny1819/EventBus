@@ -4,6 +4,10 @@ using Microsoft.Extensions.Configuration;
 using System;
 using YiDian.Soa.Sp;
 using YiDian.Soa.Sp.Extensions;
+using YiDian.EventBus;
+using System.Threading.Tasks;
+using System.Threading;
+using EventModels.es_quote;
 
 namespace ConsoleApp
 {
@@ -25,10 +29,10 @@ namespace ConsoleApp
         }
         public unsafe void Start(IServiceProvider sp, string[] args)
         {
-            var host = sp.GetService<ISoaServiceHost>();
+            //var host = sp.GetService<ISoaServiceHost>();
 
-            var s_quoteinfo = "SEtFWAAAAAAAAABGSFNJAAAAAAAAAAAxOTA3AAAAAAAAAAAAAAAAAAAAAAAATgAAAAAAAAAAAAAAAAAAAAAAAAAAAABOAAAAAAAAAAAAAAAAMjAxOS0wNy0wOSAxMzo0NDo1NC4xMTAAAAAAAACy20AAAAAAALLbQAAAAAAAAAAAAAAAAAC020AAAAAAwH7bQAAAAACAv9tAAAAAAMBu20AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP3xAQAAAAAAAAAAAAAAAAC53AEAAAAAAAAAAAAAAAAAAAAAAACy20AAAAAAALLbQAMAAAAAAAAAAAAAAIB+20AAAAAAgH7bQAAAAABAfttAAAAAAAB+20AAAAAAwH3bQAAAAACAfdtAAAAAAEB920AAAAAAAH3bQAAAAADAfNtAAAAAAIB820AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAACQAAAAAAAAAGAAAAAAAAAAwAAAAAAAAABgAAAAAAAAAWAAAAAAAAAAsAAAAAAAAACgAAAAAAAAAIAAAAAAAAAAsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwH7bQAAAAABAf9tAAAAAAIB/20AAAAAAwH/bQAAAAAAAgNtAAAAAAECA20AAAAAAgIDbQAAAAADAgNtAAAAAAACB20AAAAAAQIHbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAAKAAAAAAAAAAgAAAAAAAAACAAAAAAAAAANAAAAAAAAAAkAAAAAAAAADgAAAAAAAAAIAAAAAAAAAAwAAAAAAAAADgAAAAAAAAAAAAAAAAAAADMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAudwBAAAAAAAAAAAAAAAAAK9fi2aUIee/AAAAAACgacD+WjSjDDnyPwAAAAAAAAAAAAAAAAAAAABIS0VYAAAAAAAAAEZIU0kAAAAAAAAAADE5MDcAAAAAAAAAAAAAAAAAAAAAAABOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE4=";
-            var bytes = Convert.FromBase64String(s_quoteinfo);
+            //var s_quoteinfo = "SEtFWAAAAAAAAABGSFNJAAAAAAAAAAAxOTA3AAAAAAAAAAAAAAAAAAAAAAAATgAAAAAAAAAAAAAAAAAAAAAAAAAAAABOAAAAAAAAAAAAAAAAMjAxOS0wNy0wOSAxMzo0NDo1NC4xMTAAAAAAAACy20AAAAAAALLbQAAAAAAAAAAAAAAAAAC020AAAAAAwH7bQAAAAACAv9tAAAAAAMBu20AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP3xAQAAAAAAAAAAAAAAAAC53AEAAAAAAAAAAAAAAAAAAAAAAACy20AAAAAAALLbQAMAAAAAAAAAAAAAAIB+20AAAAAAgH7bQAAAAABAfttAAAAAAAB+20AAAAAAwH3bQAAAAACAfdtAAAAAAEB920AAAAAAAH3bQAAAAADAfNtAAAAAAIB820AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAACQAAAAAAAAAGAAAAAAAAAAwAAAAAAAAABgAAAAAAAAAWAAAAAAAAAAsAAAAAAAAACgAAAAAAAAAIAAAAAAAAAAsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwH7bQAAAAABAf9tAAAAAAIB/20AAAAAAwH/bQAAAAAAAgNtAAAAAAECA20AAAAAAgIDbQAAAAADAgNtAAAAAAACB20AAAAAAQIHbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAAKAAAAAAAAAAgAAAAAAAAACAAAAAAAAAANAAAAAAAAAAkAAAAAAAAADgAAAAAAAAAIAAAAAAAAAAwAAAAAAAAADgAAAAAAAAAAAAAAAAAAADMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAudwBAAAAAAAAAAAAAAAAAK9fi2aUIee/AAAAAACgacD+WjSjDDnyPwAAAAAAAAAAAAAAAAAAAABIS0VYAAAAAAAAAEZIU0kAAAAAAAAAADE5MDcAAAAAAAAAAAAAAAAAAAAAAABOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE4=";
+            //var bytes = Convert.FromBase64String(s_quoteinfo);
             //var info = bytes.ByteToEsQuote();
 
             //var i = 100000;
@@ -65,53 +69,51 @@ namespace ConsoleApp
             //}
             //sw.Stop();
             //Console.WriteLine(sw.ElapsedMilliseconds);
-            Console.ReadKey();
+            //Console.ReadKey();
 
-            //var eventsMgr = sp.GetRequiredService<IAppEventsManager>();
-            //var res = eventsMgr.RegisterEvent<MqA>("pub_test", "1.2");
-            //if (!res.IsVaild) Console.WriteLine(res.InvaildMessage);
-            //res = eventsMgr.VaildityTest("pub_test", "1.2");
-            //if (!res.IsVaild) Console.WriteLine(res.InvaildMessage);
-            //var a = new MqA() { PropertyA = "a", PropertyB = "b2" };
-            //var b = new MqA() { PropertyA = "b", PropertyB = "b1" };
-            //var direct = sp.GetService<IDirectEventBus>();
-            //var topic = sp.GetService<ITopicEventBus>();
-            //var qps = sp.GetService<IQpsCounter>();
-            //var ps = int.Parse(Configuration["ps"]);
-            //var type = Configuration["type"];
-            //var sleep = int.Parse(Configuration["sleep"]);
-            //Task.Run(() =>
-            //{
-            //    for (; ; )
-            //    {
-            //        var i = ps;
-            //        for (var j = 0; j < i; j++)
-            //        {
-            //            //topic.PublishPrefix(a, "s1");
-            //            //topic.Publish(a);
-            //            //direct.Publish(b);
-            //            //direct.Publish(a);
-            //            //direct.Publish(b);
-            //            qps.Add("p");
-            //            if (type == "direct")
-            //            {
-            //                direct.Publish(a);
-            //                qps.Add("i");
-            //            }
-            //            else if (type == "top-where")
-            //            {
-            //                topic.Publish(a);
-            //                qps.Add("i");
-            //            }
-            //            else if (type == "top-pre")
-            //            {
-            //                topic.PublishPrefix(a, "s1");
-            //                qps.Add("i");
-            //            }
-            //        }
-            //        Thread.Sleep(sleep);
-            //    }
-            //});
+            var eventsMgr = sp.GetRequiredService<IAppEventsManager>();
+            var a = new Exchange() { ExchangeName = "zs", ExchangeNo = "hsi" };
+            var direct = sp.GetService<IDirectEventBus>();
+            var topic = sp.GetService<ITopicEventBus>();
+            var qps = sp.GetService<IQpsCounter>();
+            var host = sp.GetService<ISoaServiceHost>();
+            var ps = int.Parse(Configuration["ps"]);
+            var type = Configuration["type"];
+            var sleep = int.Parse(Configuration["sleep"]);
+            Task.Run(() =>
+            {
+                for (; ; )
+                {
+                    var i = ps;
+                    for (var j = 0; j < i; j++)
+                    {
+                        topic.Publish(a);
+                        direct.Publish(a);
+                        qps.Add("p");
+                        //if (type == "direct")
+                        //{
+                        //    direct.Publish(a);
+                        //    qps.Add("i");
+                        //}
+                        //else if (type == "top-where")
+                        //{
+                        //    topic.Publish(a);
+                        //    qps.Add("i");
+                        //}
+                        //else if (type == "top-pre")
+                        //{
+                        //    topic.PublishPrefix(a, "s1");
+                        //    qps.Add("i");
+                        //}
+                    }
+                    Thread.Sleep(sleep);
+                }
+            });
+
+            Task.Delay(10000).ContinueWith(x =>
+            {
+                host.Exit(3);
+            });
         }
     }
 }

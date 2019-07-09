@@ -207,7 +207,7 @@ namespace YiDian.EventBus.MQ
                 file.WriteLine("{");
                 file.WriteLine("    public partial class " + meta.Name + ": " + typeof(IYiDianSeralize).Name);
                 file.WriteLine("    {");
-                file.WriteLine("        public uint ToBytes(WriteStream stream)");
+                file.WriteLine("        public uint ToBytes(ref WriteStream stream)");
                 file.WriteLine("        {");
                 file.WriteLine("            uint size = 5;");
                 file.WriteLine("            var span = stream.Advance(4);");
@@ -370,7 +370,7 @@ namespace YiDian.EventBus.MQ
                 file.WriteLine("            return size;");
                 file.WriteLine("        }");
 
-                file.WriteLine("        public void BytesTo(ReadStream stream)");
+                file.WriteLine("        public void BytesTo(ref ReadStream stream)");
                 file.WriteLine("        {");
                 file.WriteLine("            var headers = stream.ReadHeaders();");
 

@@ -7,12 +7,13 @@ using System.Text;
 
 namespace YiDian.EventBus.MQ
 {
-    public class WriteStream
+    public struct WriteStream
     {
         readonly byte[] orginal;
-        int offset = 0;
+        int offset;
         public WriteStream(uint size)
         {
+            offset = 0;
             orginal = new byte[size];
         }
         public Span<byte> Advance(int length)
@@ -367,7 +368,7 @@ namespace YiDian.EventBus.MQ
         }
         public uint WriteEventObj(IYiDianSeralize obj)
         {
-            return obj.ToBytes(this);
+            return obj.ToBytes(ref this);
         }
         public byte[] GetBytes()
         {

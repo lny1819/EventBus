@@ -7,7 +7,7 @@ namespace EventModels.es_quote
 {
     public partial class Exchange: IYiDianSeralize
     {
-        public uint ToBytes(WriteStream stream)
+        public uint ToBytes(ref WriteStream stream)
         {
             uint size = 5;
             var span = stream.Advance(4);
@@ -20,7 +20,7 @@ namespace EventModels.es_quote
             BitConverter.TryWriteBytes(span, size);
             return size;
         }
-        public void BytesTo(ReadStream stream)
+        public void BytesTo(ref ReadStream stream)
         {
             var headers = stream.ReadHeaders();
             if (headers.TryGetValue(EventPropertyType.L_8, out byte count))

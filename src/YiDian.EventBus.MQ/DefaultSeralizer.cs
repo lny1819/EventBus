@@ -12,7 +12,7 @@ namespace YiDian.EventBus.MQ
             var obj = constructor.Invoke(null) as IYiDianSeralize;
             if (obj == null) throw new ArgumentNullException("the type " + type.Name + " can not be convert as " + nameof(IYiDianSeralize));
             var readstream = new ReadStream(data);
-            obj.BytesTo(readstream);
+            obj.BytesTo(ref readstream);
             return obj;
         }
 
@@ -20,7 +20,7 @@ namespace YiDian.EventBus.MQ
         {
             var obj = (IYiDianSeralize)@event as IYiDianSeralize;
             var write = new WriteStream(2000);
-            obj.ToBytes(write);
+            obj.ToBytes(ref write);
             return write.GetBytes();
         }
     }

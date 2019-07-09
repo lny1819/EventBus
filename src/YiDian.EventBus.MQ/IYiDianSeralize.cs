@@ -6,8 +6,8 @@ namespace YiDian.EventBus.MQ
 {
     public interface IYiDianSeralize
     {
-        uint ToBytes(WriteStream stream);
-        void BytesTo(ReadStream stream);
+        uint ToBytes(ref WriteStream stream);
+        void BytesTo(ref ReadStream stream);
         uint Size();
     }
     public struct Header

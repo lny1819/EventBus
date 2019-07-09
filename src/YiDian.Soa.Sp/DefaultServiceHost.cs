@@ -19,7 +19,6 @@ namespace YiDian.Soa.Sp
         readonly SoaServiceContainerBuilder _builder;
         readonly string[] original_args;
         int exitCode = 0;
-        int state = 0;
         public DefaultServiceHost(SoaServiceContainerBuilder builder, string[] args)
         {
             original_args = args;
@@ -93,34 +92,22 @@ namespace YiDian.Soa.Sp
                     Start();
                     return 0;
                 }
+                Task.Run(() => Start());
+                waitExit.Reset();
+                waitExit.WaitOne();
+                var process = Process.GetCurrentProcess();
+                process.Kill();
             }
             catch (Exception ex)
             {
                 OnException(ex);
             }
-            if (!background)
-            {
-                Task.Run(() => Start());
-                if (exitCode == 0)
-                {
-                    waitExit.Reset();
-                    waitExit.WaitOne();
-                }
-                Task.Delay(1000).ContinueWith((x) =>
-                {
-                    var process = Process.GetCurrentProcess();
-                    process.Kill();
-                });
-            }
             return exitCode;
         }
         public void Exit(int code)
         {
-            if (Interlocked.CompareExchange(ref state, 0, 1) == 0)
-            {
-                exitCode = code;
-                waitExit.Set();
-            }
+            exitCode = code;
+            waitExit.Set();
         }
         static readonly DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         long ToUnixTimestamp(DateTime dateTime)

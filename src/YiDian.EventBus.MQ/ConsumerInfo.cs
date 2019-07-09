@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -44,7 +45,10 @@ namespace YiDian.EventBus.MQ
         }
         internal void Start()
         {
-            _model.BasicConsume(Name, AutoAck, _consumer);
+            Task.Run(() =>
+            {
+                _model.BasicConsume(Name, AutoAck, _consumer);
+            });
         }
         internal IModel GetChannel()
         {

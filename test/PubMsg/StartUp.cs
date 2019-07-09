@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using EventModels.es_quote;
 using EventModels.MyTest;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,7 +28,7 @@ namespace ConsoleApp
                  .UseDirectEventBus()
                  .UseTopicEventBus();
 #if DEBUG
-            soa.AutoCreateAppEvents("es_quotes");
+            soa.AutoCreateAppEvents("es_quote");
 #endif
         }
         public void Start(IServiceProvider sp, string[] args)
@@ -49,7 +50,16 @@ namespace ConsoleApp
                        new MqB(){ D = new string[] { "a", "a" }, C = "a" }
                 }
             };
-
+            CommodityInfo info = new CommodityInfo()
+            {
+                 CommodityNo="1906"
+            };
+            Exchange exchange = new Exchange() { ExchangeNo = "hkex", ExchangeName = "港交所" };
+            Contract ct = new Contract() { ExchangeNo = "HKEX" };
+            var dt = sp.GetService<IDirectEventBus>();
+            dt.Publish(info);
+            dt.Publish(exchange);
+            dt.Publish(ct);
             //HttpEventsManager mgr = new HttpEventsManager("http://192.168.1.220:5000/api/event");
             //var meta = mgr.CreateClassMeta(typeof(MqA), "zs", out List<Type> list);
             //var meta2 = mgr.CreateClassMeta(typeof(MqB), "zs", out list);

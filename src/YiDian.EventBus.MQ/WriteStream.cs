@@ -30,7 +30,7 @@ namespace YiDian.EventBus.MQ
         }
         unsafe public uint WriteString(string value)
         {
-            if (value == string.Empty)
+            if (string.IsNullOrEmpty(value))
             {
                 var span2 = Advance(4);
                 BitConverter.TryWriteBytes(span2, 0);

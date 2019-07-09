@@ -20,10 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Utils" Version="1.0.1.5" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\src\YiDian.EventBus.MQ\YiDian.EventBus.MQ.csproj" />
   </ItemGroup>
 

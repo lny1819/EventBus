@@ -3,18 +3,12 @@ using EventModels.MyTest;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Utils.Seralize;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
-using YiDian.EventBus.MQ.KeyAttribute;
 using YiDian.Soa.Sp;
 using YiDian.Soa.Sp.Extensions;
 
@@ -29,9 +23,12 @@ namespace ConsoleApp
         }
         public void ConfigService(SoaServiceContainerBuilder soa, ContainerBuilder builder)
         {
-            //soa.UseRabbitMq(Configuration["mqconnstr"], new JsonSeralizer())
-            //     .UseDirectEventBus()
-            //     .UseTopicEventBus();
+            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"])
+                 .UseDirectEventBus()
+                 .UseTopicEventBus();
+#if DEBUG
+            soa.AutoCreateAppEvents("es_quotes");
+#endif
         }
         public void Start(IServiceProvider sp, string[] args)
         {
@@ -63,11 +60,6 @@ namespace ConsoleApp
             //load.CreateMainClassFile(dir, "MyTest", meta2);
             //load.CreateSeralizeClassFile(dir, "MyTest", meta2);
 
-
-            var json222 = xa.ToJson();
-            var l1 = Encoding.UTF8.GetBytes(json222).Length;
-            var l2 = xa.Size();
-
             uint size = 1000;
             var stream = new WriteStream(size);
             var size1 = xa.ToBytes(stream);
@@ -83,17 +75,17 @@ namespace ConsoleApp
             var count = 500000;
             var watch = Stopwatch.StartNew();
 
-            for (var xx = 0; xx < count; xx++)
-            {
-                var json = xa.ToJson();
-                var bytes = Encoding.UTF8.GetBytes(json);
-                var json2 = Encoding.UTF8.GetString(bytes);
-                json2.JsonTo<MqA>();
-            }
-            watch.Stop();
-            Console.WriteLine("json test:" + watch.ElapsedMilliseconds.ToString());
-            GC.Collect(2);
-            Console.ReadKey();
+            //for (var xx = 0; xx < count; xx++)
+            //{
+            //    var json = xa.ToJson();
+            //    var bytes = Encoding.UTF8.GetBytes(json);
+            //    var json2 = Encoding.UTF8.GetString(bytes);
+            //    json2.JsonTo<MqA>();
+            //}
+            //watch.Stop();
+            //Console.WriteLine("json test:" + watch.ElapsedMilliseconds.ToString());
+            //GC.Collect(2);
+            //Console.ReadKey();
             watch.Restart();
             for (var xx = 0; xx < count; xx++)
             {

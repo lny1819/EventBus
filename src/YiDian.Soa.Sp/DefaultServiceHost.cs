@@ -79,7 +79,7 @@ namespace YiDian.Soa.Sp
         {
             var appname = getName(Configuration);
             if (appname == null) throw new ArgumentNullException("Run->GetAppName");
-            var logger = ServicesProvider.GetService<ILogger<DefaultServiceHost>>();
+            var logger = ServicesProvider.GetService<ILogger<ISoaServiceHost>>();
             logger.LogWarning($"soa service start with sysname {appname} datetime {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}");
             try
             {
@@ -92,11 +92,10 @@ namespace YiDian.Soa.Sp
                     Start();
                     return 0;
                 }
-                Task.Run(() => Start());
+                Start();
                 waitExit.Reset();
                 waitExit.WaitOne();
-                var process = Process.GetCurrentProcess();
-                process.Kill();
+                logger.LogInformation(" exit 2");
             }
             catch (Exception ex)
             {
@@ -106,6 +105,8 @@ namespace YiDian.Soa.Sp
         }
         public void Exit(int code)
         {
+            var logger = ServicesProvider.GetService<ILogger<ISoaServiceHost>>();
+            logger.LogInformation("begin exit");
             exitCode = code;
             waitExit.Set();
         }

@@ -402,7 +402,10 @@ namespace YiDian.EventBus.MQ
             stream.Close();
             var new_stream = webreq.GetResponse().GetResponseStream();
             StreamReader reader = new StreamReader(new_stream, Encoding.UTF8);
-            return reader.ReadToEnd();
+            var res = reader.ReadToEnd();
+            reader.Close();
+            new_stream.Close();
+            return res;
         }
         public string HttpGet(string url)
         {

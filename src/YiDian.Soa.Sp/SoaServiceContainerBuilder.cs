@@ -12,7 +12,6 @@ namespace YiDian.Soa.Sp
     public class SoaServiceContainerBuilder
     {
         readonly List<IAppRun> appRuns;
-        IConfiguration _config;
         string[] _args;
         public string Project_Dir { get; }
         public SoaServiceContainerBuilder(string[] args, IServiceCollection services)
@@ -39,15 +38,6 @@ namespace YiDian.Soa.Sp
             return appRuns;
         }
         public IServiceCollection Services { get; }
-        public IConfiguration Config
-        {
-            get { return _config; }
-            internal set
-            {
-                _config = value ?? throw new ArgumentNullException(nameof(Config));
-                Services.AddSingleton(value);
-            }
-        }
         internal Type StartUp { get; set; }
         public string[] GetArgs()
         {

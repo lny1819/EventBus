@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
@@ -51,7 +52,8 @@ namespace YiDian.Soa.Sp.Extensions
         /// <returns>builder</returns>
         public static SoaServiceContainerBuilder AutoCreateAppEvents(this SoaServiceContainerBuilder builder, string all_apps = "", string fileDir = "")
         {
-            if (string.IsNullOrEmpty(all_apps)) all_apps = builder.Config["dependApps"];
+            var config = builder.Services.BuildServiceProvider().GetService<IConfiguration>();
+            if (string.IsNullOrEmpty(all_apps)) all_apps = config["dependApps"];
             if (string.IsNullOrEmpty(fileDir)) fileDir = builder.Project_Dir;
             if (string.IsNullOrEmpty(fileDir)) throw new ArgumentNullException(nameof(fileDir), "Project Dir is null ,Project_Dir depand the commandline '-pj_dir'");
             var service = builder.Services;

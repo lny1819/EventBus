@@ -5,9 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Text;
-using System.Threading.Tasks;
 using System.Threading;
-using System.Diagnostics;
 
 namespace YiDian.Soa.Sp
 {
@@ -25,6 +23,7 @@ namespace YiDian.Soa.Sp
             _builder = builder;
             waitExit = new AutoResetEvent(false);
             var service = builder.Services;
+            Configuration = service.BuildServiceProvider().GetService<IConfiguration>();
             service.AddSingleton<ISoaServiceHost, DefaultServiceHost>((s) => this);
             Init();
             ConfigApps();
@@ -74,7 +73,7 @@ namespace YiDian.Soa.Sp
 
         public IServiceProvider ServicesProvider { get; private set; }
 
-        public IConfiguration Configuration { get { return _builder.Config; } }
+        public IConfiguration Configuration { get; private set; }
         public int Run(Func<IConfiguration, string> getName, bool background = false)
         {
             var appname = getName(Configuration);

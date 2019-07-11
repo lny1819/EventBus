@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 
 namespace YiDian.Soa.Sp.Extensions
@@ -16,7 +17,7 @@ namespace YiDian.Soa.Sp.Extensions
             var configbuilder = new ConfigurationBuilder();
             configaction(configbuilder);
             var config = configbuilder.Build();
-            builder.Config = config;
+            builder.Services.AddSingleton<IConfiguration>(config);
             return builder;
         }
     }

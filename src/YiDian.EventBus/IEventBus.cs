@@ -2,7 +2,7 @@
 
 namespace YiDian.EventBus
 {
-    public interface IEventBus
+    public interface IEventBus : IDisposable
     {
         event EventHandler<Exception> OnUncatchException;
         void EnableHandlerCache(int cacheLength);

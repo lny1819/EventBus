@@ -142,9 +142,9 @@ namespace YiDian.EventBus.MQ
                 if (_sub_keys.Contains(subkey))
                 {
                     _sub_keys.Remove(subkey);
-                    RaiseOnEventRemoved(subkey, brokerName);
                 }
             }
+            RaiseOnEventRemoved(subkey, brokerName);
         }
         private void RaiseOnEventRemoved(string eventName, string brokerName)
         {

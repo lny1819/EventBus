@@ -5,175 +5,17 @@ using System.Threading;
 
 namespace YiDian.EventBus.MQ
 {
-    public class ThreadChannels
+    class EventObj
     {
-        static readonly object lockobj = new object();
-        static ThreadChannels _current;
-        public static ThreadChannels Default
-        {
-            get
-            {
-                if (_current == null)
-                {
-                    lock (lockobj)
-                    {
-                        if (_current == null)
-                            _current = new ThreadChannels(Math.Min(16, Environment.ProcessorCount));
-                    }
-                }
-                return _current;
-            }
-        }
-        public static Action<Exception> UnCatchedException;
-        readonly Thread[] _threads;
-        ConcurrentQueue<__ITEM> queue;
-        int _limit;
-        int _state = 0;
-        readonly int _allRun = 0;
-        public static ThreadChannels Create(int limit)
-        {
-            return new ThreadChannels(limit, true);
-        }
-        internal ThreadChannels(int limit, bool highlvl = false)
-        {
-            _limit = limit;
-            _threads = new Thread[_limit];
-            queue = new ConcurrentQueue<__ITEM>();
-            ExecutionContext.SuppressFlow();
-            for (var i = 0; i < limit; i++)
-            {
-                _allRun |= (1 << i);
-            }
-            for (var i = 0; i < limit; i++)
-            {
-                _state |= (1 << i);
-                var thread = CreateThread(i, highlvl);
-                _threads[i] = thread;
-                thread.Start(i);
-            }
-            ExecutionContext.RestoreFlow();
-        }
-        Thread CreateThread(int i, bool highlvl)
-        {
-            var thread = new Thread(ThreadAction) { IsBackground = true };
-            if (highlvl) thread.Priority = ThreadPriority.Highest;
-            return thread;
-        }
-
-        void ThreadAction(object obj)
-        {
-            try
-            {
-                ThreadLoop((int)obj);
-            }
-            catch (Exception ex)
-            {
-                UnCatchedException.Invoke(ex);
-            }
-        }
-
-        void ThreadLoop(int index)
-        {
-            var thread = _threads[index];
-            for (; ; )
-            {
-                var flag = queue.TryDequeue(out __ITEM action);
-                if (flag)
-                {
-                    try
-                    {
-                        action.Action.Invoke(action.ActionObj);
-                    }
-                    catch (Exception ex)
-                    {
-                        UnCatchedException?.Invoke(ex);
-                    }
-                }
-                else
-                {
-                    lock (thread)
-                    {
-                        SetThread(index);
-                        Monitor.Wait(thread, Timeout.Infinite);
-                    }
-                }
-            }
-        }
-
-        struct __ITEM
-        {
-            public __ITEM(Action<object> action, object indata)
-            {
-                Action = action;
-                ActionObj = indata;
-            }
-            public Action<object> Action { get; }
-            public object ActionObj { get; }
-        }
-        public void QueueWorkItemInternal(Action<object> action, object indata = null)
-        {
-            queue.Enqueue(new __ITEM(action, indata));
-            var thread = GetSetThread();
-            if (thread == null) return;
-            lock (thread)
-            {
-                Monitor.PulseAll(thread);
-            }
-        }
-
-        private Thread GetSetThread()
-        {
-            if (_state == _allRun) return null;
-            if (Interlocked.CompareExchange(ref _state, 1, 0) == 0)
-            {
-                return _threads[0];
-            }
-            for (var i = 0; i < _limit; i++)
-            {
-                if (_state == _allRun) return null;
-                var x = 1 << i;
-                var y = _state;
-                var r = y | x;
-                if (r != y)
-                {
-                    var flag = Interlocked.CompareExchange(ref _state, r, y) == y;
-                    if (flag) return _threads[i];
-                }
-            }
-            return null;
-        }
-
-        private void SetThread(int index)
-        {
-            for (; ; )
-            {
-                var i = ~(1 << index);
-                var x = _state;
-                var j = x & i;
-                var flag = Interlocked.CompareExchange(ref _state, j, x) == x;
-                if (flag) break;
-            }
-        }
-
-        public int GetInWork()
-        {
-            var y = _state;
-            int z = 0;
-            for (var i = 0; i < _limit; i++)
-            {
-                var x = 1 << i;
-                var r = y | x;
-                if (r == y) z++;
-            }
-            return z;
-        }
+        public volatile int ID;
+        public AutoResetEvent Event { get; set; }
     }
-
     public class ThreadChannels<T>
     {
         static readonly object lockobj = new object();
         public Action<Exception> UnCatchedException;
         readonly Thread[] _threads;
+        readonly EventObj[] _events;
         ConcurrentQueue<T> queue;
         readonly Action<T> dowork;
         int _limit;
@@ -184,6 +26,7 @@ namespace YiDian.EventBus.MQ
             _limit = Math.Min(limit, Environment.ProcessorCount);
             dowork = action;
             _threads = new Thread[_limit];
+            _events = new EventObj[_limit];
             queue = new ConcurrentQueue<T>();
             ExecutionContext.SuppressFlow();
             for (var i = 0; i < _limit; i++)
@@ -192,6 +35,7 @@ namespace YiDian.EventBus.MQ
             }
             for (var i = 0; i < _limit; i++)
             {
+                _events[i] = new EventObj() { Event = new AutoResetEvent(false), ID = i };
                 _state |= (1 << i);
                 var thread = CreateThread(i, highlvl);
                 _threads[i] = thread;
@@ -237,48 +81,55 @@ namespace YiDian.EventBus.MQ
                 }
                 else
                 {
-                    lock (thread)
-                    {
-                        SetThread(index);
-                        Monitor.Wait(thread, Timeout.Infinite);
-                    }
+                    ResetThread(index);
                 }
             }
         }
         public void QueueWorkItemInternal(T indata)
         {
             queue.Enqueue(indata);
-            var thread = GetSetThread();
-            if (thread == null) return;
-            lock (thread)
-            {
-                Monitor.PulseAll(thread);
-            }
+            SetThread();
         }
 
-        private Thread GetSetThread()
+        private void SetThread()
         {
-            if (_state == _allRun) return null;
+            if (_state == _allRun) return;
             if (Interlocked.CompareExchange(ref _state, 1, 0) == 0)
             {
-                return _threads[0];
+                return;
             }
             for (var i = 0; i < _limit; i++)
             {
-                if (_state == _allRun) return null;
+                if (_state == _allRun) return;
                 var x = 1 << i;
                 var y = _state;
                 var r = y | x;
                 if (r != y)
                 {
                     var flag = Interlocked.CompareExchange(ref _state, r, y) == y;
-                    if (flag) return _threads[i];
+                    if (flag)
+                    {
+                        var ev = _events[i];
+                        if (ev.ID == 1)
+                        {
+                            ev.Event.Set();
+                        }
+                        else
+                        {
+                            var span = new SpinWait();
+                            while (ev.ID != 1)
+                            {
+                                span.SpinOnce();
+                            }
+                            ev.Event.Set();
+                        }
+                    }
                 }
             }
-            return null;
+            return;
         }
 
-        private void SetThread(int index)
+        private void ResetThread(int index)
         {
             for (; ; )
             {
@@ -286,7 +137,15 @@ namespace YiDian.EventBus.MQ
                 var x = _state;
                 var j = x & i;
                 var flag = Interlocked.CompareExchange(ref _state, j, x) == x;
-                if (flag) break;
+                if (flag)
+                {
+                    var ev = _events[index];
+                    ev.Event.Reset();
+                    ev.ID = 1;
+                    ev.Event.WaitOne();
+                    ev.ID = 0;
+                    break;
+                }
             }
         }
 

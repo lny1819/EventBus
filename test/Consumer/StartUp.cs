@@ -48,14 +48,12 @@ namespace Consumer
         public void Start(IServiceProvider sp, string[] args)
         {
             var direct = sp.GetRequiredService<IDirectEventBus>();
-            var topic = sp.GetService<ITopicEventBus>();
             direct.RegisterConsumer("test-direct1", x =>
             {
                 x.Subscribe<Exchange, MyHandler>();
             }, queueLength: 10000000, autodel: false, fetchCount: 2000);
-            var host = sp.GetService<ISoaServiceHost>();
-            Thread.Sleep(3000);
-            host.Exit(3);
+            //var host = sp.GetService<ISoaServiceHost>();
+            //var topic = sp.GetService<ITopicEventBus>();
             //topic.RegisterConsumer("test-topic-1", x =>
             // {
             //     x.Subscribe<MqA, My2Handler>(m => m.A == "a");
@@ -66,13 +64,11 @@ namespace Consumer
             //}, length: 10000000, autodelete: false);
         }
     }
-    public class MyHandler : IEventHandler<Exchange>, IBytesHandler
+    public class MyHandler : IEventHandler<Exchange>
     {
-        readonly Thread thread;
-
-        readonly DataQueue<TaskCompletionSource<bool>>[] his_datas;
+        //readonly DataQueue<TaskCompletionSource<bool>>[] his_datas;
         //DataQueue<TaskCompletionSource<bool>> his_data;
-        bool quue_flag = false;
+        //bool quue_flag = false;
         public ILogger<MyHandler> Logger { get; set; }
         public SleepTaskResult TaskResult { get; set; }
         public IQpsCounter Counter { get; set; }
@@ -130,35 +126,21 @@ namespace Consumer
         //}
         public Task<bool> Handle(Exchange @event)
         {
-            var cts = TaskSource.Create<bool>(@event);
+            //var cts = TaskSource.Create<bool>(@event);
 
-            var task = cts.Task;
+            //var task = cts.Task;
 
 
-            int x = quue_flag ? 1 : 0;
-            ref var his_data = ref his_datas[x];
-            his_data.Enqueue(cts);
+            //int x = quue_flag ? 1 : 0;
+            //ref var his_data = ref his_datas[x];
+            //his_data.Enqueue(cts);
 
             //var newhis = his_data;
             //newhis.Enqueue(cts);
 
             //TaskResult.Push(cts);
-            return task;
-        }
-
-        public Task<bool> Handle(string routingKey, byte[] datas)
-        {
-            var cts = TaskSource.Create<bool>(datas);
-
-            var task = cts.Task;
-
-            //var newhis = his_data;
-            //newhis.Enqueue(cts);
-
-            int x = quue_flag ? 1 : 0;
-            ref var his_data = ref his_datas[x];
-            his_data.Enqueue(cts);
-            return task;
+            Counter.Add("w");
+            return Task.FromResult(true);
         }
     }
     //public class My3Handler : IEventHandler<MqA>, IBytesHandler

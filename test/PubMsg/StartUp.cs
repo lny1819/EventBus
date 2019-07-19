@@ -27,7 +27,7 @@ namespace ConsoleApp
             soa.AutoCreateAppEvents("es_quote,depthdata");
 #endif
         }
-        public unsafe void Start(IServiceProvider sp, string[] args)
+        public void Start(IServiceProvider sp, string[] args)
         {
             //var host = sp.GetService<ISoaServiceHost>();
 
@@ -108,11 +108,6 @@ namespace ConsoleApp
                     }
                     Thread.Sleep(sleep);
                 }
-            });
-
-            Task.Delay(10000).ContinueWith(x =>
-            {
-                host.Exit(3);
             });
         }
     }

@@ -24,8 +24,4 @@
     <ProjectReference Include="..\..\src\YiDian.EventBus.MQ\YiDian.EventBus.MQ.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="EventModels\" />
-  </ItemGroup>
-
 </Project>

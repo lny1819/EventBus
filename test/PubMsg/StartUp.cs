@@ -24,7 +24,7 @@ namespace ConsoleApp
                  .UseDirectEventBus()
                  .UseTopicEventBus();
 #if DEBUG
-            //soa.AutoCreateAppEvents("es_quote");
+            soa.AutoCreateAppEvents("es_quote,depthdata");
 #endif
         }
         public unsafe void Start(IServiceProvider sp, string[] args)
@@ -87,24 +87,24 @@ namespace ConsoleApp
                     var i = ps;
                     for (var j = 0; j < i; j++)
                     {
-                        topic.Publish(a);
-                        direct.Publish(a);
-                        qps.Add("p");
-                        //if (type == "direct")
-                        //{
-                        //    direct.Publish(a);
-                        //    qps.Add("i");
-                        //}
-                        //else if (type == "top-where")
-                        //{
-                        //    topic.Publish(a);
-                        //    qps.Add("i");
-                        //}
-                        //else if (type == "top-pre")
-                        //{
-                        //    topic.PublishPrefix(a, "s1");
-                        //    qps.Add("i");
-                        //}
+                        //topic.Publish(a);
+                        //direct.Publish(a);
+                        //qps.Add("p");
+                        if (type == "direct")
+                        {
+                            direct.Publish(a);
+                            qps.Add("i");
+                        }
+                        else if (type == "top-where")
+                        {
+                            topic.Publish(a);
+                            qps.Add("i");
+                        }
+                        else if (type == "top-pre")
+                        {
+                            topic.PublishPrefix(a, "s1");
+                            qps.Add("i");
+                        }
                     }
                     Thread.Sleep(sleep);
                 }

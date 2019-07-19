@@ -42,12 +42,11 @@ namespace Consumer
                  .UseDirectEventBus(0)
                  .UseTopicEventBus(0);
 #if DEBUG
-            soa.AutoCreateAppEvents("es_quote");
+            soa.AutoCreateAppEvents("es_quote,depthdata");
 #endif
         }
         public void Start(IServiceProvider sp, string[] args)
         {
-            var channels = ThreadDispatcher.Default;
             var direct = sp.GetRequiredService<IDirectEventBus>();
             var topic = sp.GetService<ITopicEventBus>();
             direct.RegisterConsumer("test-direct1", x =>

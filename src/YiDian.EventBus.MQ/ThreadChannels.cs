@@ -23,7 +23,7 @@ namespace YiDian.EventBus.MQ
         readonly int _allRun = 0;
         public ThreadChannels(Action<T> action, int limit, bool highlvl = false)
         {
-            _limit = Math.Min(limit, Environment.ProcessorCount);
+            _limit = Math.Min(limit, Environment.ProcessorCount / 2);
             dowork = action;
             _threads = new Thread[_limit];
             _events = new EventObj[_limit];

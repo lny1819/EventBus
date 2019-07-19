@@ -3,14 +3,14 @@ using System.Collections.Concurrent;
 using System.Threading;
 
 
-namespace YiDian.EventBus.MQ
+namespace YiDian.Soa.Sp
 {
     class EventObj
     {
         public volatile int ID;
         public AutoResetEvent Event { get; set; }
     }
-    public class ThreadChannels<T>
+    public class ThreadDispatcher<T>
     {
         static readonly object lockobj = new object();
         public Action<Exception> UnCatchedException;
@@ -21,9 +21,9 @@ namespace YiDian.EventBus.MQ
         int _limit;
         int _state = 0;
         readonly int _allRun = 0;
-        public ThreadChannels(Action<T> action, int limit, bool highlvl = false)
+        public ThreadDispatcher(Action<T> action, int limit, bool highlvl = false)
         {
-            _limit = Math.Min(limit, Environment.ProcessorCount / 2);
+            _limit = limit;
             dowork = action;
             _threads = new Thread[_limit];
             _events = new EventObj[_limit];

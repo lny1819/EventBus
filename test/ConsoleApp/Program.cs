@@ -1,8 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using YiDian.EventBus.MQ;
 using YiDian.Soa.Sp;
 using YiDian.Soa.Sp.Extensions;
 

@@ -47,7 +47,7 @@ namespace Consumer
         }
         public void Start(IServiceProvider sp, string[] args)
         {
-            var channels = ThreadChannels.Default;
+            var channels = ThreadDispatcher.Default;
             var direct = sp.GetRequiredService<IDirectEventBus>();
             var topic = sp.GetService<ITopicEventBus>();
             direct.RegisterConsumer("test-direct1", x =>
@@ -194,12 +194,12 @@ namespace Consumer
     //}
     public class SleepTaskResult
     {
-        readonly ThreadChannels<TaskCompletionSource<bool>> channels;
+        readonly ThreadDispatcher<TaskCompletionSource<bool>> channels;
         readonly IQpsCounter counter;
         public SleepTaskResult(IQpsCounter counter)
         {
             //channels = ThreadChannels.Create(8);
-            channels = new ThreadChannels<TaskCompletionSource<bool>>(DoWork, 4);
+            channels = new ThreadDispatcher<TaskCompletionSource<bool>>(DoWork, 4);
             this.counter = counter;
         }
         public void Push(TaskCompletionSource<bool> tcs)

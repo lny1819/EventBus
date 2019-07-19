@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading;
-using YiDian.EventBus.MQ;
+using YiDian.Soa.Sp;
 
 namespace ConsoleApp
 {
@@ -50,7 +50,7 @@ namespace ConsoleApp
             Console.ReadKey();
             item.Reset();
 
-            var channels = new ThreadChannels<Item>(DoWork, work_thread, true);
+            var channels = new ThreadDispatcher<Item>(DoWork, work_thread, true);
             stopwatch.Restart();
             for (var i = 0; i < loop; i++)
             {

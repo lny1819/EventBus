@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\YiDian.EventBus.MQ\YiDian.EventBus.MQ.csproj" />
+    <ProjectReference Include="..\..\src\YiDian.Soa.Sp\YiDian.Soa.Sp.csproj" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties Properties_4launchSettings_1json__JSONSchema="" /></VisualStudio></ProjectExtensions>

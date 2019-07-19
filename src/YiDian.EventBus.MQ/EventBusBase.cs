@@ -8,6 +8,7 @@ using System.Threading;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
+using YiDian.Soa.Sp;
 
 namespace YiDian.EventBus.MQ
 {
@@ -17,7 +18,7 @@ namespace YiDian.EventBus.MQ
         private readonly EventHanlerCacheMgr hanlerCacheMgr;
         readonly int _retryCount;
         readonly ILogger<TEventBus> _logger;
-        readonly ThreadChannels channels = ThreadChannels.Default;
+        readonly ThreadDispatcher<QueueItem<TEventBus, TSub>> channels;
         readonly PublishPool publishPool = null;
         readonly IEventBusSubManager _pub_sub;
 
@@ -35,7 +36,10 @@ namespace YiDian.EventBus.MQ
             consumerInfos = new List<ConsumerConfig<TEventBus, TSub>>();
             hanlerCacheMgr = new EventHanlerCacheMgr(cacheCount, autofac);
             _pub_sub = _conn.SubsFactory.GetOrCreateByQueue("publish");
-            ThreadChannels.UnCatchedException = LogError;
+            channels = new ThreadDispatcher<QueueItem<TEventBus, TSub>>(StartProcess, Math.Min(8, Environment.ProcessorCount / 2))
+            {
+                UnCatchedException = LogError
+            };
             _retryCount = retryCount;
             publishPool = new PublishPool(_conn, __seralize, BROKER_NAME);
         }
@@ -184,12 +188,11 @@ namespace YiDian.EventBus.MQ
             config.Register(channel, (c, e) =>
             {
                 var item = new QueueItem<TEventBus, TSub>(c, e);
-                channels.QueueWorkItemInternal(StartProcess, item);
+                channels.QueueWorkItemInternal(item);
             }, autoStart);
         }
-        private void StartProcess(object obj)
+        private void StartProcess(QueueItem<TEventBus, TSub> item)
         {
-            var item = (QueueItem<TEventBus, TSub>)obj;
             var eventName = GetEventKeyFromRoutingKey(item.Event.RoutingKey);
             var consumer = item.ConsumerConfig;
             var mgr = consumer.GetSubMgr();

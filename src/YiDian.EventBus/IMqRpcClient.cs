@@ -1,7 +1,14 @@
-﻿namespace YiDian.EventBus
+﻿using System;
+
+namespace YiDian.EventBus
 {
-    public interface IMqRpcClient
+    public interface IMQRpcClient
     {
-        byte[] Request(string serverId, string uri, byte[] data);
+        string ServerName { get; }
+        ResponseBase<TOut> Call<TOut, Tin>(string uri, Tin data);
+        ResponseBase<T> Call<T>(string uri);
+        bool IsConnect { get; set; }
+
+        event EventHandler ConnectionError;
     }
 }

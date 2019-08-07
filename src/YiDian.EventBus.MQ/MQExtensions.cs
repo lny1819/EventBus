@@ -35,6 +35,22 @@ namespace YiDian.Soa.Sp.Extensions
             });
             return builder;
         }
+        private static void UseRpcClient(SoaServiceContainerBuilder builder, string clientName)
+        {
+            if (string.IsNullOrEmpty(clientName)) return;
+            var now = DateTime.Now.ToString("MMddHHmmss");
+            clientName = "rpcC-" + now + "-" + clientName;
+            builder.Services.AddSingleton<IRpcClientFactory, RpcClientFactory>(sp =>
+            {
+                var rabbitMQPersistentConnection = sp.GetService<IRabbitMQPersistentConnection>();
+                var iLifetimeScope = sp.GetRequiredService<ILifetimeScope>();
+                var loggerfact = sp.GetService<ILoggerFactory>();
+                var qps = sp.GetService<IQpsCounter>();
+                var logger = sp.GetService<ILogger<IMQRpcClient>>();
+                var rpc = new MQRpcClientBase(rabbitMQPersistentConnection, clientName, logger, qps);
+                return new RpcClientFactory(rpc);
+            });
+        }
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, string enven_mgr_api = "", IEventSeralize seralizer = null)
         {
             return UseRabbitMq(builder, mqConnstr, string.IsNullOrEmpty(enven_mgr_api) ? null : new HttpEventsManager(enven_mgr_api), seralizer);

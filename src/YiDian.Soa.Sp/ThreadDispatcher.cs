@@ -18,13 +18,13 @@ namespace YiDian.Soa.Sp
         readonly EventObj[] _events;
         ConcurrentQueue<T> queue;
         readonly Action<T> dowork;
-        int _limit;
+        readonly int _limit;
         int _state = 0;
         readonly int _allRun = 0;
         public ThreadDispatcher(Action<T> action, int limit = 0, bool highlvl = false)
         {
             _limit = limit == 0 ? Math.Min(8, Environment.ProcessorCount / 2) : limit;
-            dowork = action;
+            dowork = action ?? throw new ArgumentNullException(nameof(action));
             _threads = new Thread[_limit];
             _events = new EventObj[_limit];
             queue = new ConcurrentQueue<T>();
@@ -35,7 +35,7 @@ namespace YiDian.Soa.Sp
             }
             for (var i = 0; i < _limit; i++)
             {
-                _events[i] = new EventObj() { Event = new AutoResetEvent(false), ID = i };
+                _events[i] = new EventObj() { Event = new AutoResetEvent(true), ID = i };
                 _state |= (1 << i);
                 var thread = CreateThread(i, highlvl);
                 _threads[i] = thread;
@@ -97,15 +97,11 @@ namespace YiDian.Soa.Sp
         private void SetThread()
         {
             if (_state == _allRun) return;
-            if (Interlocked.CompareExchange(ref _state, 1, 0) == 0)
-            {
-                return;
-            }
             for (var i = 0; i < _limit; i++)
             {
-                if (_state == _allRun) return;
-                var x = 1 << i;
                 var y = _state;
+                if (y == _allRun) return;
+                var x = 1 << i;
                 var r = y | x;
                 if (r != y)
                 {
@@ -127,9 +123,9 @@ namespace YiDian.Soa.Sp
                             ev.Event.Set();
                         }
                     }
+                    return;
                 }
             }
-            return;
         }
 
         private void ResetThread(int index)

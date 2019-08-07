@@ -21,6 +21,7 @@ namespace ConsoleApp
         public void ConfigService(SoaServiceContainerBuilder soa, ContainerBuilder builder)
         {
             soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"])
+                 .UseMqRpcClient(Configuration["sysname"])
                  .UseDirectEventBus()
                  .UseTopicEventBus();
 #if DEBUG

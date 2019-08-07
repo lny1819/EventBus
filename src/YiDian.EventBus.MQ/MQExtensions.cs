@@ -35,9 +35,9 @@ namespace YiDian.Soa.Sp.Extensions
             });
             return builder;
         }
-        private static void UseRpcClient(SoaServiceContainerBuilder builder, string clientName)
+        public static SoaServiceContainerBuilder UseMqRpcClient(this SoaServiceContainerBuilder builder, string clientName)
         {
-            if (string.IsNullOrEmpty(clientName)) return;
+            if (string.IsNullOrEmpty(clientName)) return builder;
             var now = DateTime.Now.ToString("MMddHHmmss");
             clientName = "rpcC-" + now + "-" + clientName;
             builder.Services.AddSingleton<IRpcClientFactory, RpcClientFactory>(sp =>
@@ -50,6 +50,7 @@ namespace YiDian.Soa.Sp.Extensions
                 var rpc = new MQRpcClientBase(rabbitMQPersistentConnection, clientName, logger, qps);
                 return new RpcClientFactory(rpc);
             });
+            return builder;
         }
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, string enven_mgr_api = "", IEventSeralize seralizer = null)
         {

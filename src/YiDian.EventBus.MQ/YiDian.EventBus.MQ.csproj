@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
     <RootNamespace>YiDian.EventBus.MQ</RootNamespace>
     <AssemblyName>YiDian.EventBus.MQ</AssemblyName>
-    <Version>0.0.0.43</Version>
+    <Version>0.0.0.46</Version>
     <Company>yanfeng.sun@Live.com</Company>
     <Product>消息总线</Product>
     <Copyright></Copyright>

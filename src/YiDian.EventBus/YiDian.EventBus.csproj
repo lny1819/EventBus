@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
     <RootNamespace>YiDian.EventBus</RootNamespace>
     <AssemblyName>YiDian.EventBus</AssemblyName>
-    <Version>0.0.0.41</Version>
+    <Version>0.0.0.46</Version>
     <Company></Company>
     <Product>YiDian.EventBus</Product>
     <Copyright></Copyright>

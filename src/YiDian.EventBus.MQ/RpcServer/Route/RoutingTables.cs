@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
-using static ML.EventBus.FastInvoke;
 
 namespace YiDian.EventBus.MQ.Route
 {
@@ -47,7 +45,7 @@ namespace YiDian.EventBus.MQ.Route
                         var info = new ActionInfo()
                         {
                             ControllerType = t,
-                            Method =GetMethodInvoker(m),
+                            //Method =GetMethodInvoker(m),
                             AaguType = m.GetParameters().Length > 0 ? m.GetParameters()[0].ParameterType : null,
                             ReturnType = m.ReturnType
                         };

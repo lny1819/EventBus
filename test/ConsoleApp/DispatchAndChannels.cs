@@ -28,7 +28,7 @@ namespace ConsoleApp
         internal static void Test(string[] args)
         {
             if (int.TryParse(args[0], out int res)) Item.loop = res;
-            var work_thread = Math.Min(8, Environment.ProcessorCount/2);
+            var work_thread = Math.Min(8, Environment.ProcessorCount / 2);
             Console.WriteLine("WorkThread = " + work_thread.ToString());
             var loop = Item.loop;
             var stopwatch = new Stopwatch();
@@ -40,7 +40,7 @@ namespace ConsoleApp
             Console.WriteLine("Press Any Key Start");
             Console.ReadKey();
 
-            var dispatch = new Dispatcher.DispatchCenter<Item>(DoWork, work_thread);
+            var dispatch = new Dispatcher.DispatchCenter<Item>(DoWork, 1);
             stopwatch.Restart();
             for (var i = 0; i < loop; i++)
             {
@@ -50,7 +50,7 @@ namespace ConsoleApp
             Console.ReadKey();
             item.Reset();
 
-            var channels = new ThreadDispatcher<Item>(DoWork, work_thread, true);
+            var channels = new ThreadDispatcher<Item>(DoWork, 1, true);
             stopwatch.Restart();
             for (var i = 0; i < loop; i++)
             {

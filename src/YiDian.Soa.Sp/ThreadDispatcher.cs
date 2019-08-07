@@ -65,11 +65,13 @@ namespace YiDian.Soa.Sp
         void ThreadLoop(int index)
         {
             var thread = _threads[index];
+            bool flag = false;
+            T t = default(T);
             for (; ; )
             {
-                var flag = queue.TryDequeue(out T t);
-                if (flag)
+                if (flag || queue.TryDequeue(out t))
                 {
+                    flag = false;
                     try
                     {
                         dowork(t);
@@ -81,6 +83,7 @@ namespace YiDian.Soa.Sp
                 }
                 else
                 {
+                    if (queue.TryDequeue(out t)) { flag = true; continue; }
                     ResetThread(index);
                 }
             }

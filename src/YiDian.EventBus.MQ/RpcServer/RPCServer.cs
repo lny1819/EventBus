@@ -12,7 +12,7 @@ using YiDian.Soa.Sp;
 
 namespace YiDian.EventBus.MQ
 {
-    internal class RPCServer
+    public class RPCServer
     {
         const string BROKER_NAME = "rpc_event_bus";
         const string AUTOFAC_NAME = "rpc_event_bus";

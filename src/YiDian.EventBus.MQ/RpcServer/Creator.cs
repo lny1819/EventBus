@@ -5,7 +5,7 @@ using YiDian.Soa.Sp;
 
 namespace YiDian.EventBus.MQ
 {
-    public class Creator : IRpcServerCreator
+    public class Creator
     {
         IRabbitMQPersistentConnection _conn = null;
         ILifetimeScope _autofac = null;
@@ -14,7 +14,7 @@ namespace YiDian.EventBus.MQ
         public Creator() { }
         public RPCServer Create(RpcServerConfig config, object logger)
         {
-            return new RPCServer(_conn, logger as ILogger, config, _autofac, _qps, _factory);
+            return new RPCServer(_conn, logger as ILogger, config, _autofac, _qps);
         }
 
         public void Init(object conn, object autofac, IQpsCounter qps, TaskFactory factory)

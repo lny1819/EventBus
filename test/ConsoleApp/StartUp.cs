@@ -18,11 +18,7 @@ namespace ConsoleApp
         }
         public void Start(IServiceProvider sp, string[] args)
         {
-            for (; ; )
-            {
-                DispatchAndChannels.Test(args);
-                Console.ReadKey();
-            }
+            DispatchAndChannels.Test(args);
         }
     }
 }

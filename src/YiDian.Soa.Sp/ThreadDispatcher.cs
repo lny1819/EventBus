@@ -126,6 +126,7 @@ namespace YiDian.Soa.Sp
                             ev.Event.Set();
                         }
                     }
+                    Interlocked.Exchange(ref _set_sync, 0);
                     return;
                 }
             }

@@ -56,6 +56,7 @@ namespace ConsoleApp
             {
                 channels.QueueWorkItemInternal(item);
             }
+            channels.Dispose();
         }
 
         private static void DoWork(Item obj)

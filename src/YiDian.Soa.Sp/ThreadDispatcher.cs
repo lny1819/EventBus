@@ -8,24 +8,26 @@ namespace YiDian.Soa.Sp
     class EventObj
     {
         public volatile int ID;
+        public int Index;
         public AutoResetEvent Event { get; set; }
+        public Thread Thread;
+        public bool IsDisposed;
     }
-    public class ThreadDispatcher<T>
+    public class ThreadDispatcher<T> : IDisposable
     {
         static readonly object lockobj = new object();
         public Action<Exception> UnCatchedException;
-        readonly Thread[] _threads;
         readonly EventObj[] _events;
         ConcurrentQueue<T> queue;
         readonly Action<T> dowork;
         readonly int _limit;
         int _state = 0;
+        int _set_sync = 0;
         readonly int _allRun = 0;
         public ThreadDispatcher(Action<T> action, int limit = 0, bool highlvl = false)
         {
             _limit = limit == 0 ? Math.Min(8, Environment.ProcessorCount / 2) : limit;
             dowork = action ?? throw new ArgumentNullException(nameof(action));
-            _threads = new Thread[_limit];
             _events = new EventObj[_limit];
             queue = new ConcurrentQueue<T>();
             ExecutionContext.SuppressFlow();
@@ -35,11 +37,11 @@ namespace YiDian.Soa.Sp
             }
             for (var i = 0; i < _limit; i++)
             {
-                _events[i] = new EventObj() { Event = new AutoResetEvent(true), ID = i };
+                _events[i] = new EventObj() { Event = new AutoResetEvent(true), Index = i };
                 _state |= (1 << i);
                 var thread = CreateThread(i, highlvl);
-                _threads[i] = thread;
-                thread.Start(i);
+                _events[i].Thread = thread;
+                thread.Start(_events[i]);
             }
             ExecutionContext.RestoreFlow();
         }
@@ -54,7 +56,7 @@ namespace YiDian.Soa.Sp
         {
             try
             {
-                ThreadLoop((int)obj);
+                ThreadLoop((EventObj)obj);
             }
             catch (Exception ex)
             {
@@ -62,9 +64,8 @@ namespace YiDian.Soa.Sp
             }
         }
 
-        void ThreadLoop(int index)
+        void ThreadLoop(EventObj obj)
         {
-            var thread = _threads[index];
             bool flag = false;
             T t = default(T);
             for (; ; )
@@ -83,8 +84,9 @@ namespace YiDian.Soa.Sp
                 }
                 else
                 {
+                    if (obj.IsDisposed) break;
                     if (queue.TryDequeue(out t)) { flag = true; continue; }
-                    ResetThread(index);
+                    ResetThread(obj);
                 }
             }
         }
@@ -97,6 +99,7 @@ namespace YiDian.Soa.Sp
         private void SetThread()
         {
             if (_state == _allRun) return;
+            if (Interlocked.CompareExchange(ref _set_sync, 1, 0) != 0) return;
             for (var i = 0; i < _limit; i++)
             {
                 var y = _state;
@@ -126,10 +129,12 @@ namespace YiDian.Soa.Sp
                     return;
                 }
             }
+            Interlocked.Exchange(ref _set_sync, 0);
         }
 
-        private void ResetThread(int index)
+        private void ResetThread(EventObj ev)
         {
+            var index = ev.Index;
             for (; ; )
             {
                 var i = ~(1 << index);
@@ -138,7 +143,6 @@ namespace YiDian.Soa.Sp
                 var flag = Interlocked.CompareExchange(ref _state, j, x) == x;
                 if (flag)
                 {
-                    var ev = _events[index];
                     ev.Event.Reset();
                     ev.ID = 1;
                     ev.Event.WaitOne();
@@ -159,6 +163,15 @@ namespace YiDian.Soa.Sp
                 if (r == y) z++;
             }
             return z;
+        }
+
+        public void Dispose()
+        {
+            for (var i = 0; i < _limit; i++)
+            {
+                _events[i].IsDisposed = true;
+                _events[i].Event.Set();
+            }
         }
     }
 }

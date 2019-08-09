@@ -24,7 +24,7 @@ namespace YiDian.Soa.Sp
         int _state = 0;
         int _set_sync = 0;
         readonly int _allRun = 0;
-        public ThreadDispatcher(Action<T> action, int limit = 0, bool highlvl = false)
+        public ThreadDispatcher(Action<T> action, int limit = 0, bool highlvl = true)
         {
             _limit = limit == 0 ? Math.Min(8, Environment.ProcessorCount / 2) : limit;
             dowork = action ?? throw new ArgumentNullException(nameof(action));

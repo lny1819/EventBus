@@ -20,7 +20,8 @@ namespace ConsoleApp
         {
             for (; ; )
             {
-                DispatchAndChannels.Test(args);
+                //DispatchAndChannels.Test(args);
+                DictTest.Test();
                 Console.ReadKey();
             }
         }

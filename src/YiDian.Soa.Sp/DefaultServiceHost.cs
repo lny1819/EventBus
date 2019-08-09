@@ -94,7 +94,6 @@ namespace YiDian.Soa.Sp
                 Start();
                 waitExit.Reset();
                 waitExit.WaitOne();
-                logger.LogInformation(" exit 2");
             }
             catch (Exception ex)
             {
@@ -105,7 +104,6 @@ namespace YiDian.Soa.Sp
         public void Exit(int code)
         {
             var logger = ServicesProvider.GetService<ILogger<ISoaServiceHost>>();
-            logger.LogInformation("begin exit");
             exitCode = code;
             waitExit.Set();
         }

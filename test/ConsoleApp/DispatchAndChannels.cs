@@ -51,12 +51,17 @@ namespace ConsoleApp
             item.Reset();
 
             var channels = new ThreadDispatcher<Item>(DoWork, 1, true);
-            stopwatch.Restart();
-            for (var i = 0; i < loop; i++)
+
+            for (; ; )
             {
-                channels.QueueWorkItemInternal(item);
+                stopwatch.Restart();
+                for (var i = 0; i < loop; i++)
+                {
+                    channels.QueueWorkItemInternal(item);
+                }
+                item.Reset();
+                Console.ReadKey();
             }
-            channels.Dispose();
         }
 
         private static void DoWork(Item obj)

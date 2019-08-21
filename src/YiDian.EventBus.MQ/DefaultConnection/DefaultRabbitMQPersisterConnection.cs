@@ -21,14 +21,13 @@ namespace YiDian.EventBus.MQ.DefaultConnection
 
         public event EventHandler OnConnectRecovery;
 
-        public DefaultRabbitMQPersistentConnection(IConnectionFactory connectionFactory, string name, int retryCount, IEventBusSubManagerFactory fact, IEventSeralize seralize)
+        public DefaultRabbitMQPersistentConnection(IConnectionFactory connectionFactory, string name, int retryCount, IEventBusSubManagerFactory fact)
         {
             Name = name;
             _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(IConnectionFactory));
             _logger = new ConsoleLog();
             _retryCount = retryCount;
             SubsFactory = fact;
-            Seralizer = seralize;
         }
         public bool IsConnected
         {
@@ -38,7 +37,6 @@ namespace YiDian.EventBus.MQ.DefaultConnection
             }
         }
         public IEventBusSubManagerFactory SubsFactory { get; }
-        public IEventSeralize Seralizer { get; }
 
         public string Name { get; }
 

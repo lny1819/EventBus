@@ -9,15 +9,13 @@ namespace YiDian.EventBus.MQ.DefaultConnection
     {
         readonly Dictionary<string, DefaultRabbitMQPersistentConnection> factorys;
 
-        public IEventSeralize Seralizer { get; }
         public IEventBusSubManagerFactory SubsFactory { get; }
 
         private readonly int _retryCount;
 
-        public DefaultMqConnectSource( IEventSeralize seralize, ILogger<IEventBusSubManager> sub_logger, int retryCount, IEventBusSubManagerFactory factory)
+        public DefaultMqConnectSource(ILogger<IEventBusSubManager> sub_logger, int retryCount, IEventBusSubManagerFactory factory)
         {
             factorys = new Dictionary<string, DefaultRabbitMQPersistentConnection>(StringComparer.CurrentCultureIgnoreCase);
-            Seralizer = seralize ?? throw new ArgumentNullException(nameof(IEventSeralize));
             SubsFactory = factory ?? throw new ArgumentNullException(nameof(IEventBusSubManagerFactory));
             _retryCount = retryCount;
         }
@@ -25,7 +23,7 @@ namespace YiDian.EventBus.MQ.DefaultConnection
         {
             var conn = CreateConnect(mqConnstr, out string source_name);
             if (factorys.TryGetValue(source_name, out DefaultRabbitMQPersistentConnection factory)) return factory;
-            var mqconn = new DefaultRabbitMQPersistentConnection(conn, source_name, _retryCount, SubsFactory, Seralizer);
+            var mqconn = new DefaultRabbitMQPersistentConnection(conn, source_name, _retryCount, SubsFactory);
             if (!factorys.TryAdd(source_name, mqconn)) mqconn.Dispose();
             return mqconn;
         }

@@ -21,7 +21,7 @@ namespace YiDian.Soa.Sp.Extensions
         /// <param name="builder"></param>
         /// <param name="getconnstr"></param>
         /// <returns></returns>
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action = null, IAppEventsManager eventsManager = null, IEventSeralize seralizer = null)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action = null, IAppEventsManager eventsManager = null)
         {
             var obj = builder.GetTag(mqsettings);
             if (obj != null) throw new ArgumentException("can not  repeat register the rabbit-mq depend items");
@@ -30,10 +30,9 @@ namespace YiDian.Soa.Sp.Extensions
                 var service = builder.Services;
                 eventsManager = eventsManager ?? new DefaultEventsManager();
                 service.AddSingleton(eventsManager);
-                seralizer = seralizer ?? new DefaultSeralizer();
                 var sub_logger = sp.GetService<ILogger<IEventBusSubManager>>();
                 var subfact = new InMemorySubFactory(eventsManager, sub_logger);
-                var connSource = new DefaultMqConnectSource(seralizer, sub_logger, 5, subfact);
+                var connSource = new DefaultMqConnectSource(sub_logger, 5, subfact);
                 action?.Invoke(connSource);
                 return connSource;
             });
@@ -65,13 +64,13 @@ namespace YiDian.Soa.Sp.Extensions
             });
             return builder;
         }
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, string enven_mgr_api = "", IEventSeralize seralizer = null)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, string enven_mgr_api = "")
         {
-            return UseRabbitMq(builder, x => x.Create(mqConnstr), string.IsNullOrEmpty(enven_mgr_api) ? null : new HttpEventsManager(enven_mgr_api), seralizer);
+            return UseRabbitMq(builder, x => x.Create(mqConnstr), string.IsNullOrEmpty(enven_mgr_api) ? null : new HttpEventsManager(enven_mgr_api));
         }
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action, string enven_mgr_api = "", IEventSeralize seralizer = null)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action, string enven_mgr_api = "")
         {
-            return UseRabbitMq(builder, action, string.IsNullOrEmpty(enven_mgr_api) ? null : new HttpEventsManager(enven_mgr_api), seralizer);
+            return UseRabbitMq(builder, action, string.IsNullOrEmpty(enven_mgr_api) ? null : new HttpEventsManager(enven_mgr_api));
         }
         /// <summary>
         /// 创建系统所依赖的消息总线中的消息类型
@@ -113,26 +112,28 @@ namespace YiDian.Soa.Sp.Extensions
             builder.AppendArgs(data);
             return builder;
         }
-        public static SoaServiceContainerBuilder UseDirectEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0)
+        public static SoaServiceContainerBuilder UseDirectEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0, IEventSeralize seralizer = null)
         {
             builder.Services.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
             {
+                seralizer = seralizer ?? new DefaultSeralizer();
                 var source = sp.GetService<DefaultMqConnectSource>();
                 var conn = source.Get("") ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                 var logger = sp.GetService<ILogger<DirectEventBus>>();
-                var eventbus = new DirectEventBus(logger, sp, conn, cacheCount: cacheLength);
+                var eventbus = new DirectEventBus(logger, sp, conn, seralizer, cacheCount: cacheLength);
                 return eventbus;
             });
             return builder;
         }
-        public static SoaServiceContainerBuilder UseTopicEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0)
+        public static SoaServiceContainerBuilder UseTopicEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0, IEventSeralize seralizer = null)
         {
             builder.Services.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
             {
+                seralizer = seralizer ?? new DefaultSeralizer();
                 var source = sp.GetService<DefaultMqConnectSource>();
                 var conn = source.Get("") ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                 var logger = sp.GetService<ILogger<ITopicEventBus>>();
-                var eventbus = new TopicEventBusMQ(logger, sp, conn, cacheCount: cacheLength);
+                var eventbus = new TopicEventBusMQ(logger, sp, conn, seralizer, cacheCount: cacheLength);
                 return eventbus;
             });
             return builder;

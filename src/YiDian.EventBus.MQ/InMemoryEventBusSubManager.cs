@@ -10,10 +10,8 @@ namespace YiDian.EventBus.MQ
     public class InMemorySubFactory : IEventBusSubManagerFactory
     {
         readonly IAppEventsManager _manager;
-        readonly ILogger<IEventBusSubManager> _logger;
-        public InMemorySubFactory(IAppEventsManager manager, ILogger<IEventBusSubManager> logger)
+        public InMemorySubFactory(IAppEventsManager manager)
         {
-            _logger = logger;
             _manager = manager;
         }
         readonly List<InMemoryEventBusSubManager> __containers = new List<InMemoryEventBusSubManager>();
@@ -25,7 +23,7 @@ namespace YiDian.EventBus.MQ
             {
                 mgr = __containers.FirstOrDefault(x => x.QueueName == queueName);
                 if (mgr != null) return mgr;
-                mgr = new InMemoryEventBusSubManager(queueName, _manager, _logger);
+                mgr = new InMemoryEventBusSubManager(queueName, _manager);
                 __containers.Add(mgr);
                 return mgr;
             }
@@ -35,16 +33,14 @@ namespace YiDian.EventBus.MQ
     {
         readonly List<SubscriptionInfo> _subInfos;
         readonly HashSet<string> _sub_keys;
-        readonly ILogger<IEventBusSubManager> _logger;
         readonly IAppEventsManager _manager;
 
         public event EventHandler<ValueTuple<string, string>> OnEventRemoved;
         public event EventHandler<ValueTuple<string, string>> OnEventAdd;
 
         static readonly ConcurrentDictionary<string, string> dic = new ConcurrentDictionary<string, string>();
-        public InMemoryEventBusSubManager(string name, IAppEventsManager manager, ILogger<IEventBusSubManager> logger)
+        public InMemoryEventBusSubManager(string name, IAppEventsManager manager)
         {
-            _logger = logger;
             _manager = manager;
             _subInfos = new List<SubscriptionInfo>();
             _sub_keys = new HashSet<string>();
@@ -122,7 +118,7 @@ namespace YiDian.EventBus.MQ
         }
         public IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventName)
         {
-            return _subInfos.Where(x => x.EventKey == eventName);
+            return _subInfos.Where(x => string.Compare(x.EventKey, eventName, true) == 0);
         }
         private void SubMessage(string subkey, string brokerName)
         {

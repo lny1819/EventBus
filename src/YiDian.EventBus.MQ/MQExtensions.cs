@@ -34,11 +34,15 @@ namespace YiDian.Soa.Sp.Extensions
             service.AddSingleton(eventsManager);
             builder.Services.AddSingleton(sp =>
             {
-                var sub_logger = sp.GetService<ILogger<IEventBusSubManager>>();
-                var subfact = new InMemorySubFactory(eventsManager, sub_logger);
-                var connSource = new DefaultMqConnectSource(sub_logger, 5, subfact);
+                var subfact = sp.GetService<IEventBusSubManagerFactory>();
+                var connSource = new DefaultMqConnectSource(5, subfact);
                 action?.Invoke(connSource);
                 return connSource;
+            });
+            builder.Services.AddSingleton<IEventBusSubManagerFactory, InMemorySubFactory>(sp =>
+            {
+                var subfact = new InMemorySubFactory(eventsManager);
+                return subfact;
             });
             builder.Services.AddSingleton(sp =>
             {

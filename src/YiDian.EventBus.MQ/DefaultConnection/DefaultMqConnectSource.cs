@@ -9,21 +9,21 @@ namespace YiDian.EventBus.MQ.DefaultConnection
     {
         readonly Dictionary<string, DefaultRabbitMQPersistentConnection> factorys;
 
-        public IEventBusSubManagerFactory SubsFactory { get; }
-
         private readonly int _retryCount;
+        private readonly IEventBusSubManagerFactory default_sub_fact;
 
-        public DefaultMqConnectSource(ILogger<IEventBusSubManager> sub_logger, int retryCount, IEventBusSubManagerFactory factory)
+        public DefaultMqConnectSource(int retryCount, IEventBusSubManagerFactory subfactory)
         {
+            default_sub_fact = subfactory ?? throw new ArgumentNullException(nameof(IEventBusSubManagerFactory));
             factorys = new Dictionary<string, DefaultRabbitMQPersistentConnection>(StringComparer.CurrentCultureIgnoreCase);
-            SubsFactory = factory ?? throw new ArgumentNullException(nameof(IEventBusSubManagerFactory));
             _retryCount = retryCount;
         }
-        public DefaultRabbitMQPersistentConnection Create(string mqConnstr)
+        public DefaultRabbitMQPersistentConnection Create(string mqConnstr, IEventBusSubManagerFactory subFactory = null)
         {
+            subFactory = subFactory ?? default_sub_fact;
             var conn = CreateConnect(mqConnstr, out string source_name);
             if (factorys.TryGetValue(source_name, out DefaultRabbitMQPersistentConnection factory)) return factory;
-            var mqconn = new DefaultRabbitMQPersistentConnection(conn, source_name, _retryCount, SubsFactory);
+            var mqconn = new DefaultRabbitMQPersistentConnection(conn, source_name, _retryCount, subFactory);
             if (!factorys.TryAdd(source_name, mqconn)) mqconn.Dispose();
             return mqconn;
         }

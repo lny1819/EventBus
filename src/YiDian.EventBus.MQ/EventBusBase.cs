@@ -35,7 +35,7 @@ namespace YiDian.EventBus.MQ
             __seralize = seralize ?? throw new ArgumentNullException(nameof(IEventSeralize));
             consumerInfos = new List<ConsumerConfig<TEventBus, TSub>>();
             hanlerCacheMgr = new EventHanlerCacheMgr(cacheCount, autofac);
-            _pub_sub = _conn.SubsFactory.GetOrCreateByQueue("publish");
+            _pub_sub = persistentConnection.SubsFactory.GetOrCreateByQueue("publish");
             channels = new ThreadDispatcher<QueueItem<TEventBus, TSub>>(StartProcess, Math.Min(8, Environment.ProcessorCount / 2))
             {
                 UnCatchedException = LogError
@@ -206,7 +206,11 @@ namespace YiDian.EventBus.MQ
             var handlers = mgr.GetHandlersForEvent(eventName);
             var ider = handlers.GetEnumerator();
             var flag = ider.MoveNext();
-            if (!flag) return;
+            if (!flag)
+            {
+                _logger.LogWarning("routingkey=" + item.Event.RoutingKey + ",eventName=" + eventName + ",sub event but not set handlers");
+                return;
+            }
             ProcessEvent(handlers, item);
         }
         private void AckChannel(object obj)

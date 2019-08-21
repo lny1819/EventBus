@@ -22,7 +22,7 @@ namespace YiDian.EventBus.MQ
             this.brokerName = brokerName;
             persistentConnection.TryConnect();
             var channel = persistentConnection.CreateModel();
-            channel.ExchangeDeclare(brokerName, "topic", false, false, null);
+            channel.ExchangeDeclare(brokerName, "topic", true, false, null);
             channel.Dispose();
         }
         public override string BROKER_NAME => brokerName;
@@ -38,17 +38,11 @@ namespace YiDian.EventBus.MQ
         }
         public override void Publish<T>(T @event, bool enableTransaction = false)
         {
-            //var item = new SendItem(@event, string.Empty, enableTransaction);
-            //sending.QueueWorkItemInternal(item);
             var fix = GetPubKey(@event);
             Publish(@event, (x) => fix + x, enableTransaction);
         }
         public void PublishPrefix<T>(T @event, string prefix, bool enableTransaction = false) where T : IMQEvent
         {
-            //var item = new SendItem(@event, prefix, enableTransaction);
-            //sending.QueueWorkItemInternal(item);
-            //var fix = GetPubKey(@event);
-            //fix = prefix + "." + fix;
             Publish(@event, (x) => prefix + x, enableTransaction);
         }
         public override string GetEventKeyFromRoutingKey(string routingKey)

@@ -33,7 +33,7 @@ namespace YiDian.Soa.Sp.Extensions
                 seralizer = seralizer ?? new DefaultSeralizer();
                 var sub_logger = sp.GetService<ILogger<IEventBusSubManager>>();
                 var subfact = new InMemorySubFactory(eventsManager, sub_logger);
-                var connSource = new DefaultMqConnectSource(eventsManager, seralizer, sub_logger, 5, subfact);
+                var connSource = new DefaultMqConnectSource(seralizer, sub_logger, 5, subfact);
                 action?.Invoke(connSource);
                 return connSource;
             });

@@ -10,17 +10,16 @@ namespace YiDian.EventBus.MQ
 
     public class TopicEventBusMQ : EventBusBase<ITopicEventBus, TopicSubscriber>, ITopicEventBus
     {
-        //readonly ThreadChannels<SendItem> sending;
-
+        string brokerName = "amq.topic";
         public TopicEventBusMQ(ILogger<ITopicEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, int retryCount = 5, int cacheCount = 100) : base(logger, autofac, persistentConnection, retryCount, cacheCount)
         {
-            //sending = new ThreadChannels<SendItem>(DoWork, 4)
-            //{
-            //    UnCatchedException = LogError
-            //};
         }
-
-        public override string BROKER_NAME => "amq.topic";
+        public TopicEventBusMQ(string brokerName, ILogger<ITopicEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, int retryCount = 5, int cacheCount = 100) : base(logger, autofac, persistentConnection, retryCount, cacheCount)
+        {
+            if (string.IsNullOrEmpty(brokerName)) throw new ArgumentNullException(nameof(brokerName), "broker name can not be null");
+            this.brokerName = brokerName;
+        }
+        public override string BROKER_NAME => brokerName;
 
         private void DoWork(SendItem item)
         {

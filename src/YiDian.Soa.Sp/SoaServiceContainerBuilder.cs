@@ -12,10 +12,12 @@ namespace YiDian.Soa.Sp
     public class SoaServiceContainerBuilder
     {
         readonly List<IAppRun> appRuns;
+        Dictionary<string, object> tags;
         string[] _args;
         public string Project_Dir { get; }
         public SoaServiceContainerBuilder(string[] args, IServiceCollection services)
         {
+            tags = new Dictionary<string, object>();
             Services = services ?? new ServiceCollection();
             appRuns = new List<IAppRun>();
             _args = args;
@@ -26,6 +28,16 @@ namespace YiDian.Soa.Sp
                     Project_Dir = _args[i + 1];
                 }
             }
+        }
+        public bool SetTag(string name, object tag)
+        {
+            return tags.TryAdd(name, tag);
+        }
+        public object GetTag(string name)
+        {
+            var f = tags.TryGetValue(name, out object tag);
+            if (f) return tag;
+            return null;
         }
         public void RegisterRun(IAppRun run)
         {

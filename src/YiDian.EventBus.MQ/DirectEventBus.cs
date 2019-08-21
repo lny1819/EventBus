@@ -6,11 +6,17 @@ namespace YiDian.EventBus.MQ
 {
     public class DirectEventBus : EventBusBase<IDirectEventBus, DirectSubscriber>, IDirectEventBus
     {
+        readonly string brokerName = "amq.direct";
         public DirectEventBus(ILogger<IDirectEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection = null, int retryCount = 5, int cacheCount = 100) : base(logger, autofac, persistentConnection, retryCount, cacheCount)
         {
         }
+        public DirectEventBus(string brokerName, ILogger<IDirectEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection = null, int retryCount = 5, int cacheCount = 100) : base(logger, autofac, persistentConnection, retryCount, cacheCount)
+        {
+            if (string.IsNullOrEmpty(brokerName)) throw new ArgumentNullException(nameof(brokerName), "broker name can not be null");
+            this.brokerName = brokerName;
+        }
 
-        public override string BROKER_NAME => "amq.direct";
+        public override string BROKER_NAME => brokerName;
 
         public override string GetEventKeyFromRoutingKey(string routingKey)
         {
@@ -58,7 +64,7 @@ namespace YiDian.EventBus.MQ
                 {
                     var mgr = item.GetSubMgr();
                     var subkey = mgr.GetEventKey<T>();
-                    mgr.AddBytesSubscription<T, TH>(subkey,BROKER_NAME);
+                    mgr.AddBytesSubscription<T, TH>(subkey, BROKER_NAME);
                     break;
                 }
             }

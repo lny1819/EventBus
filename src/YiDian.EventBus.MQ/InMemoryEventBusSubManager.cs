@@ -38,9 +38,10 @@ namespace YiDian.EventBus.MQ
         public event EventHandler<ValueTuple<string, string>> OnEventRemoved;
         public event EventHandler<ValueTuple<string, string>> OnEventAdd;
 
-        static readonly ConcurrentDictionary<string, string> dic = new ConcurrentDictionary<string, string>();
+        readonly ConcurrentDictionary<string, string> dic;
         public InMemoryEventBusSubManager(string name, IAppEventsManager manager)
         {
+            dic = new ConcurrentDictionary<string, string>();
             _manager = manager;
             _subInfos = new List<SubscriptionInfo>();
             _sub_keys = new HashSet<string>();

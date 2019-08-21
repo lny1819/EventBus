@@ -55,9 +55,9 @@ namespace YiDian.EventBus.MQ
         }
         public IDirectEventBus GetDirect(IEventSeralize seralizer = null, string connSource = "", string brokerName = "", int length = 100)
         {
-            seralizer = seralizer ?? new DefaultSeralizer();
             var key = new BusKey(connSource, brokerName);
             if (DirectBusDic.TryGetValue(key, out IDirectEventBus bus)) return bus;
+            seralizer = seralizer ?? new DefaultSeralizer();
             var conn = _source.Get(connSource) ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
             var connname = conn.Name;
             DirectEventBus eventbus;
@@ -70,9 +70,9 @@ namespace YiDian.EventBus.MQ
         }
         public ITopicEventBus GetTopic(IEventSeralize seralizer = null, string connSource = "", string brokerName = "", int length = 100)
         {
-            seralizer = seralizer ?? new DefaultSeralizer();
             var key = new BusKey(connSource, brokerName);
             if (TopicBusDic.TryGetValue(key, out ITopicEventBus bus)) return bus;
+            seralizer = seralizer ?? new DefaultSeralizer();
             var conn = _source.Get(connSource) ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
             var connname = conn.Name;
             TopicEventBusMQ eventbus;

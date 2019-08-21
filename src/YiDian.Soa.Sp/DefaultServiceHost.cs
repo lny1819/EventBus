@@ -95,9 +95,9 @@ namespace YiDian.Soa.Sp
                 waitExit.Reset();
                 waitExit.WaitOne();
             }
-            catch (Exception ex)
+            catch
             {
-                OnException(ex);
+                throw;
             }
             return exitCode;
         }

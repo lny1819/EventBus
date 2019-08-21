@@ -19,7 +19,7 @@ namespace YiDian.EventBus.MQ
         readonly int _retryCount;
         readonly ILogger<TEventBus> _logger;
         readonly ThreadDispatcher<QueueItem<TEventBus, TSub>> channels;
-        readonly PublishPool publishPool = null;
+        PublishPool publishPool = null;
         readonly IEventBusSubManager _pub_sub;
 
         public event EventHandler<Exception> OnUncatchException;
@@ -41,7 +41,6 @@ namespace YiDian.EventBus.MQ
                 UnCatchedException = LogError
             };
             _retryCount = retryCount;
-            publishPool = new PublishPool(_conn, __seralize, BROKER_NAME);
         }
 
         protected IEventBusSubManager GetSubscriber(string queueName)
@@ -125,6 +124,14 @@ namespace YiDian.EventBus.MQ
             }
             try
             {
+                if (publishPool == null)
+                {
+                    lock (typeof(PublishPool))
+                    {
+                        if (publishPool == null)
+                            publishPool = new PublishPool(_conn, __seralize, BROKER_NAME);
+                    }
+                }
                 publishPool.Send(@event, pubkey2, enableTransaction);
             }
             catch (Exception ex)

@@ -61,6 +61,7 @@ namespace YiDian.EventBus.MQ
                     var appnames = appname.Split(',');
                     foreach (var app in appnames)
                     {
+                        _logger.LogInformation($"begin create event files of {app} ");
                         var version = "";
                         var res = _eventsManager.GetVersion(app);
                         if (res.IsVaild)

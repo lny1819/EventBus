@@ -23,13 +23,17 @@ namespace YiDian.Soa.Sp.Extensions
         /// <returns></returns>
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action = null, IAppEventsManager eventsManager = null)
         {
-            var obj = builder.GetTag(mqsettings);
-            if (obj != null) throw new ArgumentException("can not  repeat register the rabbit-mq depend items");
+            lock (builder)
+            {
+                var obj = builder.GetTag(mqsettings);
+                if (obj != null) throw new ArgumentException("can not  repeat register the rabbit-mq depend items");
+                builder.SetTag(mqsettings, new object());
+            }
+            var service = builder.Services;
+            eventsManager = eventsManager ?? new DefaultEventsManager();
+            service.AddSingleton(eventsManager);
             builder.Services.AddSingleton(sp =>
             {
-                var service = builder.Services;
-                eventsManager = eventsManager ?? new DefaultEventsManager();
-                service.AddSingleton(eventsManager);
                 var sub_logger = sp.GetService<ILogger<IEventBusSubManager>>();
                 var subfact = new InMemorySubFactory(eventsManager, sub_logger);
                 var connSource = new DefaultMqConnectSource(sub_logger, 5, subfact);
@@ -44,7 +48,6 @@ namespace YiDian.Soa.Sp.Extensions
                 var busfact = new EventBusFactory(source, sp, dbs, tbs);
                 return busfact;
             });
-            builder.SetTag(mqsettings, new object());
             return builder;
         }
         public static SoaServiceContainerBuilder UseMqRpcClient(this SoaServiceContainerBuilder builder, string clientName)
@@ -68,9 +71,10 @@ namespace YiDian.Soa.Sp.Extensions
         {
             return UseRabbitMq(builder, x => x.Create(mqConnstr), string.IsNullOrEmpty(enven_mgr_api) ? null : new HttpEventsManager(enven_mgr_api));
         }
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action, string enven_mgr_api = "")
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action, string enven_mgr_api)
         {
-            return UseRabbitMq(builder, action, string.IsNullOrEmpty(enven_mgr_api) ? null : new HttpEventsManager(enven_mgr_api));
+            var mgr = string.IsNullOrEmpty(enven_mgr_api) ? throw new ArgumentNullException(nameof(IAppEventsManager), "the address of IAppEventsManager can not be empty") : new HttpEventsManager(enven_mgr_api);
+            return UseRabbitMq(builder, action, mgr);
         }
         /// <summary>
         /// 创建系统所依赖的消息总线中的消息类型

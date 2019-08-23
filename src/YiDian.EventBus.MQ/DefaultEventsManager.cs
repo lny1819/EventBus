@@ -7,6 +7,9 @@ namespace YiDian.EventBus.MQ
     public class DefaultEventsManager : IAppEventsManager
     {
         static readonly CheckResult Success = new CheckResult() { IsVaild = true, InvaildMessage = "" };
+
+        public bool AllowNoRegisterEvent => true;
+
         public CheckResult GetEventId(string typename)
         {
             return new CheckResult() { IsVaild = true, InvaildMessage = typename };

@@ -27,8 +27,12 @@ namespace YiDian.EventBus.MQ
     {
         const char separator = '#';
         readonly Uri web_host;
-        public HttpEventsManager(string web_api_address)
+
+        public bool AllowNoRegisterEvent { get; }
+
+        public HttpEventsManager(string web_api_address, bool allow_no_reg = false)
         {
+            AllowNoRegisterEvent = allow_no_reg;
             var flag = Uri.TryCreate(web_api_address, UriKind.Absolute, out web_host);
             if (!flag) throw new ArgumentException("not vaild web api address", nameof(web_api_address));
         }

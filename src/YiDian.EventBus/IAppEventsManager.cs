@@ -6,6 +6,7 @@ namespace YiDian.EventBus
 {
     public interface IAppEventsManager
     {
+        bool AllowNoRegisterEvent { get; }
         CheckResult RegisterEvent<T>(string appName, string version, bool enableDefaultSeralize = true) where T : IMQEvent;
         CheckResult VaildityTest(string appName, string version);
         CheckResult GetVersion(string appName);

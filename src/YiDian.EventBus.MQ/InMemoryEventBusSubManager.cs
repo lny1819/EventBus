@@ -171,9 +171,8 @@ namespace YiDian.EventBus.MQ
             {
                 if (dic.TryGetValue(typename, out id)) return id;
                 var res = _manager.GetEventId(typename);
-                if (!_manager.AllowNoRegisterEvent)
-                    if (!res.IsVaild) throw new Exception("when get event key, response error: " + res.InvaildMessage);
-                    else return typename;
+                if (!res.IsVaild && _manager.AllowNoRegisterEvent) return typename;
+                if (!res.IsVaild && !_manager.AllowNoRegisterEvent) throw new Exception("when get event key, response error: " + res.InvaildMessage);
                 dic.TryAdd(typename, res.InvaildMessage);
                 return res.InvaildMessage;
             }

@@ -75,6 +75,10 @@ namespace YiDian.Soa.Sp.Extensions
         {
             return UseRabbitMq(builder, x => x.Create(mqConnstr), string.IsNullOrEmpty(enven_mgr_api) ? null : new HttpEventsManager(enven_mgr_api));
         }
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, IAppEventsManager enven_mgr_api)
+        {
+            return UseRabbitMq(builder, x => x.Create(mqConnstr), enven_mgr_api);
+        }
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action, string enven_mgr_api)
         {
             var mgr = string.IsNullOrEmpty(enven_mgr_api) ? throw new ArgumentNullException(nameof(IAppEventsManager), "the address of IAppEventsManager can not be empty") : new HttpEventsManager(enven_mgr_api);

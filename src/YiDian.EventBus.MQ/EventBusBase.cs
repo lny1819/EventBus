@@ -113,7 +113,12 @@ namespace YiDian.EventBus.MQ
         #endregion
 
         #region Publish
-        public void Publish<T>(T @event, Func<string, string> key_handler, bool enableTransaction = false) where T : IMQEvent
+
+        public void PublishWithKey<T>(T @event, string key, bool enableTransaction = false) where T : IMQEvent
+        {
+            Publish(@event, (x) => key, enableTransaction);
+        }
+        protected void Publish<T>(T @event, Func<string, string> key_handler, bool enableTransaction = false) where T : IMQEvent
         {
             var pubkey1 = _pub_sub.GetEventKey(@event.GetType());
             var pubkey2 = key_handler(pubkey1);

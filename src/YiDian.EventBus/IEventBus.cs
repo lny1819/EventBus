@@ -9,7 +9,9 @@ namespace YiDian.EventBus
         void DeleteQueue(string queuename, bool force);
         void Start(string queueName);
         void Publish<T>(T @event, bool enableTransaction = false) where T : IMQEvent;
-        void Subscribe<T, TH>(string queueName)
+        void PublishWithKey<T>(T @event, string key, bool enableTransaction = false) where T : IMQEvent;
+
+       void Subscribe<T, TH>(string queueName)
             where T : IMQEvent
             where TH : IEventHandler<T>;
         void Unsubscribe<T, TH>(string queueName)

@@ -54,7 +54,7 @@ namespace YiDian.EventBus.MQ
             lock (_subInfos)
             {
                 var count = _subInfos.Where(x => x.IsDynamic && x.SubKey == subkey && x.HandlerType == typeof(TH)).Count();
-                if (count !== 0)
+                if (count == 0)
                 {
                     var eventkey = GetEventKey<T>();
                     var flag = eventkey == subkey;

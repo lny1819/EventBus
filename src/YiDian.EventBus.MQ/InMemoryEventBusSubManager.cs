@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,34 +51,38 @@ namespace YiDian.EventBus.MQ
             where T : IMQEvent
             where TH : IBytesHandler
         {
-            SubMessage(subkey, brokerName);
             lock (_subInfos)
             {
                 var count = _subInfos.Where(x => x.IsDynamic && x.SubKey == subkey && x.HandlerType == typeof(TH)).Count();
-                if (count != 0) return;
-                var eventkey = GetEventKey<T>();
-                var flag = eventkey == subkey;
-                var enventkey = GetEventKey<T>();
-                var info = SubscriptionInfo.Dynamic(subkey, enventkey, flag, typeof(TH), null, brokerName);
-                _subInfos.Add(info);
+                if (count !== 0)
+                {
+                    var eventkey = GetEventKey<T>();
+                    var flag = eventkey == subkey;
+                    var enventkey = GetEventKey<T>();
+                    var info = SubscriptionInfo.Dynamic(subkey, enventkey, flag, typeof(TH), null, brokerName);
+                    _subInfos.Add(info);
+                }
             }
+            SubMessage(subkey, brokerName);
         }
         public void AddSubscription<T, TH>(string subkey, string brokerName)
           where T : IMQEvent
           where TH : IEventHandler<T>
         {
-            SubMessage(subkey, brokerName);
             lock (_subInfos)
             {
                 var count = _subInfos.Where(x => !x.IsDynamic && x.SubKey == subkey && x.HandlerType == typeof(TH)).Count();
-                if (count != 0) return;
-                var eventkey = GetEventKey<T>();
-                var flag = eventkey == subkey;
-                var method = typeof(TH).GetMethod("Handle", new Type[] { typeof(T) });
-                var handler = FastInvoke.GetMethodInvoker(method);
-                var info = SubscriptionInfo.Typed(subkey, eventkey, flag, typeof(TH), typeof(T), handler, brokerName);
-                _subInfos.Add(info);
+                if (count == 0)
+                {
+                    var eventkey = GetEventKey<T>();
+                    var flag = eventkey == subkey;
+                    var method = typeof(TH).GetMethod("Handle", new Type[] { typeof(T) });
+                    var handler = FastInvoke.GetMethodInvoker(method);
+                    var info = SubscriptionInfo.Typed(subkey, eventkey, flag, typeof(TH), typeof(T), handler, brokerName);
+                    _subInfos.Add(info);
+                }
             }
+            SubMessage(subkey, brokerName);
         }
 
         public void RemoveSubscription(string subkey, string brokerName)

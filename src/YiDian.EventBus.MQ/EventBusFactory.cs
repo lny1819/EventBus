@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using YiDian.EventBus.MQ.DefaultConnection;
 
 namespace YiDian.EventBus.MQ
@@ -48,6 +48,10 @@ namespace YiDian.EventBus.MQ
         {
             DirectBusDic = new Dictionary<BusKey, IDirectEventBus>(BusKey.Compare);
             TopicBusDic = new Dictionary<BusKey, ITopicEventBus>(BusKey.Compare);
+            var defaultDirect = scope.GetService<IDirectEventBus>();
+            var defaultTopic = scope.GetService<ITopicEventBus>();
+            DirectBusDic.Add(new BusKey() { brokerName = defaultDirect.BROKER_NAME, connName = defaultDirect.ConnectionName }, defaultDirect);
+            TopicBusDic.Add(new BusKey() { brokerName = defaultTopic.BROKER_NAME, connName = defaultTopic.ConnectionName }, defaultTopic);
             _sp = scope;
             _source = source;
             _logger = logger;

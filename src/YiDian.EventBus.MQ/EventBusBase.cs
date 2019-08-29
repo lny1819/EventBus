@@ -30,6 +30,7 @@ namespace YiDian.EventBus.MQ
         internal EventBusBase(ILogger<TEventBus> logger, IServiceProvider autofac, IEventSeralize seralize, IRabbitMQPersistentConnection persistentConnection, int retryCount = 5, int cacheCount = 100)
         {
             _conn = persistentConnection ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
+            ConnectionName = _conn.Name;
             _conn.OnConnectRecovery += _persistentConnection_OnConnectRecovery;
             _logger = logger ?? throw new ArgumentNullException(nameof(ILogger<TEventBus>));
             __seralize = seralize ?? throw new ArgumentNullException(nameof(IEventSeralize));
@@ -51,6 +52,7 @@ namespace YiDian.EventBus.MQ
             return submgr;
         }
 
+        public string ConnectionName { get; }
         public abstract string BROKER_NAME { get; }
         public abstract void Publish<T>(T @event, bool enableTransaction = false) where T : IMQEvent;
         public abstract string GetEventKeyFromRoutingKey(string routingKey);

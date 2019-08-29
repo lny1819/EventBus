@@ -4,6 +4,8 @@ namespace YiDian.EventBus
 {
     public interface IEventBus : IDisposable
     {
+        string BROKER_NAME { get; }
+        string ConnectionName { get; }
         event EventHandler<Exception> OnUncatchException;
         void EnableHandlerCache(int cacheLength);
         void DeleteQueue(string queuename, bool force);
@@ -11,9 +13,9 @@ namespace YiDian.EventBus
         void Publish<T>(T @event, bool enableTransaction = false) where T : IMQEvent;
         void PublishWithKey<T>(T @event, string key, bool enableTransaction = false) where T : IMQEvent;
 
-       void Subscribe<T, TH>(string queueName)
-            where T : IMQEvent
-            where TH : IEventHandler<T>;
+        void Subscribe<T, TH>(string queueName)
+             where T : IMQEvent
+             where TH : IEventHandler<T>;
         void Unsubscribe<T, TH>(string queueName)
             where T : IMQEvent
             where TH : IEventHandler<T>;

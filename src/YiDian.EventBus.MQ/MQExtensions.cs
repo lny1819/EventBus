@@ -144,7 +144,6 @@ namespace YiDian.Soa.Sp.Extensions
                  seralizer = seralizer ?? new DefaultSeralizer();
                  var source = sp.GetService<DefaultMqConnectSource>();
                  var conn = source.Get("") ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
-                 var busfact = sp.GetService<EventBusFactory>();
                  var logger = sp.GetService<ILogger<ITopicEventBus>>();
                  var eventbus = new TopicEventBusMQ(logger, sp, conn, seralizer, cacheLength);
                  return eventbus;

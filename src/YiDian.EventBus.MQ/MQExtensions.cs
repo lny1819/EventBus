@@ -126,24 +126,29 @@ namespace YiDian.Soa.Sp.Extensions
         }
         public static SoaServiceContainerBuilder UseDirectEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0, IEventSeralize seralizer = null)
         {
-            builder.Services.AddSingleton(sp =>
+            builder.Services.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
             {
                 seralizer = seralizer ?? new DefaultSeralizer();
-                var busfact = sp.GetService<EventBusFactory>();
-                var eventbus = busfact.GetDirect(seralizer, "", "", cacheLength);
+                var source = sp.GetService<DefaultMqConnectSource>();
+                var conn = source.Get("") ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
+                var logger = sp.GetService<ILogger<IDirectEventBus>>();
+                var eventbus = new DirectEventBus(logger, sp, conn, seralizer, cacheLength);
                 return eventbus;
             });
             return builder;
         }
         public static SoaServiceContainerBuilder UseTopicEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0, IEventSeralize seralizer = null)
         {
-            builder.Services.AddSingleton(sp =>
-            {
-                seralizer = seralizer ?? new DefaultSeralizer();
-                var busfact = sp.GetService<EventBusFactory>();
-                var eventbus = busfact.GetTopic(seralizer, "", "", cacheLength);
-                return eventbus;
-            });
+            builder.Services.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
+             {
+                 seralizer = seralizer ?? new DefaultSeralizer();
+                 var source = sp.GetService<DefaultMqConnectSource>();
+                 var conn = source.Get("") ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
+                 var busfact = sp.GetService<EventBusFactory>();
+                 var logger = sp.GetService<ILogger<ITopicEventBus>>();
+                 var eventbus = new TopicEventBusMQ(logger, sp, conn, seralizer, cacheLength);
+                 return eventbus;
+             });
             return builder;
         }
     }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.Json;
 using YiDian.Soa.Sp;
 
 
@@ -112,8 +113,15 @@ namespace ConsoleApp
         public void ConfigService(SoaServiceContainerBuilder soa, ContainerBuilder builder)
         {
         }
+        class Persion
+        {
+            public string Name { get; set; }
+            public int Age { get; set; }
+            public DateTime Date { get; set; }
+        }
         public void Start(IServiceProvider sp, string[] args)
         {
+            var v = System.Text.Json.JsonSerializer.Serialize(new Persion() { Age = 1, Name = "zs", Date = DateTime.Now });
             for (; ; )
             {
                 //DispatchAndChannels.Test(args);

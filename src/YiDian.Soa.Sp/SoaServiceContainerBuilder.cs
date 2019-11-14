@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Autofac;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,10 +16,11 @@ namespace YiDian.Soa.Sp
         Dictionary<string, object> tags;
         string[] _args;
         public string Project_Dir { get; }
-        public SoaServiceContainerBuilder(string[] args, IServiceCollection services)
+        public SoaServiceContainerBuilder(string[] args, IServiceCollection services = null, ContainerBuilder container = null)
         {
             tags = new Dictionary<string, object>();
             Services = services ?? new ServiceCollection();
+            Container = container ?? new ContainerBuilder();
             appRuns = new List<IAppRun>();
             _args = args;
             for (var i = 0; i < _args.Length; i++)
@@ -50,6 +52,7 @@ namespace YiDian.Soa.Sp
             return appRuns;
         }
         public IServiceCollection Services { get; }
+        public ContainerBuilder Container { get; }
         internal Type StartUp { get; set; }
         public string[] GetArgs()
         {

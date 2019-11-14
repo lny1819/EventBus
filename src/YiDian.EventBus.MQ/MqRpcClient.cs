@@ -1,7 +1,8 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 
 namespace YiDian.EventBus.MQ
 {
@@ -40,7 +41,7 @@ namespace YiDian.EventBus.MQ
             }
             else if (type.IsEnum) value = ((int)o).ToString();
             else if (type.IsValueType) value = o.ToString();
-            else value = JsonConvert.SerializeObject(o);
+            else value = JsonSerializer.Serialize(o);
             return value;
         }
         public ResponseBase<T> Call<T>(string uri)
@@ -59,7 +60,7 @@ namespace YiDian.EventBus.MQ
                 //Hand();
                 return new ResponseBase<T>() { ServerState = -1, ServerMsg = "请求已超时" };
             }
-            var res = JsonConvert.DeserializeObject(Encode.GetString(d), typeof(ResponseBase<T>));
+            var res = Encode.GetString(d).JsonTo(typeof(ResponseBase<T>));
             return res as ResponseBase<T>;
         }
 

@@ -125,7 +125,7 @@ namespace YiDian.EventBus.MQ
             var replyTold = ea.BasicProperties.CorrelationId;
             var replyProps = _pubChannel.CreateBasicProperties();
             replyProps.CorrelationId = replyTold;
-            var data = replayData.SeralizeAndGetBytes(Configs.Encode);
+            var data = Configs.Encode.GetBytes(replayData.ToJson());
             _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: data);
         }
 
@@ -148,7 +148,8 @@ namespace YiDian.EventBus.MQ
             if (route_action.InArgumentType != null)
             {
                 var data = ea.Body;
-                invoke_data = data.DeseralizeBytes(8, data.Length - 8, route_action.InArgumentType, Configs.Encode);
+                var v = Configs.Encode.GetString(data, 8, data.Length - 8);
+                invoke_data = v.JsonTo(route_action.InArgumentType);
             }
             var token = new Token() { Stopwatch = stopwatch, Action = route_action, Data = invoke_data, Eargs = ea };
             var action = token.Action;

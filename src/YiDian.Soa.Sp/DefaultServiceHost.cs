@@ -42,7 +42,7 @@ namespace YiDian.Soa.Sp
             else sysstart = ci.Invoke(new object[] { Configuration });
 
             var config = startup.GetMethod("ConfigService");
-            var autofac = new ContainerBuilder();
+            var autofac = _builder.Container;
             config.Invoke(sysstart, new object[] { _builder, autofac });
 
             autofac.Populate(_builder.Services);

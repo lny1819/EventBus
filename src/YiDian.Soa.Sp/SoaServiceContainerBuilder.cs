@@ -16,7 +16,7 @@ namespace YiDian.Soa.Sp
         Dictionary<string, object> tags;
         string[] _args;
         public string Project_Dir { get; }
-        public SoaServiceContainerBuilder(string[] args, IServiceCollection services = null, ContainerBuilder container = null)
+        internal SoaServiceContainerBuilder(string[] args, IServiceCollection services , ContainerBuilder container )
         {
             tags = new Dictionary<string, object>();
             Services = services ?? new ServiceCollection();

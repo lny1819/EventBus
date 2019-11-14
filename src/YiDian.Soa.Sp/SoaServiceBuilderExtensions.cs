@@ -9,6 +9,7 @@ namespace YiDian.Soa.Sp.Extensions
         public static SoaServiceContainerBuilder UserStartUp<TStartup>(this SoaServiceContainerBuilder builder) where TStartup : class
         {
             var t = typeof(TStartup);
+            builder.Services.AddScoped(t);
             builder.StartUp = t;
             return builder;
         }

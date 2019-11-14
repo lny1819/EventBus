@@ -16,11 +16,10 @@ namespace YiDian.Soa.Sp
         Dictionary<string, object> tags;
         string[] _args;
         public string Project_Dir { get; }
-        internal SoaServiceContainerBuilder(string[] args, IServiceCollection services , ContainerBuilder container )
+        internal SoaServiceContainerBuilder(string[] args, IServiceCollection services)
         {
             tags = new Dictionary<string, object>();
             Services = services ?? new ServiceCollection();
-            Container = container ?? new ContainerBuilder();
             appRuns = new List<IAppRun>();
             _args = args;
             for (var i = 0; i < _args.Length; i++)
@@ -52,7 +51,6 @@ namespace YiDian.Soa.Sp
             return appRuns;
         }
         public IServiceCollection Services { get; }
-        public ContainerBuilder Container { get; }
         internal Type StartUp { get; set; }
         public string[] GetArgs()
         {

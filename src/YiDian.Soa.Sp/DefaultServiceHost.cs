@@ -15,50 +15,55 @@ namespace YiDian.Soa.Sp
         object sysstart;
         readonly AutoResetEvent waitExit;
         readonly SoaServiceContainerBuilder _builder;
+        readonly IConfiguration config;
         readonly string[] original_args;
+        bool take_build_container = false;
         int exitCode = 0;
         public DefaultServiceHost(SoaServiceContainerBuilder builder, string[] args)
         {
             original_args = args;
             _builder = builder;
             waitExit = new AutoResetEvent(false);
-            var service = builder.Services;
-            Configuration = service.BuildServiceProvider().GetService<IConfiguration>();
-            service.AddSingleton<ISoaServiceHost, DefaultServiceHost>((s) => this);
-            Init();
-            ConfigApps();
+            builder.Services.AddSingleton<ISoaServiceHost, DefaultServiceHost>((s) => this);
+            config = builder.Services.BuildServiceProvider().GetService<IConfiguration>();
+            ConfigServices();
         }
 
-        private void ConfigApps()
-        {
-            var startup = _builder.StartUp;
-
-            System.Reflection.ConstructorInfo ci = startup.GetConstructor(new Type[] { typeof(IConfiguration) });
-            if (ci == null)
-            {
-                ci = startup.GetConstructor(new Type[] { });
-                sysstart = ci.Invoke(new object[0]);
-            }
-            else sysstart = ci.Invoke(new object[] { Configuration });
-
-            var config = startup.GetMethod("ConfigService");
-            var autofac = _builder.Container;
-            config.Invoke(sysstart, new object[] { _builder, autofac });
-
-            autofac.Populate(_builder.Services);
-            var container = autofac.Build();
-            ServicesProvider = new AutofacServiceProvider(container);//第三方IOC接管 core内置DI容器
-        }
-
-        public event Action<Exception> UnCatchedException;
-        private void Init()
+        private void ConfigServices()
         {
             Console.OutputEncoding = Encoding.UTF8;
-
             RegisterBase();
-
             RegisterLogger();
 
+            var startup = _builder.StartUp;
+            if (sysstart == null)
+            {
+                var sp = _builder.Services.BuildServiceProvider();
+                sysstart = sp.GetService(_builder.StartUp);
+            }
+            var config = startup.GetMethod("ConfigService");
+            config.Invoke(sysstart, new object[] { _builder.Services });
+        }
+        public IServiceProvider ConfigContainerBuilder(ContainerBuilder container)
+        {
+            take_build_container = true;
+            var startup = _builder.StartUp;
+
+            if (sysstart == null)
+            {
+                var sp = _builder.Services.BuildServiceProvider();
+                sysstart = sp.GetService(_builder.StartUp);
+            }
+            var config = startup.GetMethod("ConfigContainer");
+            if (container == null)
+            {
+                container = new ContainerBuilder();
+                container.Populate(_builder.Services);
+                config.Invoke(sysstart, new object[] { container });
+                ServicesProvider = new AutofacServiceProvider(container.Build());//第三方IOC接管 core内置DI容器
+            }
+            else config.Invoke(sysstart, new object[] { container });
+            return ServicesProvider;
         }
 
         private void RegisterBase()
@@ -73,10 +78,11 @@ namespace YiDian.Soa.Sp
 
         public IServiceProvider ServicesProvider { get; private set; }
 
-        public IConfiguration Configuration { get; private set; }
-        public int Run(Func<IConfiguration, string> getName, bool background = false)
+        public int Run(Func<IConfiguration, string> getName, bool background, IServiceProvider provider)
         {
-            var appname = getName(Configuration);
+            if (!take_build_container) ConfigContainerBuilder(null);
+            else ServicesProvider = provider ?? throw new Exception("should set provider");
+            var appname = getName(ServicesProvider.GetService<IConfiguration>());
             if (appname == null) throw new ArgumentNullException("Run->GetAppName");
             var logger = ServicesProvider.GetService<ILogger<ISoaServiceHost>>();
             logger.LogWarning($"soa service start with sysname {appname} datetime {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}");
@@ -118,18 +124,9 @@ namespace YiDian.Soa.Sp
             if (appstart == null) return;
             appstartResult = appstart.Invoke(sysstart, new object[] { ServicesProvider, original_args });
         }
-        void OnException(Exception ex)
-        {
-            if (UnCatchedException == null)
-            {
-                var logger = ServicesProvider.GetService<ILogger<DefaultServiceHost>>();
-                logger.LogError(ex.Message + Environment.NewLine + ex.ToString());
-            }
-            else UnCatchedException(ex);
-        }
         private void RegisterLogger()
         {
-            Enum.TryParse(Configuration["Logging:Console:LogLevel:Default"], out LogLevel level);
+            Enum.TryParse(config["Logging:Console:LogLevel:Default"], out LogLevel level);
             _builder.Services.AddLogging(e =>
             {
                 e.AddFilter(m => level <= m);

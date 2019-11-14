@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections;
@@ -110,7 +111,10 @@ namespace ConsoleApp
         {
             Configuration = config;
         }
-        public void ConfigService(SoaServiceContainerBuilder soa, ContainerBuilder builder)
+        public void ConfigService(IServiceCollection services)
+        {
+        }
+        public void ConfigBuilder(ContainerBuilder services)
         {
         }
         class Persion

@@ -21,7 +21,7 @@ namespace YiDian.EventBus.MQ
         public bool IsConnect { get; set; }
         public ResponseBase<TOut> Call<TOut, Tin>(string uri, Tin data)
         {
-            var bytes = Encode.GetBytes(ToJson(data));
+            var bytes = Encode.GetBytes(data.ToJson());
             return Call<TOut>(uri, bytes);
         }
         static readonly DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -29,20 +29,6 @@ namespace YiDian.EventBus.MQ
         public static long ToUnixTimestamp(DateTime dateTime)
         {
             return Convert.ToInt64((dateTime.ToUniversalTime() - start).TotalSeconds);
-        }
-        public string ToJson(object o)
-        {
-            if (o == null) return "";
-            string value;
-            var type = o.GetType();
-            if (type == typeof(String))
-            {
-                value = o.ToString();
-            }
-            else if (type.IsEnum) value = ((int)o).ToString();
-            else if (type.IsValueType) value = o.ToString();
-            else value = JsonSerializer.Serialize(o);
-            return value;
         }
         public ResponseBase<T> Call<T>(string uri)
         {

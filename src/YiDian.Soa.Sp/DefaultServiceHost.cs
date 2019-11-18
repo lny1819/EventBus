@@ -42,7 +42,7 @@ namespace YiDian.Soa.Sp
                 sysstart = sp.GetService(_builder.StartUp);
             }
             var config = startup.GetMethod("ConfigService");
-            config.Invoke(sysstart, new object[] { _builder.Services });
+            config.Invoke(sysstart, new object[] { _builder });
         }
         public IServiceProvider ConfigContainerBuilder(ContainerBuilder container)
         {

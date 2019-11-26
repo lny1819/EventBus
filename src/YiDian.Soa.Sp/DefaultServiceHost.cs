@@ -126,10 +126,8 @@ namespace YiDian.Soa.Sp
         }
         private void RegisterLogger()
         {
-            Enum.TryParse(config["Logging:Console:LogLevel:Default"], out LogLevel level);
             _builder.Services.AddLogging(e =>
             {
-                e.AddFilter(m => level <= m);
                 e.AddConsole();
             });
         }

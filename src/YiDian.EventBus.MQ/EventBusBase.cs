@@ -307,7 +307,7 @@ namespace YiDian.EventBus.MQ
                 item.Dispose();
             }
             consumerInfos.Clear();
-            publishPool.Dispose();
+            publishPool?.Dispose();
             _conn.Dispose();
         }
 

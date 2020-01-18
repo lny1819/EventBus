@@ -57,33 +57,33 @@ namespace YiDian.EventBus.MQ
             _logger = logger;
             _logger2 = logger2;
         }
-        public IDirectEventBus GetDirect(IEventSeralize seralizer = null, string connSource = "", string brokerName = "", int length = 100)
+        public IDirectEventBus GetDirect<T>(T serializer = null, string connSource = "", string brokerName = "", int length = 100) where T : class, IEventSeralize, new()
         {
             var key = new BusKey(connSource, brokerName);
             if (DirectBusDic.TryGetValue(key, out IDirectEventBus bus)) return bus;
-            seralizer = seralizer ?? new DefaultSeralizer();
             var conn = _source.Get(connSource) ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
             var connname = conn.Name;
             DirectEventBus eventbus;
+            serializer ??= new T();
             if (string.IsNullOrEmpty(brokerName))
-                eventbus = new DirectEventBus(_logger, _sp, conn, seralizer, cacheCount: length);
+                eventbus = new DirectEventBus(_logger, _sp, conn, serializer, cacheCount: length);
             else
-                eventbus = new DirectEventBus(brokerName, _logger, _sp, conn, seralizer, cacheCount: length);
+                eventbus = new DirectEventBus(brokerName, _logger, _sp, conn, serializer, cacheCount: length);
             DirectBusDic.TryAdd(key, eventbus);
             return eventbus;
         }
-        public ITopicEventBus GetTopic(IEventSeralize seralizer = null, string connSource = "", string brokerName = "", int length = 100)
+        public ITopicEventBus GetTopic<T>(T serializer, string connSource = "", string brokerName = "", int length = 100) where T : class, IEventSeralize, new()
         {
             var key = new BusKey(connSource, brokerName);
             if (TopicBusDic.TryGetValue(key, out ITopicEventBus bus)) return bus;
-            seralizer = seralizer ?? new DefaultSeralizer();
             var conn = _source.Get(connSource) ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
             var connname = conn.Name;
             TopicEventBusMQ eventbus;
+            serializer ??= new T();
             if (string.IsNullOrEmpty(brokerName))
-                eventbus = new TopicEventBusMQ(_logger2, _sp, conn, seralizer, cacheCount: length);
+                eventbus = new TopicEventBusMQ(_logger2, _sp, conn, serializer, cacheCount: length);
             else
-                eventbus = new TopicEventBusMQ(brokerName, _logger2, _sp, conn, seralizer, cacheCount: length);
+                eventbus = new TopicEventBusMQ(brokerName, _logger2, _sp, conn, serializer, cacheCount: length);
             TopicBusDic.TryAdd(key, eventbus);
             return eventbus;
         }

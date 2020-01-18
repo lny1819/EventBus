@@ -18,14 +18,13 @@ namespace YiDian.EventBus.MQ.DefaultConnection
             factorys = new Dictionary<string, DefaultRabbitMQPersistentConnection>(StringComparer.CurrentCultureIgnoreCase);
             _retryCount = retryCount;
         }
-        public DefaultRabbitMQPersistentConnection Create(string mqConnstr, IEventBusSubManagerFactory subFactory = null)
+        public void Create(string mqConnstr, IEventBusSubManagerFactory subFactory = null)
         {
-            subFactory = subFactory ?? default_sub_fact;
+            subFactory ??= default_sub_fact;
             var conn = CreateConnect(mqConnstr, out string source_name);
-            if (factorys.TryGetValue(source_name, out DefaultRabbitMQPersistentConnection factory)) return factory;
+            if (factorys.TryGetValue(source_name, out _)) throw new Exception($"repeat create mq connection by the name {source_name}");
             var mqconn = new DefaultRabbitMQPersistentConnection(conn, source_name, _retryCount, subFactory);
             if (!factorys.TryAdd(source_name, mqconn)) mqconn.Dispose();
-            return mqconn;
         }
         public IRabbitMQPersistentConnection Get(string name)
         {
@@ -37,7 +36,7 @@ namespace YiDian.EventBus.MQ.DefaultConnection
         {
             return factorys.ContainsKey(name);
         }
-        private static ConnectionFactory CreateConnect(string connstr, out string name)
+        private ConnectionFactory CreateConnect(string connstr, out string name)
         {
             name = "default";
             string server = "";

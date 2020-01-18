@@ -39,7 +39,7 @@ namespace Consumer
                 return hdl;
             }).SingleInstance();
             soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"])
-                 .UseDirectEventBus(0)
+                 .UseDirectEventBus<DefaultSeralizer>(0)
                  .UseTopicEventBus(0);
 #if DEBUG
             soa.AutoCreateAppEvents("es_quote,depthdata");

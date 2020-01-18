@@ -30,7 +30,7 @@ namespace YiDian.Soa.Sp.Extensions
                 builder.SetTag(mqsettings, new object());
             }
             var service = builder.Services;
-            eventsManager = eventsManager ?? new DefaultEventsManager();
+            eventsManager ??= new DefaultEventsManager();
             service.AddSingleton(eventsManager);
             builder.Services.AddSingleton(sp =>
             {

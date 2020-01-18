@@ -4,7 +4,7 @@ using System.Text;
 
 namespace YiDian.EventBus.MQ
 {
-    public class JsonSralizer : IEventSeralize
+    public class JsonSerializer : IEventSeralize
     {
         public Encoding Encoding { get; set; } = Encoding.UTF8;
         public object DeserializeObject(byte[] data, Type type)

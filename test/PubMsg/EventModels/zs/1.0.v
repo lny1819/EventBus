@@ -1,0 +1,1 @@
+{"Name":"zs","Version":"1.0","MetaInfos":[{"Name":"TestMqEvent","IsEventType":true,"DefaultSeralize":true,"Attr":null,"Properties":[{"Name":"Name","Type":"string","SeralizeIndex":0,"Attr":null},{"Name":"Age","Type":"Int32","SeralizeIndex":1,"Attr":null}]}],"Enums":[]}

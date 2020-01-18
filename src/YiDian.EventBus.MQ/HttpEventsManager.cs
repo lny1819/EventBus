@@ -153,14 +153,7 @@ namespace YiDian.EventBus.MQ
                 meta.ToJson(sb);
                 var json = sb.ToString();
                 var response = PostReq(uri, json);
-                var obj = JsonString.Unpack(response);
-                var ht = (Hashtable)obj;
-                var res = new CheckResult
-                {
-                    IsVaild = (bool)ht["IsVaild"],
-                    InvaildMessage = (ht["InvaildMessage"] ?? "").ToString(),
-                };
-                return res;
+                return response.JsonTo<CheckResult>();
             }
             catch (Exception ex)
             {
@@ -176,14 +169,7 @@ namespace YiDian.EventBus.MQ
                 meta.ToJson(sb);
                 var json = sb.ToString();
                 var response = PostReq(uri, json);
-                var obj = JsonString.Unpack(response);
-                var ht = (Hashtable)obj;
-                var res = new CheckResult
-                {
-                    IsVaild = (bool)ht["IsVaild"],
-                    InvaildMessage = (ht["InvaildMessage"] ?? "").ToString(),
-                };
-                return res;
+                return response.JsonTo<CheckResult>();
             }
             catch (Exception ex)
             {
@@ -196,14 +182,7 @@ namespace YiDian.EventBus.MQ
             {
                 var uri = "check?app=" + appname + "&version=" + version;
                 var response = GetReq(uri);
-                var obj = JsonString.Unpack(response);
-                var ht = (Hashtable)obj;
-                var res = new CheckResult
-                {
-                    IsVaild = bool.Parse(ht["IsVaild"].ToString()),
-                    InvaildMessage = (ht["InvaildMessage"] ?? "").ToString(),
-                };
-                return res;
+                return response.JsonTo<CheckResult>();
             }
             catch (Exception ex)
             {
@@ -241,14 +220,7 @@ namespace YiDian.EventBus.MQ
                 var typename = type.Name;
                 var uri = "check_not_event?app=" + appName + "&name=" + typename + "&version=" + version;
                 var response = GetReq(uri);
-                var obj = JsonString.Unpack(response);
-                var ht = (Hashtable)obj;
-                var res = new CheckResult
-                {
-                    IsVaild = bool.Parse(ht["IsVaild"].ToString()),
-                    InvaildMessage = ht["InvaildMessage"].ToString(),
-                };
-                return res;
+                return response.JsonTo<CheckResult>();
             }
             catch (Exception ex)
             {
@@ -262,14 +234,7 @@ namespace YiDian.EventBus.MQ
             {
                 var uri = "eventid?name=" + typename;
                 var response = GetReq(uri);
-                var obj = JsonString.Unpack(response);
-                var ht = (Hashtable)obj;
-                var res = new CheckResult
-                {
-                    IsVaild = (bool)ht["IsVaild"],
-                    InvaildMessage = (ht["InvaildMessage"] ?? "").ToString(),
-                };
-                return res;
+                return response.JsonTo<CheckResult>();
             }
             catch (Exception ex)
             {
@@ -280,85 +245,12 @@ namespace YiDian.EventBus.MQ
         {
             var uri = "allids?app=" + appname;
             var value = GetReq(uri);
-            var obj = JsonString.Unpack(value);
-            if (obj == null || obj.GetType() != typeof(ArrayList)) throw new ArgumentException("the returns is not expected result");
-            var al = (ArrayList)obj;
-            var list = new List<EventId>();
-            foreach (var item in al)
-            {
-                var ht = (Hashtable)item;
-                list.Add(new EventId() { ID = ht["ID"].ToString(), Name = ht["Name"].ToString() });
-            }
-            return list;
+            return value.JsonTo<List<EventId>>();
         }
         #endregion
         AppMetas ToMetas(string json)
         {
-            var obj = JsonString.Unpack(json);
-            if (obj == null || obj.GetType() != typeof(Hashtable)) throw new ArgumentException("the returns is not expected result");
-            var ht = (Hashtable)obj;
-            var appmetas = new AppMetas
-            {
-                Name = ht["Name"].ToString(),
-                Version = ht["Version"].ToString(),
-            };
-            var list = (ArrayList)ht["MetaInfos"];
-            foreach (var item in list)
-            {
-                var ht2 = (Hashtable)item;
-                var class_meta = new ClassMeta
-                {
-                    Name = ht2["Name"].ToString(),
-                    IsEventType = bool.Parse(ht2["IsEventType"].ToString()),
-                    DefaultSeralize = bool.Parse(ht2["DefaultSeralize"].ToString())
-                };
-                if (ht2["Attr"] != null)
-                {
-                    var attr_ht = (Hashtable)ht2["Attr"];
-                    var attr = new MetaAttr()
-                    {
-                        AttrType = (AttrType)(int.Parse(attr_ht["AttrType"].ToString())),
-                        Value = attr_ht["Value"].ToString()
-                    };
-                    class_meta.Attr = attr;
-                }
-                var pss_ht = (ArrayList)ht2["Properties"];
-                foreach (Hashtable ps in pss_ht)
-                {
-                    var p_info = new PropertyMetaInfo()
-                    {
-                        Name = ps["Name"].ToString(),
-                        SeralizeIndex = int.Parse(ps["SeralizeIndex"].ToString()),
-                        Type = ps["Type"].ToString()
-                    };
-                    if (ps["Attr"] != null)
-                    {
-                        var p_attr_ht = (Hashtable)ps["Attr"];
-                        var p_attr = new MetaAttr()
-                        {
-                            AttrType = (AttrType)(int.Parse(p_attr_ht["AttrType"].ToString())),
-                            Value = p_attr_ht["Value"].ToString()
-                        };
-                        p_info.Attr = p_attr;
-                    }
-                    class_meta.Properties.Add(p_info);
-                }
-                appmetas.MetaInfos.Add(class_meta);
-            }
-            var list2 = (ArrayList)ht["Enums"];
-            foreach (var item in list2)
-            {
-                var ht2 = (Hashtable)item;
-                var v_ht = (ArrayList)ht2["Values"];
-                var enumMeta = new EnumMeta() { Name = ht2["Name"].ToString() };
-                foreach (var v in v_ht)
-                {
-                    var h_v = (Hashtable)v;
-                    enumMeta.Values.Add((h_v["Item1"].ToString(), int.Parse(h_v["Item2"].ToString())));
-                }
-                appmetas.Enums.Add(enumMeta);
-            }
-            return appmetas;
+            return json.JsonTo<AppMetas>();
         }
         string PostReq(string uri, string value)
         {

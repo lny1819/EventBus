@@ -8,6 +8,8 @@ using YiDian.EventBus;
 using System.Threading.Tasks;
 using System.Threading;
 using EventModels.es_quote;
+using YiDian.EventBus.MQ.KeyAttribute;
+using EventModels.zs;
 
 namespace ConsoleApp
 {
@@ -18,15 +20,18 @@ namespace ConsoleApp
         {
             Configuration = config;
         }
-        public void ConfigService(SoaServiceContainerBuilder soa, ContainerBuilder builder)
+        public void ConfigService(SoaServiceContainerBuilder soa)
         {
             soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"])
                  .UseMqRpcClient(Configuration["sysname"])
                  .UseDirectEventBus()
                  .UseTopicEventBus();
 #if DEBUG
-            soa.AutoCreateAppEvents("es_quote,depthdata");
+            soa.AutoCreateAppEvents("es_quote,depthdata,zs");
 #endif
+        }
+        public void ConfigContainer(ContainerBuilder builder)
+        {
         }
         public void Start(IServiceProvider sp, string[] args)
         {
@@ -73,6 +78,7 @@ namespace ConsoleApp
             //Console.ReadKey();
 
             var eventsMgr = sp.GetRequiredService<IAppEventsManager>();
+            eventsMgr.RegisterEvent<TestMqEvent>("zs", "1.0");
             var a = new Exchange() { ExchangeName = "zs", ExchangeNo = "hsi" };
             var direct = sp.GetService<IDirectEventBus>();
             var topic = sp.GetService<ITopicEventBus>();

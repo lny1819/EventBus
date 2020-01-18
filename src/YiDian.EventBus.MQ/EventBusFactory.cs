@@ -72,7 +72,7 @@ namespace YiDian.EventBus.MQ
             DirectBusDic.TryAdd(key, eventbus);
             return eventbus;
         }
-        public ITopicEventBus GetTopic<T>(T serializer, string connSource = "", string brokerName = "", int length = 100) where T : class, IEventSeralize, new()
+        public ITopicEventBus GetTopic<T>(T serializer = null, string connSource = "", string brokerName = "", int length = 100) where T : class, IEventSeralize, new()
         {
             var key = new BusKey(connSource, brokerName);
             if (TopicBusDic.TryGetValue(key, out ITopicEventBus bus)) return bus;

@@ -1,0 +1,189 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>YiDian.EventBus.MQ</name>
+    </assembly>
+    <members>
+        <member name="M:YiDian.EventBus.MQ.EventHanlerCacheMgr.GetDynamicHandler(System.Type,YiDian.EventBus.IBytesHandler@,Microsoft.Extensions.DependencyInjection.IServiceScope@)">
+            <summary>
+            从缓存中获取实例
+            </summary>
+            <param name="type"></param>
+            <param name="handler"></param>
+            <param name="scope"></param>
+            <returns>是否是从缓存中获取</returns>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:YiDian.EventBus.MQ.HttpEventsManager" -->
+        <member name="T:YiDian.EventBus.MQ.JsonSerializer">
+            <summary>
+            实现IEventSeralize的Json序列化
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.JsonSerializer.#ctor(System.Action{System.Text.Json.JsonSerializerOptions})">
+            <summary>
+            创建一个JSON序列化实例
+            </summary>
+            <param name="options">JSON序列化设定</param>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.JsonSerializer.DateFormat">
+            <summary>
+            默认使用UtcKindDataParse
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.JsonSerializer.Encoding">
+            <summary>
+            编码格式
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.JsonSerializer.DeserializeObject(System.Byte[],System.Type)">
+            <summary>
+            反序列化字节数组
+            </summary>
+            <param name="data"></param>
+            <param name="type"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.JsonSerializer.Serialize``1(``0)">
+            <summary>
+            序列化对象为字节数组
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="event"></param>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.KeyAttribute.AppDomainTypeFinder">
+            <summary>
+            基于特定关键字加载当前上下文中的所有程序集，
+            查找所有类型。
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.KeyAttribute.AppDomainTypeFinder.App">
+            <summary>当前AppDomain,应用进程</summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.KeyAttribute.AppDomainTypeFinder.LoadAppDomainAssemblies">
+            <summary>
+            是否自动加载运行时上下文的程序集，如果为false，只加载配置过的程序集。
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.KeyAttribute.AppDomainTypeFinder.AssemblyNames">
+            <summary>
+            配置需要加载的程序集。
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.KeyAttribute.AppDomainTypeFinder.AssemblySkipLoadingPattern">
+            <summary>忽略的DLL</summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.KeyAttribute.AppDomainTypeFinder.GetAssemblies">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.KeyAttribute.AppDomainTypeFinder.AddAssembliesInAppDomain(System.Collections.Generic.List{System.String},System.Collections.Generic.List{System.Reflection.Assembly})">
+            <summary>
+            遍历AppDomain中的程序集，符合条件就添加到列表。
+            </summary>
+            <param name="addedAssemblyNames">已添加的程序集名称</param>
+            <param name="assemblies">需要添加到的程序集结果列表</param>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.KeyAttribute.AppDomainTypeFinder.AddConfiguredAssemblies(System.Collections.Generic.List{System.String},System.Collections.Generic.List{System.Reflection.Assembly})">
+            <summary>
+            将属性AssemblyNames中显式配置的程序集加载到列表中。
+            </summary>
+            <param name="addedAssemblyNames"></param>
+            <param name="assemblies"></param>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.KeyAttribute.AppDomainTypeFinder.Matches(System.String)">
+            <summary>
+            判断是否符合添加条件
+            </summary>
+            <param name="assemblyFullName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.KeyAttribute.AppDomainTypeFinder.Matches(System.String,System.String)">
+            <summary>
+            判断是否符合添加条件
+            </summary>
+            <param name="assemblyFullName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.KeyAttribute.AppDomainTypeFinder.LoadMatchingAssemblies(System.String)">
+            <summary>
+            加载目录下符合条件的程序集
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.KeyAttribute.AppDomainTypeFinder.DoesTypeImplementOpenGeneric(System.Type,System.Type)">
+            <summary>
+            判断类型是否是泛型
+            </summary>
+            <param name="type"></param>
+            <param name="openGeneric"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.KeyAttribute.FastInvoke.EmitGetter(System.Reflection.PropertyInfo)">
+            <summary>
+            Emit获取对象的属性值
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="propertyName"></param>
+            <returns></returns>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.Abstractions.ResponseBase.ServerState">
+            <summary>
+            20000 握手响应
+            401  指定方法不存在
+            500  服务器内部异常
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.MQ.Route.RoutingTables.ActionsDic">
+            <summary>
+            Action名称字典 Action名称=methodInfo
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.RpcServerConfig.ApplicationId">
+            <summary>
+            服务器ID
+            <para>连接在同一个MQ集群上的不同应用应该具有不同的名称</para>
+            通过配置相同名称的服务器达到服务器间的负载均衡
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.RpcServerConfig.Encode">
+            <summary>
+            系统序列化编码字符集
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.RpcServerConfig.Fetchout">
+            <summary>
+            批量从队列获取消息数量
+            </summary>
+        </member>
+        <member name="M:YiDian.Soa.Sp.Extensions.MQExtensions.UseRabbitMq(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.Action{YiDian.EventBus.MQ.DefaultConnection.DefaultMqConnectSource},YiDian.EventBus.IAppEventsManager)">
+            <summary>
+            注册MQ连接字符串
+            <para>格式：server=ip:port;user=username;password=pwd;vhost=vhostname;name=zs</para>
+            eventsmgr=inmemory
+            </summary>
+            <param name="builder"></param>
+            <param name="getconnstr"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.Soa.Sp.Extensions.MQExtensions.AutoCreateAppEvents(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.String,System.String)">
+            <summary>
+            创建系统所依赖的消息总线中的消息类型
+            </summary>
+            <param name="builder">builder</param>
+            <param name="all_apps">所依赖的消息系统名称列表，以逗号隔开
+            <para>为空时，从配置文件中加载键为 dependApps 的值</para>
+            </param>
+            <param name="fileDir">创建消息 体的目录
+            <para>为空时，使用当前系统目录 依赖命令行传入键为-pj_dir的参数</para>
+            </param>
+            <returns>builder</returns>
+        </member>
+        <member name="M:System.JsonHelper.UseUtcKindDataParse">
+            <summary>
+            format:2020-01-08T18:57:12.629+08:00
+            </summary>
+        </member>
+    </members>
+</doc>

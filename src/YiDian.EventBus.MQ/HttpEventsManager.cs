@@ -13,7 +13,7 @@ using YiDian.EventBus.MQ.KeyAttribute;
 
 namespace YiDian.EventBus.MQ
 {
-    /// <summary>
+    /*
     /// post reg_class?app=a&version=1.0 (ClassMeta)
     /// post reg_enum?app=a&version=1.0 (EnumMeta)
     /// get check?app=a&version=1.0
@@ -22,14 +22,23 @@ namespace YiDian.EventBus.MQ
     /// get eventid?name=zs
     /// get allids?app=a
     /// get check_not_event?app=a&version=1.0 (true,false)
+    */
+    /// <summary>
+    /// 基于webapi的MQ事件名称管理器
     /// </summary>
     public class HttpEventsManager : IAppEventsManager
     {
         const char separator = '#';
         readonly Uri web_host;
-
+        /// <summary>
+        /// 是否允许未注册的事件
+        /// </summary>
         public bool AllowNoRegisterEvent { get; }
-
+        /// <summary>
+        /// 创建一个事件管理器
+        /// </summary>
+        /// <param name="web_api_address"></param>
+        /// <param name="allow_no_reg"></param>
         public HttpEventsManager(string web_api_address, bool allow_no_reg = false)
         {
             AllowNoRegisterEvent = allow_no_reg;

@@ -3,13 +3,35 @@ using System;
 
 namespace YiDian.EventBus.MQ
 {
+    /// <summary>
+    /// Direct 类型 消息总线实现
+    /// </summary>
     public class DirectEventBus : EventBusBase<IDirectEventBus, DirectSubscriber>, IDirectEventBus
     {
         readonly string brokerName = "amq.direct";
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="autofac"></param>
+        /// <param name="persistentConnection"></param>
+        /// <param name="seralize"></param>
+        /// <param name="retryCount"></param>
+        /// <param name="cacheCount"></param>
         public DirectEventBus(ILogger<IDirectEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, int retryCount = 5, int cacheCount = 100)
             : base(logger, autofac, seralize, persistentConnection, retryCount, cacheCount)
         {
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="brokerName"></param>
+        /// <param name="logger"></param>
+        /// <param name="autofac"></param>
+        /// <param name="persistentConnection"></param>
+        /// <param name="seralize"></param>
+        /// <param name="retryCount"></param>
+        /// <param name="cacheCount"></param>
         public DirectEventBus(string brokerName, ILogger<IDirectEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, int retryCount = 5, int cacheCount = 100)
             : base(logger, autofac, seralize, persistentConnection, retryCount, cacheCount)
         {
@@ -20,9 +42,15 @@ namespace YiDian.EventBus.MQ
             channel.ExchangeDeclare(brokerName, "topic", false, false, null);
             channel.Dispose();
         }
-
+        /// <summary>
+        /// Exchange名称
+        /// </summary>
         public override string BROKER_NAME => brokerName;
-
+        /// <summary>
+        /// 获取路由键
+        /// </summary>
+        /// <param name="routingKey"></param>
+        /// <returns></returns>
         public override string GetEventKeyFromRoutingKey(string routingKey)
         {
             return routingKey;

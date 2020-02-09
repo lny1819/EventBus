@@ -124,7 +124,15 @@ namespace YiDian.Soa.Sp.Extensions
             builder.AppendArgs(data);
             return builder;
         }
-        public static SoaServiceContainerBuilder UseDirectEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0, IEventSeralize seralizer = null)
+        /// <summary>
+        /// 创建默认的<see cref="IDirectEventBus"/>实现
+        /// </summary>
+        /// <param name="builder">构造器</param>
+        /// <param name="cacheLength">缓存大小</param>
+        /// <param name="seralizer">序列化类型</param>
+        /// <param name="broker_name">交换机名称</param>
+        /// <returns></returns>
+        public static SoaServiceContainerBuilder UseDirectEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0, IEventSeralize seralizer = null, string broker_name = "")
         {
             builder.Services.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
             {
@@ -132,12 +140,24 @@ namespace YiDian.Soa.Sp.Extensions
                 var source = sp.GetService<DefaultMqConnectSource>();
                 var conn = source.Get("") ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                 var logger = sp.GetService<ILogger<IDirectEventBus>>();
-                var eventbus = new DirectEventBus(logger, sp, conn, seralizer, cacheLength);
-                return eventbus;
+                DirectEventBus eventBus;
+                if (string.IsNullOrEmpty(broker_name))
+                    eventBus = new DirectEventBus(logger, sp, conn, seralizer, cacheLength);
+                else
+                    eventBus = new DirectEventBus(broker_name, logger, sp, conn, seralizer, cacheCount: cacheLength);
+                return eventBus;
             });
             return builder;
         }
-        public static SoaServiceContainerBuilder UseTopicEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0, IEventSeralize seralizer = null)
+        /// <summary>
+        /// 创建默认的<see cref="ITopicEventBus"/>实现
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <param name="cacheLength"></param>
+        /// <param name="seralizer"></param>
+        /// <param name="broker_name">交换机名称</param>
+        /// <returns></returns>
+        public static SoaServiceContainerBuilder UseTopicEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0, IEventSeralize seralizer = null, string broker_name = "")
         {
             builder.Services.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
              {
@@ -145,8 +165,12 @@ namespace YiDian.Soa.Sp.Extensions
                  var source = sp.GetService<DefaultMqConnectSource>();
                  var conn = source.Get("") ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                  var logger = sp.GetService<ILogger<ITopicEventBus>>();
-                 var eventbus = new TopicEventBusMQ(logger, sp, conn, seralizer, cacheLength);
-                 return eventbus;
+                 TopicEventBusMQ eventBus;
+                 if (string.IsNullOrEmpty(broker_name))
+                     eventBus = new TopicEventBusMQ(logger, sp, conn, seralizer, cacheLength);
+                 else
+                     eventBus = new TopicEventBusMQ(broker_name, logger, sp, conn, seralizer, cacheCount: cacheLength);
+                 return eventBus;
              });
             return builder;
         }

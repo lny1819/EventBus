@@ -44,6 +44,42 @@
             <param name="routingKey"></param>
             <returns></returns>
         </member>
+        <member name="T:YiDian.EventBus.MQ.EventBusFactory">
+            <summary>
+            EventBus创建工厂
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.EventBusFactory.#ctor(YiDian.EventBus.MQ.DefaultConnection.DefaultMqConnectSource,System.IServiceProvider,Microsoft.Extensions.Logging.ILogger{YiDian.EventBus.IDirectEventBus},Microsoft.Extensions.Logging.ILogger{YiDian.EventBus.ITopicEventBus})">
+            <summary>
+            创建一个工厂实例
+            </summary>
+            <param name="source">RabbitMq连接源</param>
+            <param name="scope">对象生命周期管理器</param>
+            <param name="logger">IDirectEventBus日志</param>
+            <param name="logger2">ITopicEventBus日志</param>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.EventBusFactory.GetDirect``1(``0,System.String,System.String,System.Int32)">
+            <summary>
+            创建指定序列化，连接地址，交换机名称的IDirectEventBus类型EventBus
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="serializer"></param>
+            <param name="connSource"></param>
+            <param name="brokerName"></param>
+            <param name="length"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.EventBusFactory.GetTopic``1(``0,System.String,System.String,System.Int32)">
+            <summary>
+             创建指定序列化，连接地址，交换机名称的ITopicEventBus类型EventBus
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="serializer"></param>
+            <param name="connSource"></param>
+            <param name="brokerName"></param>
+            <param name="length"></param>
+            <returns></returns>
+        </member>
         <member name="M:YiDian.EventBus.MQ.EventHanlerCacheMgr.GetDynamicHandler(System.Type,YiDian.EventBus.IBytesHandler@,Microsoft.Extensions.DependencyInjection.IServiceScope@)">
             <summary>
             从缓存中获取实例
@@ -75,11 +111,10 @@
             实现IEventSeralize的Json序列化
             </summary>
         </member>
-        <member name="M:YiDian.EventBus.MQ.JsonSerializer.#ctor(System.Action{System.Text.Json.JsonSerializerOptions})">
+        <member name="M:YiDian.EventBus.MQ.JsonSerializer.#ctor">
             <summary>
-            创建一个JSON序列化实例
+            创建一个JSON序列化实例 
             </summary>
-            <param name="options">JSON序列化设定</param>
         </member>
         <member name="P:YiDian.EventBus.MQ.JsonSerializer.DateFormat">
             <summary>

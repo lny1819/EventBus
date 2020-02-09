@@ -6,6 +6,9 @@ using YiDian.EventBus.MQ.DefaultConnection;
 
 namespace YiDian.EventBus.MQ
 {
+    /// <summary>
+    /// EventBus创建工厂
+    /// </summary>
     public class EventBusFactory
     {
         struct BusKey
@@ -43,7 +46,13 @@ namespace YiDian.EventBus.MQ
         readonly IServiceProvider _sp;
         readonly ILogger<IDirectEventBus> _logger;
         readonly ILogger<ITopicEventBus> _logger2;
-
+        /// <summary>
+        /// 创建一个工厂实例
+        /// </summary>
+        /// <param name="source">RabbitMq连接源</param>
+        /// <param name="scope">对象生命周期管理器</param>
+        /// <param name="logger">IDirectEventBus日志</param>
+        /// <param name="logger2">ITopicEventBus日志</param>
         public EventBusFactory(DefaultMqConnectSource source, IServiceProvider scope, ILogger<IDirectEventBus> logger, ILogger<ITopicEventBus> logger2)
         {
             DirectBusDic = new Dictionary<BusKey, IDirectEventBus>(BusKey.Compare);
@@ -57,6 +66,15 @@ namespace YiDian.EventBus.MQ
             _logger = logger;
             _logger2 = logger2;
         }
+        /// <summary>
+        /// 创建指定序列化，连接地址，交换机名称的IDirectEventBus类型EventBus
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="serializer"></param>
+        /// <param name="connSource"></param>
+        /// <param name="brokerName"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
         public IDirectEventBus GetDirect<T>(T serializer = null, string connSource = "", string brokerName = "", int length = 100) where T : class, IEventSeralize, new()
         {
             var key = new BusKey(connSource, brokerName);
@@ -72,6 +90,15 @@ namespace YiDian.EventBus.MQ
             DirectBusDic.TryAdd(key, eventbus);
             return eventbus;
         }
+        /// <summary>
+        ///  创建指定序列化，连接地址，交换机名称的ITopicEventBus类型EventBus
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="serializer"></param>
+        /// <param name="connSource"></param>
+        /// <param name="brokerName"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
         public ITopicEventBus GetTopic<T>(T serializer = null, string connSource = "", string brokerName = "", int length = 100) where T : class, IEventSeralize, new()
         {
             var key = new BusKey(connSource, brokerName);

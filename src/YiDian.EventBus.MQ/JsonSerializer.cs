@@ -12,13 +12,11 @@ namespace YiDian.EventBus.MQ
         readonly JsonSerializerOptions opt;
         string dateFormat;
         /// <summary>
-        /// 创建一个JSON序列化实例
+        /// 创建一个JSON序列化实例 
         /// </summary>
-        /// <param name="options">JSON序列化设定</param>
-        public JsonSerializer(Action<JsonSerializerOptions> options = null)
+        public JsonSerializer()
         {
             opt = new JsonSerializerOptions();
-            options?.Invoke(opt);
         }
         /// <summary>
         /// 默认使用UtcKindDataParse

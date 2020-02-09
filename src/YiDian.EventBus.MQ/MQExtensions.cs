@@ -71,14 +71,35 @@ namespace YiDian.Soa.Sp.Extensions
             });
             return builder;
         }
+        /// <summary>
+        /// 使用RabbitMq
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <param name="mqConnstr"></param>
+        /// <param name="enven_mgr_api"></param>
+        /// <returns></returns>
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, string enven_mgr_api = "")
         {
             return UseRabbitMq(builder, x => x.Create(mqConnstr), string.IsNullOrEmpty(enven_mgr_api) ? null : new HttpEventsManager(enven_mgr_api));
         }
+        /// <summary>
+        /// 使用字符串地址创建RabbitMq
+        /// </summary>
+        /// <param name="builder">构造器</param>
+        /// <param name="mqConnstr">MQ地址</param>
+        /// <param name="enven_mgr_api">事件名称管理器地址</param>
+        /// <returns></returns>
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, IAppEventsManager enven_mgr_api)
         {
             return UseRabbitMq(builder, x => x.Create(mqConnstr), enven_mgr_api);
         }
+        /// <summary>
+        /// 使用指定方法创建RabbitMq
+        /// </summary>
+        /// <param name="builder">构造器</</param>
+        /// <param name="action"></param>
+        /// <param name="enven_mgr_api"></param>
+        /// <returns></returns>
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action, string enven_mgr_api)
         {
             var mgr = string.IsNullOrEmpty(enven_mgr_api) ? throw new ArgumentNullException(nameof(IAppEventsManager), "the address of IAppEventsManager can not be empty") : new HttpEventsManager(enven_mgr_api);

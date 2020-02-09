@@ -4,6 +4,46 @@
         <name>YiDian.EventBus.MQ</name>
     </assembly>
     <members>
+        <member name="T:YiDian.EventBus.MQ.DirectEventBus">
+            <summary>
+            Direct 类型 消息总线实现
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.DirectEventBus.#ctor(Microsoft.Extensions.Logging.ILogger{YiDian.EventBus.IDirectEventBus},System.IServiceProvider,YiDian.EventBus.MQ.IRabbitMQPersistentConnection,YiDian.EventBus.IEventSeralize,System.Int32,System.Int32)">
+            <summary>
+            
+            </summary>
+            <param name="logger"></param>
+            <param name="autofac"></param>
+            <param name="persistentConnection"></param>
+            <param name="seralize"></param>
+            <param name="retryCount"></param>
+            <param name="cacheCount"></param>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.DirectEventBus.#ctor(System.String,Microsoft.Extensions.Logging.ILogger{YiDian.EventBus.IDirectEventBus},System.IServiceProvider,YiDian.EventBus.MQ.IRabbitMQPersistentConnection,YiDian.EventBus.IEventSeralize,System.Int32,System.Int32)">
+            <summary>
+            
+            </summary>
+            <param name="brokerName"></param>
+            <param name="logger"></param>
+            <param name="autofac"></param>
+            <param name="persistentConnection"></param>
+            <param name="seralize"></param>
+            <param name="retryCount"></param>
+            <param name="cacheCount"></param>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.DirectEventBus.BROKER_NAME">
+            <summary>
+            Exchange名称
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.DirectEventBus.GetEventKeyFromRoutingKey(System.String)">
+            <summary>
+            获取路由键
+            </summary>
+            <param name="routingKey"></param>
+            <returns></returns>
+        </member>
         <member name="M:YiDian.EventBus.MQ.EventHanlerCacheMgr.GetDynamicHandler(System.Type,YiDian.EventBus.IBytesHandler@,Microsoft.Extensions.DependencyInjection.IServiceScope@)">
             <summary>
             从缓存中获取实例
@@ -183,6 +223,25 @@
             <param name="getconnstr"></param>
             <returns></returns>
         </member>
+        <member name="M:YiDian.Soa.Sp.Extensions.MQExtensions.UseRabbitMq(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.String,System.String)">
+            <summary>
+            使用RabbitMq
+            </summary>
+            <param name="builder"></param>
+            <param name="mqConnstr"></param>
+            <param name="enven_mgr_api"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.Soa.Sp.Extensions.MQExtensions.UseRabbitMq(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.String,YiDian.EventBus.IAppEventsManager)">
+            <summary>
+            使用字符串地址创建RabbitMq
+            </summary>
+            <param name="builder">构造器</param>
+            <param name="mqConnstr">MQ地址</param>
+            <param name="enven_mgr_api">事件名称管理器地址</param>
+            <returns></returns>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:YiDian.Soa.Sp.Extensions.MQExtensions.UseRabbitMq(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.Action{YiDian.EventBus.MQ.DefaultConnection.DefaultMqConnectSource},System.String)" -->
         <member name="M:YiDian.Soa.Sp.Extensions.MQExtensions.AutoCreateAppEvents(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.String,System.String)">
             <summary>
             创建系统所依赖的消息总线中的消息类型
@@ -195,6 +254,26 @@
             <para>为空时，使用当前系统目录 依赖命令行传入键为-pj_dir的参数</para>
             </param>
             <returns>builder</returns>
+        </member>
+        <member name="M:YiDian.Soa.Sp.Extensions.MQExtensions.UseDirectEventBus(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.Int32,YiDian.EventBus.IEventSeralize,System.String)">
+            <summary>
+            创建默认的<see cref="T:YiDian.EventBus.IDirectEventBus"/>实现
+            </summary>
+            <param name="builder">构造器</param>
+            <param name="cacheLength">缓存大小</param>
+            <param name="seralizer">序列化类型</param>
+            <param name="broker_name">交换机名称</param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.Soa.Sp.Extensions.MQExtensions.UseTopicEventBus(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.Int32,YiDian.EventBus.IEventSeralize,System.String)">
+            <summary>
+            创建默认的<see cref="T:YiDian.EventBus.ITopicEventBus"/>实现
+            </summary>
+            <param name="builder"></param>
+            <param name="cacheLength"></param>
+            <param name="seralizer"></param>
+            <param name="broker_name">交换机名称</param>
+            <returns></returns>
         </member>
         <member name="M:System.JsonHelper.UseUtcKindDataParse">
             <summary>

@@ -13,7 +13,23 @@
             <param name="scope"></param>
             <returns>是否是从缓存中获取</returns>
         </member>
-        <!-- Badly formed XML comment ignored for member "T:YiDian.EventBus.MQ.HttpEventsManager" -->
+        <member name="T:YiDian.EventBus.MQ.HttpEventsManager">
+            <summary>
+            基于webapi的MQ事件名称管理器
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.HttpEventsManager.AllowNoRegisterEvent">
+            <summary>
+            是否允许未注册的事件
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.HttpEventsManager.#ctor(System.String,System.Boolean)">
+            <summary>
+            创建一个事件管理器
+            </summary>
+            <param name="web_api_address"></param>
+            <param name="allow_no_reg"></param>
+        </member>
         <member name="T:YiDian.EventBus.MQ.JsonSerializer">
             <summary>
             实现IEventSeralize的Json序列化

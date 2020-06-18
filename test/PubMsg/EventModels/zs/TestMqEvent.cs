@@ -10,5 +10,12 @@ namespace EventModels.zs
         public string Name { get; set; }
         [SeralizeIndex(1)]
         public Int32 Age { get; set; }
+        [SeralizeIndex(2)]
+        public Sex Sex { get; set; }
+    }
+    public enum Sex
+    {
+        Male,
+        FaMale,
     }
 }

@@ -67,7 +67,7 @@ namespace YiDian.Soa.Sp
         void ThreadLoop(EventObj obj)
         {
             bool flag = false;
-            T t = default(T);
+            T t = default;
             for (; ; )
             {
                 if (flag || queue.TryDequeue(out t))

@@ -133,7 +133,7 @@ namespace YiDian.EventBus.MQ
             var values = Enum.GetValues(type);
             foreach (var v in values)
             {
-                enumMeta.Values.Add((v.ToString(), (int)v));
+                enumMeta.Values.Add(new EnumValue() { Name = v.ToString(), Value = (int)v });
             }
             return RegisterEnumType(appName, version, enumMeta);
         }

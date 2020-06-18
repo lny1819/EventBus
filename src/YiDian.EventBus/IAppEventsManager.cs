@@ -61,15 +61,20 @@ namespace YiDian.EventBus
             sb.Append("}");
         }
     }
+    public class EnumValue
+    {
+        public string Name { get; set; }
+        public int Value { get; set; }
+    }
     public class EnumMeta
     {
         public EnumMeta()
         {
-            Values = new List<(string, int)>();
+            Values = new List<EnumValue>();
         }
         public string Name { get; set; }
         public bool DefaultSeralize { get; set; }
-        public List<ValueTuple<string, int>> Values { get; set; }
+        public List<EnumValue> Values { get; set; }
         public void ToJson(StringBuilder sb)
         {
             sb.Append("{\"Name\":\"");
@@ -79,10 +84,10 @@ namespace YiDian.EventBus
             sb.Append(",\"Values\":[");
             for (var i = 0; i < Values.Count; i++)
             {
-                sb.Append("{\"Item1\":\"");
-                sb.Append(Values[i].Item1);
-                sb.Append("\",\"Item2\":");
-                sb.Append(Values[i].Item2.ToString());
+                sb.Append("{\"Name\":\"");
+                sb.Append(Values[i].Name);
+                sb.Append("\",\"Value\":");
+                sb.Append(Values[i].Value.ToString());
                 sb.Append("}");
                 if (i != Values.Count - 1) sb.Append(',');
             }

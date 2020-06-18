@@ -118,10 +118,10 @@ namespace YiDian.EventBus.MQ
                     {
                         if (i != meta.Values.Count - 1)
                         {
-                            file.Write("        " + meta.Values[i].Item1 + " = " + meta.Values[i].Item2);
+                            file.Write("        " + meta.Values[i].Name + " = " + meta.Values[i].Value);
                             file.WriteLine(",");
                         }
-                        else file.WriteLine("        " + meta.Values[i].Item1 + " = " + meta.Values[i].Item2);
+                        else file.WriteLine("        " + meta.Values[i].Name + " = " + meta.Values[i].Value);
                     }
                     file.WriteLine("    }");
                     file.WriteLine("}");

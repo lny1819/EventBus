@@ -12,10 +12,12 @@ namespace EventModels.zs
             uint size = 5;
             var span = stream.Advance(4);
             stream.WriteByte(2);
-             size +=stream.WriteHeader(EventPropertyType.L_32,1);
+             size +=stream.WriteHeader(EventPropertyType.L_32,2);
              size +=stream.WriteHeader(EventPropertyType.L_Str,1);
              size +=stream.WriteIndex(1);
              size +=stream.WriteInt32(Age);
+             size +=stream.WriteIndex(2);
+             size +=stream.WriteInt32((int)Sex);
              size +=stream.WriteIndex(0);
              size +=stream.WriteString(Name);
             BitConverter.TryWriteBytes(span, size);
@@ -54,6 +56,7 @@ namespace EventModels.zs
                 {
                     var index = stream.ReadByte();
                     if (index == 1){ Age = stream.ReadInt32();continue;}
+                    if (index == 2){ Sex = (Sex)stream.ReadInt32();continue;}
                     stream.Advance(4);
                 }
             }
@@ -94,7 +97,7 @@ namespace EventModels.zs
         }
         public uint Size()
         {
-                var size=15+WriteStream.GetStringSize(Name)+ 0;
+                var size=20+WriteStream.GetStringSize(Name)+ 0;
                 return size;
         }
     }

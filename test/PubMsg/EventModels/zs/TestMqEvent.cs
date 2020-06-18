@@ -13,9 +13,4 @@ namespace EventModels.zs
         [SeralizeIndex(2)]
         public Sex Sex { get; set; }
     }
-    public enum Sex
-    {
-        Male,
-        FaMale,
-    }
 }

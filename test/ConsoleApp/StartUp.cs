@@ -52,53 +52,6 @@ namespace Microsoft.Extensions.Configuration
             return sb;
         }
     }
-    class SB : IConfigurationProvider
-    {
-        Hashtable jsonobj;
-        public void LoadFromFile(string path)
-        {
-            if (!System.IO.Path.IsPathRooted(path)) path = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path);
-            var str_json = System.IO.File.ReadAllText(path);
-            jsonobj = (Hashtable)JsonString.Unpack(str_json);
-        }
-        public IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string parentPath)
-        {
-            return new List<string>() { "zs", "ls" };
-        }
-
-        public IChangeToken GetReloadToken()
-        {
-            return new SBc();
-        }
-
-        public void Load()
-        {
-
-        }
-
-        public void Set(string key, string value)
-        {
-            Console.WriteLine("Set");
-        }
-
-        public bool TryGet(string key, out string value)
-        {
-            Hashtable curObj = jsonobj;
-            var itor = key.Split(':').GetEnumerator();
-            value = null;
-            while (itor.MoveNext())
-            {
-                var k = (string)itor.Current;
-                var curObj2 = (Hashtable)curObj[k];
-                if (curObj2 == null)
-                {
-                    return curObj.ContainsKey(k);
-                }
-                value = curObj2.ToString();
-            }
-            return true;
-        }
-    }
 }
 
 namespace ConsoleApp

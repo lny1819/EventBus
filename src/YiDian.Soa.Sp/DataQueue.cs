@@ -5,6 +5,10 @@ using System.Threading;
 
 namespace YiDian.Soa.Sp
 {
+    /// <summary>
+    /// 可多组复用无复制队列
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public struct DataQueue<T>
     {
         private static DataQueue<T> Null = default;

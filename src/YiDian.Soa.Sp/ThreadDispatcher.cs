@@ -13,6 +13,10 @@ namespace YiDian.Soa.Sp
         public Thread Thread;
         public bool IsDisposed;
     }
+    /// <summary>
+    /// 多线程处理同一队列数据
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class ThreadDispatcher<T> : IDisposable
     {
         static readonly object lockobj = new object();

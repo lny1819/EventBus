@@ -10,7 +10,22 @@ namespace YiDian.EventBus
         void EnableHandlerCache(int cacheLength);
         void DeleteQueue(string queuename, bool force);
         void Start(string queueName);
+        /// <summary>
+        /// 发布消息   当消息体有keyIndex标识时 会将标识拼接在路由键的头部
+        /// <para>路由键的最后一个标识时消息体在<see cref="IAppEventsManager">中的名称</para>
+        /// 路由键格式：当消息体有keyIndex标识时 a.b.c.x ;没有keyIndex标识时，为x
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="event"></param>
+        /// <param name="enableTransaction"></param>
         void Publish<T>(T @event, bool enableTransaction = false) where T : IMQEvent;
+        /// <summary>
+        /// 自定义路由键发送消息
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="event"></param>
+        /// <param name="key"></param>
+        /// <param name="enableTransaction"></param>
         void PublishWithKey<T>(T @event, string key, bool enableTransaction = false) where T : IMQEvent;
 
         void Subscribe<T, TH>(string queueName)

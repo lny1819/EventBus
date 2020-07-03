@@ -3,20 +3,38 @@ using System.Collections.Generic;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.KeyAttribute;
-namespace EventModels.es_quote
+namespace EventModels.userinfo
 {
-    public partial class Exchange: IYiDianSeralize
+    public partial class RspUserOrderInfo: IYiDianSeralize
     {
         public uint ToBytes(ref WriteStream stream)
         {
             uint size = 5;
             var span = stream.Advance(4);
-            stream.WriteByte(1);
-             size +=stream.WriteHeader(EventPropertyType.L_Str,2);
+            stream.WriteByte(3);
+             size +=stream.WriteHeader(EventPropertyType.L_32,4);
+             size +=stream.WriteHeader(EventPropertyType.L_64,1);
+             size +=stream.WriteHeader(EventPropertyType.L_Str,5);
+             size +=stream.WriteIndex(5);
+             size +=stream.WriteUInt32(Size);
+             size +=stream.WriteIndex(7);
+             size +=stream.WriteInt32((int)State);
+             size +=stream.WriteIndex(8);
+             size +=stream.WriteUInt32(FillSize);
+             size +=stream.WriteIndex(9);
+             size +=stream.WriteInt32((int)Action);
+             size +=stream.WriteIndex(6);
+             size +=stream.WriteDouble(Price);
              size +=stream.WriteIndex(0);
-             size +=stream.WriteString(ExchangeNo);
+             size +=stream.WriteString(LocalOrderNo);
              size +=stream.WriteIndex(1);
-             size +=stream.WriteString(ExchangeName);
+             size +=stream.WriteString(Exchange);
+             size +=stream.WriteIndex(2);
+             size +=stream.WriteString(ContractId);
+             size +=stream.WriteIndex(3);
+             size +=stream.WriteString(Commodity);
+             size +=stream.WriteIndex(4);
+             size +=stream.WriteString(ServiceNo);
             BitConverter.TryWriteBytes(span, size);
             return size;
         }
@@ -52,6 +70,10 @@ namespace EventModels.es_quote
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
+                    if (index == 5){ Size = stream.ReadUInt32();continue;}
+                    if (index == 7){ State = (OrderState)stream.ReadInt32();continue;}
+                    if (index == 8){ FillSize = stream.ReadUInt32();continue;}
+                    if (index == 9){ Action = (OrderActType)stream.ReadInt32();continue;}
                     stream.Advance(4);
                 }
             }
@@ -60,6 +82,7 @@ namespace EventModels.es_quote
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
+                    if (index == 6){ Price = stream.ReadDouble();continue;}
                     stream.Advance(8);
                 }
             }
@@ -68,8 +91,11 @@ namespace EventModels.es_quote
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 0){ ExchangeNo = stream.ReadString();continue;}
-                    if (index == 1){ ExchangeName = stream.ReadString();continue;}
+                    if (index == 0){ LocalOrderNo = stream.ReadString();continue;}
+                    if (index == 1){ Exchange = stream.ReadString();continue;}
+                    if (index == 2){ ContractId = stream.ReadString();continue;}
+                    if (index == 3){ Commodity = stream.ReadString();continue;}
+                    if (index == 4){ ServiceNo = stream.ReadString();continue;}
                      var c = stream.ReadInt32();stream.Advance(c);
                 }
             }
@@ -91,9 +117,9 @@ namespace EventModels.es_quote
                 }
             }
         }
-        public uint Size()
+        public uint BytesSize()
         {
-                var size=9+WriteStream.GetStringSize(ExchangeNo)+WriteStream.GetStringSize(ExchangeName)+ 0;
+                var size=45+WriteStream.GetStringSize(LocalOrderNo)+WriteStream.GetStringSize(Exchange)+WriteStream.GetStringSize(ContractId)+WriteStream.GetStringSize(Commodity)+WriteStream.GetStringSize(ServiceNo)+ 0;
                 return size;
         }
     }

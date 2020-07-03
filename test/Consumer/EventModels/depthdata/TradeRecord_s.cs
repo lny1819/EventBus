@@ -118,7 +118,7 @@ namespace EventModels.depthdata
                 }
             }
         }
-        public uint Size()
+        public uint BytesSize()
         {
                 var size=62+WriteStream.GetStringSize(CommodityNo)+WriteStream.GetStringSize(ExchangeID)+WriteStream.GetStringSize(InstrumentID)+WriteStream.GetStringSize(Oper)+WriteStream.GetStringSize(InTime)+ 0;
                 return size;

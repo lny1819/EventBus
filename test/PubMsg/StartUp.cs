@@ -1,13 +1,10 @@
 ﻿using Autofac;
-using Microsoft.Extensions.DependencyInjection;
+using EventModels.userinfo;
 using Microsoft.Extensions.Configuration;
 using System;
+using YiDian.EventBus.MQ;
 using YiDian.Soa.Sp;
 using YiDian.Soa.Sp.Extensions;
-using YiDian.EventBus;
-using System.Threading.Tasks;
-using System.Threading;
-using EventModels.zs;
 
 namespace ConsoleApp
 {
@@ -25,7 +22,7 @@ namespace ConsoleApp
                  .UseDirectEventBus()
                  .UseTopicEventBus();
 #if DEBUG
-            soa.AutoCreateAppEvents("es_quote,depthdata,zs");
+            soa.AutoCreateAppEvents("userinfo");
 #endif
         }
         public void ConfigContainer(ContainerBuilder builder)
@@ -74,16 +71,29 @@ namespace ConsoleApp
             //sw.Stop();
             //Console.WriteLine(sw.ElapsedMilliseconds);
             //Console.ReadKey();
-
-            var eventsMgr = sp.GetRequiredService<IAppEventsManager>();
-            eventsMgr.RegisterEvent<TestMqEvent>("zs", "1.0");
-            var direct = sp.GetService<IDirectEventBus>();
-            var topic = sp.GetService<ITopicEventBus>();
-            var qps = sp.GetService<IQpsCounter>();
-            var host = sp.GetService<ISoaServiceHost>();
-            var ps = int.Parse(Configuration["ps"]);
-            var type = Configuration["type"];
-            var sleep = int.Parse(Configuration["sleep"]);
+            var ws = new WriteStream(2000);
+            var info = new RspUseAction
+            {
+                Data = new RspUserOrderInfo()
+                {
+                    Action = OrderActType.DELETE,
+                    Commodity = "HSI",
+                    ContractId = "2006",
+                    Exchange = "HKEX",
+                    FillSize = 5,
+                    LocalOrderNo = "OA23411",
+                    Price = 4.5,
+                    ServiceNo = "SO98",
+                    Size = 5,
+                    State = OrderState.Accept
+                },
+                IsLast = true,
+                SessionId = 0
+            };
+            info.ToBytes(ref ws);
+            var bs = ws.GetBytes();
+            var rs = new ReadStream(bs);
+            var info2 = rs.ReadEventObj<RspUseAction>();
         }
     }
 }

@@ -91,7 +91,7 @@ namespace EventModels.es_quote
                 }
             }
         }
-        public uint Size()
+        public uint BytesSize()
         {
                 var size=9+WriteStream.GetStringSize(ExchangeNo)+WriteStream.GetStringSize(ExchangeName)+ 0;
                 return size;

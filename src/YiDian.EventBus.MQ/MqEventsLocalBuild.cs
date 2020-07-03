@@ -688,7 +688,7 @@ namespace YiDian.EventBus.MQ
                         file.Write($"                    if (index == {item.SeralizeIndex.ToString()})");
                         file.Write("{");
                         file.Write($" {item.Name} = new {item.Type}();");
-                        file.Write($" {item.Name}.BytesTo(stream);continue;");
+                        file.Write($" {item.Name}.BytesTo(ref stream);continue;");
                         file.WriteLine("}");
                     }
                 }
@@ -700,7 +700,7 @@ namespace YiDian.EventBus.MQ
                 file.WriteLine("        }");
 
 
-                file.WriteLine("        public uint Size()");
+                file.WriteLine("        public uint BytesSize()");
                 file.WriteLine("        {");
                 var size = 5 + dic.Count * 2 + meta.Properties.Count + (l8_props == null ? 0 : l8_props.Count) + (ldate_props == null ? 0 : ldate_props.Count * 11) + (l16_props == null ? 0 : l16_props.Count * 2) + (l32_props == null ? 0 : l32_props.Count * 4) + (l64_props == null ? 0 : l64_props.Count * 8);
                 file.Write($"                var size={size}+");
@@ -755,7 +755,7 @@ namespace YiDian.EventBus.MQ
                 {
                     foreach (var item in ln_props)
                     {
-                        file.Write($"{item.Name}.Size()+");
+                        file.Write($"{item.Name}.BytesSize()+");
                     }
                 }
                 file.WriteLine($" 0;");

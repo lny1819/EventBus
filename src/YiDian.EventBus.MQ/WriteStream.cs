@@ -406,7 +406,7 @@ namespace YiDian.EventBus.MQ
             var ider = arr.GetEnumerator();
             while (ider.MoveNext())
             {
-                size += ider.Current.Size();
+                size += ider.Current.BytesSize();
             }
             return size + 8;
         }

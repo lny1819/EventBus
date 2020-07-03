@@ -281,7 +281,7 @@ namespace EventModels.depthdata
                 }
             }
         }
-        public uint Size()
+        public uint BytesSize()
         {
                 var size=542+WriteStream.GetStringSize(CurrencyNo)+WriteStream.GetStringSize(CommodityNo)+WriteStream.GetStringSize(ExchangeID)+WriteStream.GetStringSize(InstrumentID)+WriteStream.GetStringSize(Source)+WriteStream.GetStringSize(TradingTime)+ 0;
                 return size;

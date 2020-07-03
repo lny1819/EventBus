@@ -132,7 +132,7 @@ namespace EventModels.es_quote
                 }
             }
         }
-        public uint Size()
+        public uint BytesSize()
         {
                 var size=70+WriteStream.GetStringSize(ExchangeNo)+WriteStream.GetStringSize(ExchangeName)+WriteStream.GetStringSize(CommodityNo)+WriteStream.GetStringSize(CommodityName)+WriteStream.GetStringSize(CommodityEngName)+WriteStream.GetStringSize(TradeCurrency)+WriteStream.GetStringSize(AddOneTime)+ 0;
                 return size;

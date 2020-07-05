@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using YiDian.Soa.Sp;
 
 namespace YiDian.EventBus.MQ
@@ -39,123 +40,71 @@ namespace YiDian.EventBus.MQ
         }
         private void AddToMethodPool(CallMeta callmeta)
         {
-            this.methodPoll.AddOrUpdate(callmeta.MethodId, callmeta, delegate (long x, CallMeta y)
-            {
-                return callmeta;
-            });
+            methodPoll.AddOrUpdate(callmeta.MethodId, callmeta, (x, y) => y);
         }
         private void CreateConsumerChannel()
         {
-            if ((this._consumerchannel == null) || this._consumerchannel.IsClosed)
+            if ((_consumerchannel == null) || _consumerchannel.IsClosed)
             {
-                if (!this._persistentConnection.IsConnected)
+                if (!_persistentConnection.IsConnected)
                 {
-                    this._persistentConnection.TryConnect();
+                    _persistentConnection.TryConnect();
                 }
-                Dictionary<string, object> dictionary1 = new Dictionary<string, object>();
-                dictionary1.Add("x-max-length", (int)0x4e20);
+                Dictionary<string, object> dictionary1 = new Dictionary<string, object>
+                {
+                    { "x-max-length", 20000 }
+                };
                 Dictionary<string, object> dictionary = dictionary1;
-                IModel model = this._persistentConnection.CreateModel();
-                model.QueueDeclare(this._clientName, false, true, true, (IDictionary<string, object>)dictionary);
+                IModel model = _persistentConnection.CreateModel();
+                model.QueueDeclare(_clientName, false, true, true, (IDictionary<string, object>)dictionary);
                 model.BasicQos(0, 200, false);
                 model.CallbackException += (delegate (object sender, CallbackExceptionEventArgs ea)
                 {
-                    this._consumerchannel.Dispose();
-                    this._consumerchannel = null;
-                    this.CreateConsumerChannel();
+                    _consumerchannel.Dispose();
+                    _consumerchannel = null;
+                    CreateConsumerChannel();
                 });
-                this._consumerchannel = model;
-                this.StartConsumer();
+                _consumerchannel = model;
+                StartConsumer();
             }
         }
         private void StartConsumer()
         {
-            EventingBasicConsumer consumer = new EventingBasicConsumer(this._consumerchannel);
-            consumer.Received += (delegate (object e, BasicDeliverEventArgs o)
-            {
-                long num;
-                CallMeta meta;
-                if (long.TryParse(o.BasicProperties.CorrelationId, out num) && this.methodPoll.TryGetValue(num, out meta))
-                {
-                    meta.Result = o.Body;
-                    meta.Reset();
-                }
-            });
-            this._consumerchannel.BasicConsume(this._clientName, true, consumer);
+            EventingBasicConsumer consumer = new EventingBasicConsumer(_consumerchannel);
+            consumer.Received += Consumer_Received;
+            _consumerchannel.BasicConsume(_clientName, true, consumer);
         }
-        public byte[] Request(string serverId, string uri, byte[] data)
+
+        private void Consumer_Received(object e, BasicDeliverEventArgs o)
         {
-            string str = this.CreateServerKey(serverId).ToLower();
-            CallMeta callmeta = new CallMeta();
-            this.AddToMethodPool(callmeta);
-            IBasicProperties basicProperties = this._consumerchannel.CreateBasicProperties();
-            basicProperties.CorrelationId = ((long)callmeta.MethodId).ToString();
-            basicProperties.ReplyTo = this._clientName;
-            this._consumerchannel.BasicPublish("ml_rpc_event_bus", str + uri, basicProperties, data);
-            callmeta.Wait(this.TimeOut);
-            return this.GetMethodResult(callmeta.MethodId);
-        }
-        private byte[] GetMethodResult(long methodid)
-        {
-            if (!this.methodPoll.TryRemove(methodid, out CallMeta meta))
+            if (long.TryParse(o.BasicProperties.CorrelationId, out long num) && methodPoll.TryRemove(num, out CallMeta meta))
             {
-                return null;
+                meta.SetResult(o.Body);
             }
-            return (((DateTime.Now - meta.InTime).TotalSeconds <= this.TimeOut) ? meta.Result : null);
         }
-        private class CallMeta : IDisposable
+
+        public Task<byte[]> Request(string serverId, string uri, byte[] data)
+        {
+            string str = CreateServerKey(serverId).ToLower();
+            var callmeta = new CallMeta();
+            AddToMethodPool(callmeta);
+            var basicProperties = _consumerchannel.CreateBasicProperties();
+            basicProperties.CorrelationId = callmeta.MethodId.ToString();
+            basicProperties.ReplyTo = _clientName;
+            _consumerchannel.BasicPublish(BROKER_NAME, str + uri, basicProperties, data);
+            return callmeta.Task;
+        }
+        class CallMeta : TaskCompletionSource<byte[]>
         {
             private static long callid;
-            private readonly object async = new object();
-            private AutoResetEvent autoEvent = new AutoResetEvent(false);
+            public long MethodId { get; }
+            public DateTime InTime { get; private set; }
+
             public CallMeta()
             {
                 MethodId = Interlocked.Increment(ref callid);
                 InTime = DateTime.Now;
             }
-            // Methods
-            public void Dispose()
-            {
-                if (this.autoEvent != null)
-                {
-                    this.autoEvent.Dispose();
-                }
-                this.autoEvent = null;
-            }
-
-            public void Reset()
-            {
-                object async = this.async;
-                lock (async)
-                {
-                    if (this.autoEvent != null)
-                    {
-                        this.autoEvent.Set();
-                        this.autoEvent.Dispose();
-                    }
-                    this.autoEvent = null;
-                }
-            }
-
-            internal void Wait(int timeOut)
-            {
-                object async = this.async;
-                lock (async)
-                {
-                    if (this.autoEvent == null)
-                    {
-                        return;
-                    }
-                }
-                this.autoEvent.WaitOne((int)(timeOut * 0x3e8));
-            }
-
-            // Properties
-            public long MethodId { get; }
-
-            public DateTime InTime { get; }
-
-            public byte[] Result { get; set; }
         }
     }
 }

@@ -7,7 +7,7 @@ namespace YiDian.EventBus.MQ.KeyAttribute
     {
         public SeralizeIndex(int v)
         {
-            this.Index = v;
+            Index = v;
         }
         public int Index { get; }
     }

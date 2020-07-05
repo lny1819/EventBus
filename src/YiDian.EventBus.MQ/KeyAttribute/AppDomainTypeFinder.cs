@@ -58,7 +58,7 @@ namespace YiDian.EventBus.MQ.KeyAttribute
         {
             var result = new List<Type>();
 
-            var types = this.GetAllTypes();
+            var types = GetAllTypes();
 
             foreach (var t in types)
             {
@@ -315,7 +315,7 @@ namespace YiDian.EventBus.MQ.KeyAttribute
         protected virtual List<Type> CreateTypeList()
         {
             var allTypes = new List<Type>();
-            var assemblies = this.GetAssemblies().Distinct();
+            var assemblies = GetAssemblies().Distinct();
             foreach (var assembly in assemblies)
             {
                 try

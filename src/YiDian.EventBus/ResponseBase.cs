@@ -1,6 +1,6 @@
 ﻿namespace YiDian.EventBus
 {
-    public class ResponseBase<T> : ievent
+    public class ResponseBase<T>
     {
         public int ServerState { get; set; }
         public string ServerMsg { get; set; }

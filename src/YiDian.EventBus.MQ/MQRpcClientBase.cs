@@ -19,17 +19,15 @@ namespace YiDian.EventBus.MQ
         readonly AutoResetEvent signal;
         private readonly ConcurrentDictionary<long, CallMeta> methodPoll;
         IModel _consumerchannel;
-        public MQRpcClientBase(IRabbitMQPersistentConnection rabbitMQPersistentConnection, string clientName, ILogger logger, IQpsCounter counter, int timeOut = 10)
+        public MQRpcClientBase(IRabbitMQPersistentConnection rabbitMQPersistentConnection, string clientName, ILogger logger, IQpsCounter counter)
         {
             signal = new AutoResetEvent(false);
-            TimeOut = timeOut;
             _clientName = clientName ?? throw new ArgumentNullException(nameof(clientName));
             _qps = counter ?? throw new ArgumentNullException(nameof(IQpsCounter));
             _persistentConnection = rabbitMQPersistentConnection ?? throw new ArgumentNullException(nameof(rabbitMQPersistentConnection));
             methodPoll = new ConcurrentDictionary<long, CallMeta>();
             CreateConsumerChannel();
         }
-        public int TimeOut { get; }
         private string CreateServerKey(string serverName)
         {
             if (serverName.IndexOf(".") > -1)

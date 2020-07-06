@@ -8,9 +8,9 @@ namespace YiDian.EventBus.MQ
     {
         readonly byte[] orginal;
         int offset;
-        public ReadStream(byte[] datas)
+        public ReadStream(byte[] datas, int index = 0)
         {
-            offset = 0;
+            offset = index;
             orginal = datas;
         }
         public Dictionary<EventPropertyType, byte> ReadHeaders()

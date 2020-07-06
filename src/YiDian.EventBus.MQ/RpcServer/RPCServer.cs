@@ -12,7 +12,7 @@ using YiDian.Soa.Sp;
 
 namespace YiDian.EventBus.MQ
 {
-    public class RPCServer
+    public class RPCServer : IRpcServer
     {
         const string BROKER_NAME = "rpc_event_bus";
         const string AUTOFAC_NAME = "rpc_event_bus";
@@ -21,14 +21,13 @@ namespace YiDian.EventBus.MQ
         readonly IRabbitMQPersistentConnection _conn;
         readonly IQpsCounter _qps;
         readonly TaskFactory _factory;
-
         IModel _consumerChannel;
         IModel _pubChannel;
-        internal RPCServer(IRabbitMQPersistentConnection conn, ILogger logger, RpcServerConfig config, ILifetimeScope autofac, IQpsCounter qps)
+        internal RPCServer(IRabbitMQPersistentConnection conn, ILogger logger, RpcServerConfig config, ILifetimeScope autofac, IQpsCounter qps, IEventSeralize seralize = null)
         {
             config.ApplicationId = config.ApplicationId.ToLower();
             RoutingTables.LoadControlers(config.ApplicationId);
-
+            Seralize = seralize ?? new DefaultSeralizer();
             _autofac = autofac;
             _logger = logger;
             _conn = conn;
@@ -58,6 +57,10 @@ namespace YiDian.EventBus.MQ
         }
         internal static string RoutePrefix { get; private set; }
         public RpcServerConfig Configs { get; }
+
+        public IEventSeralize Seralize { get; }
+
+        public string ServerId => Configs.ApplicationId;
 
         private void CreateConsumerChannel()
         {

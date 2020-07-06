@@ -7,5 +7,6 @@ namespace YiDian.EventBus
     {
         byte[] Serialize<T>(T @event) where T : IMQEvent;
         object DeserializeObject(byte[] data, Type type);
+        object DeserializeObject(byte[] data, Type type, int index, int count);
     }
 }

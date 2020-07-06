@@ -7,21 +7,26 @@ namespace YiDian.EventBus.MQ
     public class MQRpcClient : IMQRpcClient
     {
         readonly MQRpcClientBase mqRpc;
-        public string ServerName { get; }
-        public MQRpcClient(string serverName, MQRpcClientBase client, int timeOut)
+
+        public MQRpcClient(string serverName, MQRpcClientBase client, int timeOut, IEventSeralize seralize = null)
         {
+            this.Seralize = seralize ?? new DefaultSeralizer();
             mqRpc = client;
             TimeOut = timeOut;
-            ServerName = serverName.ToLower();
+            ServerId = serverName.ToLower();
             Encode = Encoding.UTF8;
         }
         public int TimeOut { get; }
         public event EventHandler ConnectionError;
         public Encoding Encode { get; set; }
         public bool IsConnect { get; set; }
-        public ResponseBase<TOut> Call<TOut, Tin>(string uri, Tin data)
+        public string ServerId { get; }
+
+        public IEventSeralize Seralize { get; }
+
+        public ResponseBase<TOut> Call<TOut, Tin>(string uri, Tin data) where Tin : IMQEvent where TOut : IMQEvent
         {
-            var bytes = Encode.GetBytes(data.ToJson());
+            var bytes = Seralize.Serialize(data);
             return Call<TOut>(uri, bytes);
         }
         static readonly DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -30,17 +35,17 @@ namespace YiDian.EventBus.MQ
         {
             return Convert.ToInt64((dateTime.ToUniversalTime() - start).TotalSeconds);
         }
-        public ResponseBase<T> Call<T>(string uri)
+        public ResponseBase<T> Call<T>(string uri) where T : IMQEvent
         {
             return Call<T>(uri, new byte[0]);
         }
-        private ResponseBase<T> Call<T>(string uri, byte[] data)
+        private ResponseBase<T> Call<T>(string uri, byte[] data) where T : IMQEvent
         {
             var now = BitConverter.GetBytes(ToUnixTimestamp(DateTime.Now));
             var newdata = new byte[data.Length + now.Length];
             Buffer.BlockCopy(now, 0, newdata, 0, now.Length);
             Buffer.BlockCopy(data, 0, newdata, now.Length, data.Length);
-            var task = mqRpc.Request(ServerName, uri, newdata);
+            var task = mqRpc.Request(ServerId, uri, newdata);
             var flag = task.Wait(TimeOut * 1000);
             if (!flag || !task.IsCompletedSuccessfully)
             {
@@ -48,6 +53,15 @@ namespace YiDian.EventBus.MQ
             }
             var res = Encode.GetString(task.Result).JsonTo(typeof(ResponseBase<T>));
             return res as ResponseBase<T>;
+        }
+        private async ResponseBase<T> CallAsync<T>(string uri, byte[] data)
+        {
+            var now = BitConverter.GetBytes(ToUnixTimestamp(DateTime.Now));
+            var newdata = new byte[data.Length + now.Length];
+            Buffer.BlockCopy(now, 0, newdata, 0, now.Length);
+            Buffer.BlockCopy(data, 0, newdata, now.Length, data.Length);
+            var res =await mqRpc.Request(ServerId, uri, newdata);
+            Seralize.DeserializeObject(res,typeof())
         }
     }
 }

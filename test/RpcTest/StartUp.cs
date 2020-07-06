@@ -21,7 +21,7 @@ namespace RpcTest
         {
             soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"]).UseRpc(new RpcServerConfig()
             {
-                Delay = 10,
+                Delay = 0,
                 ControllerCache = 10,
                 Fetchout = 5,
                 ApplicationId = "test"

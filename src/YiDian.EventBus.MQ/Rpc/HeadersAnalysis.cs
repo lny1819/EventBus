@@ -22,69 +22,71 @@ namespace YiDian.EventBus.MQ.Rpc
             Do();
         }
         public DateTime ClientDate { get; private set; }
-        public Encoding Encoding { get; private set; }
+        public Uri Url { get; private set; }
+        public Encoding Encode { get; private set; }
         public ContentType ContentType { get; set; }
-        public string Query { get; private set; }
         public long ContentLength { get; private set; }
         public Dictionary<string, string> Headers { get; }
         private void Do()
         {
             for (; ; )
             {
-                if (!ReadLine(out string value))
+                if (ReadLine(out string value))
                 {
                     AnalysisStringValue(value);
-                    if ((offset + 1) < orginal.Length && orginal.Span[offset + 1] == a_r)
+                    if ((offset + 1) < orginal.Length && orginal.Span[offset] == a_r)
                     {
                         offset += 1;
                         DealBodyDatas();
+                        return;
                     }
-                    break;
+                    continue;
                 }
+                break;
             }
         }
 
         private void AnalysisStringValue(string value)
         {
-            var arr = value.Split(':');
-            if (arr.Length != 2) throw new FormatException("数据格式错误");
-            if (string.Compare("clientTime", arr[0], true) == 0)
+            if (string.IsNullOrEmpty(value)) return;
+            var index = value.IndexOf(':');
+            var tag = value.Substring(0, index);
+            var text = value.Substring(index + 1);
+            if (string.Compare("clientTime", tag, true) == 0)
             {
-                ClientDate = DateTime.Parse(arr[1]);
+                ClientDate = DateTime.Parse(text);
             }
-            else if (string.Compare("encoding", arr[0], true) == 0)
+            else if (string.Compare("encoding", tag, true) == 0)
             {
-                Encoding = Encoding.GetEncoding(arr[1]);
+                Encode = Encoding.GetEncoding(text);
             }
-            else if (string.Compare("url", arr[0], true) == 0)
+            else if (string.Compare("url", tag, true) == 0)
             {
-                var uri = new Uri(arr[1]);
-                Query = uri.Query;
+                Url = new Uri(text);
             }
-            else if (string.Compare("content-type", arr[0], true) == 0)
+            else if (string.Compare("content-type", tag, true) == 0)
             {
-                if (string.Compare("json", arr[1], true) == 0)
+                if (string.Compare("json", text, true) == 0)
                 {
                     ContentType = ContentType.Json;
                 }
-                else if (string.Compare("text", arr[1], true) == 0)
+                else if (string.Compare("text", text, true) == 0)
                 {
                     ContentType = ContentType.Text;
                 }
-                else if (string.Compare("yddata", arr[1], true) == 0)
+                else if (string.Compare("yddata", text, true) == 0)
                 {
                     ContentType = ContentType.YDData;
                 }
             }
-            else if (string.Compare("content-length", arr[0], true) == 0)
-            {
-                ContentLength = long.Parse(arr[1]);
-            }
-            else dic.TryAdd(arr[0], arr[1]);
+            else dic.TryAdd(tag, text);
         }
 
         private void DealBodyDatas()
         {
+            var length = BitConverter.ToInt32(orginal.Slice(offset, 4).Span);
+            offset += 4;
+            ContentLength = length;
         }
 
         const byte a_r = (byte)'\r';

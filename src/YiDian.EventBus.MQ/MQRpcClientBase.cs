@@ -34,7 +34,7 @@ namespace YiDian.EventBus.MQ
             {
                 serverName.Replace('.', '_');
             }
-            return (serverName + ".");
+            return serverName;
         }
         private void AddToMethodPool(CallMeta callmeta)
         {

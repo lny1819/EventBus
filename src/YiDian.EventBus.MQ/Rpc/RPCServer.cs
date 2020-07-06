@@ -30,7 +30,6 @@ namespace YiDian.EventBus.MQ.Rpc
             _conn = conn;
             _qps = qps;
             Configs = config;
-            RoutePrefix = string.Format($"{config.ApplicationId}.#");
             CreatePublishChannel();
             CreateConsumerChannel();
         }
@@ -51,7 +50,6 @@ namespace YiDian.EventBus.MQ.Rpc
                 };
             }
         }
-        internal static string RoutePrefix { get; private set; }
         public RpcServerConfig Configs { get; }
 
         public string ServerId => Configs.ApplicationId;
@@ -61,10 +59,10 @@ namespace YiDian.EventBus.MQ.Rpc
             if (_consumerChannel != null && !_consumerChannel.IsClosed) return;
             if (!_conn.IsConnected) _conn.TryConnect();
             var channel = _conn.CreateModel();
-            channel.ExchangeDeclare(BROKER_NAME, "topic", true, false);
+            channel.ExchangeDeclare(BROKER_NAME, "direct", true, false);
             channel.BasicQos(0, 1, false);
             channel.QueueDeclare(queue: Configs.ApplicationId, durable: false, exclusive: false, autoDelete: false, arguments: null);
-            channel.QueueBind(Configs.ApplicationId, BROKER_NAME, RoutePrefix, null);
+            channel.QueueBind(Configs.ApplicationId, BROKER_NAME, Configs.ApplicationId, null);
             _consumerChannel = channel;
             StartConsumer();
         }
@@ -82,26 +80,26 @@ namespace YiDian.EventBus.MQ.Rpc
 
         private void ProcessEvent(BasicDeliverEventArgs ea)
         {
-            var action = RoutingTables.Route(ea.RoutingKey, Configs.ApplicationId, out string msg);
-            if (action == null)
-            {
-                ReplayTo(ea, 401, msg);
-                return;
-            }
             var header = new HeadersAnalysis(ea.Body);
             var clienttime = header.ClientDate;
             var span = Math.Abs((DateTime.Now - clienttime).TotalSeconds);
-            if (span > Configs.Delay)
+            if (Configs.Delay != 0 && span > Configs.Delay)
             {
                 ReplayTo(ea, 402, $"请求已超时 请求 {ea.RoutingKey} 耗时 {span.ToString()}ms");
+                return;
+            }
+            var action = RoutingTables.Route(header.Url.AbsolutePath, Configs.ApplicationId, out string msg);
+            if (action == null)
+            {
+                ReplayTo(ea, 401, msg);
                 return;
             }
             var reques = new Request()
             {
                 Headers = header.Headers,
                 Action = action,
-                QueryString = header.Query,
-                Seralize = CreateSeralize(header.ContentType, header.Encoding),
+                QueryString = header.Url.Query,
+                Seralize = CreateSeralize(header.ContentType, header.Encode),
                 ContentLength = header.ContentLength
             };
             Excute(reques, ea);

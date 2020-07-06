@@ -33,11 +33,11 @@ namespace YiDian.EventBus.MQ.Rpc
         {
             var datas = new byte[2000];
             var write = new Write(datas);
-            var url = "url:" + uri;
+            var url = "url:" + "rpc://" + ServerId + uri;
             write.WriteString(url);
             var now = "clientTime:" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             write.WriteString(now);
-            var encoding = "encoding:" + Encode.EncodingName;
+            var encoding = "encoding:" + Encode.WebName;
             write.WriteString(encoding);
             var contenttype = "content-type:" + GetContentTypeName(type);
             write.WriteString(contenttype);
@@ -74,7 +74,7 @@ namespace YiDian.EventBus.MQ.Rpc
                     offset += 1;
                     return 1;
                 }
-                var l = Encoding.UTF8.GetByteCount(value);
+                var l = Encoding.ASCII.GetByteCount(value);
                 var span = Advance(l);
                 fixed (char* cPtr = value)
                 {

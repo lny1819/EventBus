@@ -1,4 +1,4 @@
-﻿namespace YiDian.EventBus.MQ
+﻿namespace YiDian.EventBus.MQ.Rpc
 {
     public class ActionResult<T> : ActionResult where T : IMQEvent
     {

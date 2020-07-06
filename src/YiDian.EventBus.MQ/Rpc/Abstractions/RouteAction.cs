@@ -1,7 +1,7 @@
-﻿using YiDian.EventBus.MQ.Route;
+﻿using YiDian.EventBus.MQ.Rpc.Route;
 using System;
 
-namespace YiDian.EventBus.MQ.Abstractions
+namespace YiDian.EventBus.MQ.Rpc.Abstractions
 {
     public class RouteAction
     {

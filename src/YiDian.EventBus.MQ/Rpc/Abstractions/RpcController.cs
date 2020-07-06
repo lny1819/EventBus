@@ -1,6 +1,6 @@
-﻿using YiDian.EventBus.MQ.Abstractions;
+﻿
 
-namespace YiDian.EventBus.MQ
+namespace YiDian.EventBus.MQ.Rpc.Abstractions
 {
     public class RpcController
     {

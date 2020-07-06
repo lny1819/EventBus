@@ -2,7 +2,7 @@
 using System.Text;
 using System.Runtime.CompilerServices;
 
-namespace YiDian.EventBus.MQ
+namespace YiDian.EventBus.MQ.Rpc
 {
     public class MQRpcClient : IMQRpcClient
     {
@@ -54,15 +54,15 @@ namespace YiDian.EventBus.MQ
             var res = Encode.GetString(task.Result).JsonTo(typeof(ResponseBase<T>));
             return res as ResponseBase<T>;
         }
-        private async ResponseBase<T> CallAsync<T>(string uri, byte[] data)
-        {
-            var now = BitConverter.GetBytes(ToUnixTimestamp(DateTime.Now));
-            var newdata = new byte[data.Length + now.Length];
-            Buffer.BlockCopy(now, 0, newdata, 0, now.Length);
-            Buffer.BlockCopy(data, 0, newdata, now.Length, data.Length);
-            var res = await mqRpc.Request(ServerId, uri, newdata, out _);
-            Seralize.DeserializeObject(res, typeof())
-        }
+        //private async ResponseBase<T> CallAsync<T>(string uri, byte[] data)
+        //{
+        //    var now = BitConverter.GetBytes(ToUnixTimestamp(DateTime.Now));
+        //    var newdata = new byte[data.Length + now.Length];
+        //    Buffer.BlockCopy(now, 0, newdata, 0, now.Length);
+        //    Buffer.BlockCopy(data, 0, newdata, now.Length, data.Length);
+        //    var res = await mqRpc.Request(ServerId, uri, newdata, out _);
+        //    Seralize.DeserializeObject(res, typeof())
+        //}
 
         public void Cancel(long mid)
         {

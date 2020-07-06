@@ -1,4 +1,4 @@
-﻿namespace YiDian.EventBus.MQ.Abstractions
+﻿namespace YiDian.EventBus.MQ.Rpc.Abstractions
 {
     public class Request
     {

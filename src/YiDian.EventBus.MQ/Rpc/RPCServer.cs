@@ -1,16 +1,15 @@
 ﻿using Microsoft.Extensions.Logging;
-using YiDian.EventBus.MQ.Route;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 using Autofac;
-using YiDian.EventBus.MQ.Abstractions;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using YiDian.Soa.Sp;
+using YiDian.EventBus.MQ.Rpc.Route;
+using YiDian.EventBus.MQ.Rpc.Abstractions;
 
-namespace YiDian.EventBus.MQ
+namespace YiDian.EventBus.MQ.Rpc
 {
     public class RPCServer : IRpcServer
     {
@@ -84,48 +83,44 @@ namespace YiDian.EventBus.MQ
             };
             _consumerChannel.BasicConsume(queue: Configs.ApplicationId, autoAck: true, consumer: consumer);
         }
+
+
         private void ProcessEvent(BasicDeliverEventArgs ea)
         {
-            var stopwatch = new Stopwatch();
-            stopwatch.Restart();
             var action = RoutingTables.Route(ea.RoutingKey, Configs.ApplicationId, out string msg);
             if (action == null)
             {
-                var replayData = new ResponseBase
-                {
-                    ServerState = 401,
-                    ServerMsg = msg
-                };
-                ReplayTo(ea, replayData);
+                ReplayTo(ea, 401, msg);
                 return;
             }
+            var header = new HeadersAnalysis(ea.Body);
             var clienttime = UnixTimestampToDate(BitConverter.ToInt64(ea.Body, 0));
-            if (Math.Abs((DateTime.Now - clienttime).TotalSeconds) > 10)
+            var span = Math.Abs((DateTime.Now - clienttime).TotalSeconds);
+            if (span > 10)
             {
-                stopwatch.Stop();
-                _logger.LogWarning($"请求已超时 请求 {ea.RoutingKey} 耗时 {stopwatch.ElapsedMilliseconds.ToString()}ms");
+                ReplayTo(ea, 402, $"请求已超时 请求 {ea.RoutingKey} 耗时 {span.ToString()}ms");
                 return;
             }
-            _factory.StartNew(() => Excute(action, ea, stopwatch)).ContinueWith(x =>
-            {
-                if (x.Status == TaskStatus.Faulted)
-                {
-                    _logger?.LogError(x.Exception.ToString());
-                    stopwatch.Stop();
-                    _logger.LogError($" 请求出错 {ea.RoutingKey} 耗时 {stopwatch.ElapsedMilliseconds.ToString()}ms");
-                }
-            });
+            Excute(action, ea);
+            //_factory.StartNew(() => Excute(action, ea, stopwatch)).ContinueWith(x =>
+            //{
+            //    if (x.Status == TaskStatus.Faulted)
+            //    {
+            //        _logger?.LogError(x.Exception.ToString());
+            //        stopwatch.Stop();
+            //        _logger.LogError($" 请求出错 {ea.RoutingKey} 耗时 {stopwatch.ElapsedMilliseconds.ToString()}ms");
+            //    }
+            //});
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ReplayTo(BasicDeliverEventArgs ea, ResponseBase replayData, object obj = null, Type objType = null)
+        private void ReplayTo(BasicDeliverEventArgs ea, int state, string msg, object obj = null, Type objType = null)
         {
             var replyTo = ea.BasicProperties.ReplyTo;
             var replyTold = ea.BasicProperties.CorrelationId;
             var replyProps = _pubChannel.CreateBasicProperties();
             replyProps.CorrelationId = replyTold;
-            Seralize.Serialize(obj, objType);
-            var data = Configs.Encode.GetBytes(replayData.ToJson());
-            _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: data);
+            var bs = Seralize.Serialize(obj, objType);
+            _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: bs);
         }
 
         readonly static DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -140,8 +135,6 @@ namespace YiDian.EventBus.MQ
             public BasicDeliverEventArgs Eargs { get; set; }
             public object Data { get; set; }
             public DateTime InTime { get; set; }
-            public object ResponseData { get; set; }
-            public ResponseBase Response { get; set; }
         }
         private void Excute(RouteAction route_action, BasicDeliverEventArgs ea)
         {
@@ -151,22 +144,20 @@ namespace YiDian.EventBus.MQ
             var action = token.Action;
             var argu = token.Data;
             var controller = GetController(token.Action, out ILifetimeScope scope);
-            var replayData = new ResponseBase();
-            if (argu != null)
+            object res;
+            if (argu != null) res = token.Action.CurrentMethod(controller, new object[] { argu });
+            else res = action.CurrentMethod(controller, null);
+            var t = typeof(ActionResult<>);
+            if (res is ActionResult result)
             {
-                var res = token.Action.CurrentMethod(controller, new object[] { argu });
-                replayData.Data = res.GetResult();
+                var obj = result.GetResult();
+                ReplayTo(token.Eargs, 0, "", obj, res.GetType());
             }
-            else
+            else if (res is Task)
             {
-                var res = action.CurrentMethod(controller, null) as ActionResult;
-                replayData.Data = res.GetResult();
+
             }
-            ReplayTo(token.Eargs, replayData);
-            ResetController(action.ControllerType, controller, scope);
-            _qps.Add("task");
-            token.InTime.Stop();
-            _logger.LogInformation($"请求 {ea.RoutingKey} 耗时 {token.InTime.ElapsedMilliseconds.ToString()}ms");
+            scope?.Dispose();
         }
 
         private RpcController GetController(RouteAction action, out ILifetimeScope scope)

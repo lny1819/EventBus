@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using YiDian.Soa.Sp;
 
-namespace YiDian.EventBus.MQ
+namespace YiDian.EventBus.MQ.Rpc
 {
     public class Creator
     {

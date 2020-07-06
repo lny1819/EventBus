@@ -1,10 +1,10 @@
-﻿using YiDian.EventBus.MQ.Abstractions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using YiDian.EventBus.MQ.Rpc.Abstractions;
 
-namespace YiDian.EventBus.MQ.Route
+namespace YiDian.EventBus.MQ.Rpc.Route
 {
     internal class RoutingTables
     {

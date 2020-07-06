@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using YiDian.EventBus.MQ.Rpc;
 
 namespace YiDian.EventBus.MQ
 {

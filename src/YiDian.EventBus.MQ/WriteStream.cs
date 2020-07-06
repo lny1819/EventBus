@@ -15,12 +15,15 @@ namespace YiDian.EventBus.MQ
         {
             offset = 0;
             orginal = new byte[size];
+            Encoding = Encoding.UTF8;
         }
         public WriteStream(byte[] bs, int index)
         {
             offset = index;
             orginal = bs;
+            Encoding = Encoding.UTF8;
         }
+        public Encoding Encoding { get; set; }
         public Span<byte> Advance(int length)
         {
             var span = new Span<byte>(orginal, offset, length);
@@ -42,7 +45,7 @@ namespace YiDian.EventBus.MQ
                 BitConverter.TryWriteBytes(span2, 0);
                 return 4;
             }
-            var l = Encoding.UTF8.GetByteCount(value);
+            var l = Encoding.GetByteCount(value);
             var span = Advance(4);
             BitConverter.TryWriteBytes(span, l);
             span = Advance(l);
@@ -50,7 +53,7 @@ namespace YiDian.EventBus.MQ
             {
                 fixed (byte* bPtr = &MemoryMarshal.GetReference(span))
                 {
-                    Encoding.UTF8.GetBytes(cPtr, value.Length, bPtr, l);
+                    Encoding.GetBytes(cPtr, value.Length, bPtr, l);
                 }
             }
             return (uint)l + 4;
@@ -381,12 +384,12 @@ namespace YiDian.EventBus.MQ
             Array.Copy(orginal, res, offset);
             return res;
         }
-        public static uint GetStringSize(string value)
+        public uint GetStringSize(string value)
         {
-            var l = (uint)Encoding.UTF8.GetByteCount(value);
+            var l = (uint)Encoding.GetByteCount(value);
             return l + 4;
         }
-        public static uint GetArrayStringSize(IEnumerable<string> arr)
+        public uint GetArrayStringSize(IEnumerable<string> arr)
         {
             var count = arr == null ? 0 : (uint)arr.Count();
             if (count == 0) return 8;
@@ -398,12 +401,12 @@ namespace YiDian.EventBus.MQ
             }
             return size + 8;
         }
-        public static uint GetValueArraySize<T>(byte perszie, IEnumerable<T> arr)
+        public uint GetValueArraySize<T>(byte perszie, IEnumerable<T> arr)
         {
             var count = arr == null ? 0 : (uint)arr.Count();
             return perszie * count + 8;
         }
-        public static uint GetArrayEventObjSize<T>(IEnumerable<T> arr) where T : IYiDianSeralize
+        public uint GetArrayEventObjSize<T>(IEnumerable<T> arr) where T : IYiDianSeralize
         {
             var count = arr == null ? 0 : (uint)arr.Count();
             if (count == 0) return 8;

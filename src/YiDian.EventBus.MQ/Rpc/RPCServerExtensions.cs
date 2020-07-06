@@ -1,4 +1,4 @@
-﻿namespace YiDian.EventBus.MQ
+﻿namespace YiDian.EventBus.MQ.Rpc
 {
     public static class RPCServerExtensions
     {

@@ -12,7 +12,9 @@ namespace YiDian.EventBus.MQ
         {
             offset = index;
             orginal = datas;
+            Encoding = Encoding.UTF8;
         }
+        public Encoding Encoding { get; set; }
         public Dictionary<EventPropertyType, byte> ReadHeaders()
         {
             Advance(4);
@@ -208,7 +210,7 @@ namespace YiDian.EventBus.MQ
         {
             var count = ReadInt32();
             if (count == 0) return string.Empty;
-            var value = Encoding.UTF8.GetString(orginal, offset, count);
+            var value = Encoding.GetString(orginal, offset, count);
             offset += count;
             return value;
         }

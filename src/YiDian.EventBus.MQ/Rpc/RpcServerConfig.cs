@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace YiDian.EventBus.MQ
+namespace YiDian.EventBus.MQ.Rpc
 {
     public class RpcServerConfig
     {

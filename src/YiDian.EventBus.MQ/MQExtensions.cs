@@ -19,7 +19,8 @@ namespace YiDian.Soa.Sp.Extensions
         /// eventsmgr=inmemory
         /// </summary>
         /// <param name="builder"></param>
-        /// <param name="getconnstr"></param>
+        /// <param name="action"></param>
+        /// <param name="eventsManager"></param>
         /// <returns></returns>
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action = null, IAppEventsManager eventsManager = null)
         {

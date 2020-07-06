@@ -78,8 +78,8 @@ namespace YiDian.EventBus.MQ
     {
         public QueueItem(ConsumerConfig<TEventBus, TSub> config, BasicDeliverEventArgs e) : this()
         {
-            this.ConsumerConfig = config;
-            this.Event = e;
+            ConsumerConfig = config;
+            Event = e;
         }
 
         public ConsumerConfig<TEventBus, TSub> ConsumerConfig { get; }

@@ -1,6 +1,6 @@
 ﻿namespace YiDian.EventBus.MQ
 {
-    public class ActionResult<T> : ActionResult
+    public class ActionResult<T> : ActionResult where T : IMQEvent
     {
         public ActionResult(T t)
         {

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace YiDian.EventBus.MQ
 {
@@ -28,10 +26,24 @@ namespace YiDian.EventBus.MQ
 
         public byte[] Serialize<T>(T @event) where T : IMQEvent
         {
-            var obj = (IYiDianSeralize)@event as IYiDianSeralize;
+            return Serialize(@event, typeof(T));
+        }
+
+        public byte[] Serialize(object obj, Type type)
+        {
+            if (!(obj is IMQEvent)) throw new ArgumentException(nameof(obj), "event must instance of IMQEvent");
+            if (!(obj is IYiDianSeralize seralize)) throw new ArgumentException(nameof(obj), "event must instance of IYiDianSeralize");
             var write = new WriteStream(2000);
-            obj.ToBytes(ref write);
+            seralize.ToBytes(ref write);
             return write.GetBytes();
+        }
+
+        public int Serialize(object obj, Type type, byte[] bs, int offset)
+        {
+            if (!(obj is IMQEvent)) throw new ArgumentException(nameof(obj), "event must instance of IMQEvent");
+            if (!(obj is IYiDianSeralize seralize)) throw new ArgumentException(nameof(obj), "event must instance of IYiDianSeralize");
+            var write = new WriteStream(bs, offset);
+            return (int)seralize.ToBytes(ref write);
         }
     }
 }

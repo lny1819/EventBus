@@ -45,7 +45,7 @@ namespace YiDian.EventBus.MQ
             var newdata = new byte[data.Length + now.Length];
             Buffer.BlockCopy(now, 0, newdata, 0, now.Length);
             Buffer.BlockCopy(data, 0, newdata, now.Length, data.Length);
-            var task = mqRpc.Request(ServerId, uri, newdata);
+            var task = mqRpc.Request(ServerId, uri, newdata, out _);
             var flag = task.Wait(TimeOut * 1000);
             if (!flag || !task.IsCompletedSuccessfully)
             {
@@ -60,8 +60,13 @@ namespace YiDian.EventBus.MQ
             var newdata = new byte[data.Length + now.Length];
             Buffer.BlockCopy(now, 0, newdata, 0, now.Length);
             Buffer.BlockCopy(data, 0, newdata, now.Length, data.Length);
-            var res =await mqRpc.Request(ServerId, uri, newdata);
-            Seralize.DeserializeObject(res,typeof())
+            var res = await mqRpc.Request(ServerId, uri, newdata, out _);
+            Seralize.DeserializeObject(res, typeof())
+        }
+
+        public void Cancel(long mid)
+        {
+            throw new NotImplementedException();
         }
     }
 }

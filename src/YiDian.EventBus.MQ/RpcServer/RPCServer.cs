@@ -91,17 +91,12 @@ namespace YiDian.EventBus.MQ
             var action = RoutingTables.Route(ea.RoutingKey, Configs.ApplicationId, out string msg);
             if (action == null)
             {
-                _factory.StartNew(() =>
-               {
-                   _logger.LogError($"未找到匹配方法 请求地址：{ea.RoutingKey} 错误消息：{msg}");
-                   var replayData = new ResponseBase
-                   {
-                       ServerState = 401,
-                       ServerMsg = msg
-                   };
-                   ReplayTo(ea, replayData);
-                   stopwatch.Stop();
-               });
+                var replayData = new ResponseBase
+                {
+                    ServerState = 401,
+                    ServerMsg = msg
+                };
+                ReplayTo(ea, replayData);
                 return;
             }
             var clienttime = UnixTimestampToDate(BitConverter.ToInt64(ea.Body, 0));
@@ -122,12 +117,13 @@ namespace YiDian.EventBus.MQ
             });
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ReplayTo(BasicDeliverEventArgs ea, ResponseBase replayData)
+        private void ReplayTo(BasicDeliverEventArgs ea, ResponseBase replayData, object obj = null, Type objType = null)
         {
             var replyTo = ea.BasicProperties.ReplyTo;
             var replyTold = ea.BasicProperties.CorrelationId;
             var replyProps = _pubChannel.CreateBasicProperties();
             replyProps.CorrelationId = replyTold;
+            Seralize.Serialize(obj, objType);
             var data = Configs.Encode.GetBytes(replayData.ToJson());
             _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: data);
         }
@@ -143,25 +139,22 @@ namespace YiDian.EventBus.MQ
             public RouteAction Action { get; set; }
             public BasicDeliverEventArgs Eargs { get; set; }
             public object Data { get; set; }
-            public Stopwatch Stopwatch { get; set; }
+            public DateTime InTime { get; set; }
+            public object ResponseData { get; set; }
+            public ResponseBase Response { get; set; }
         }
-        private void Excute(RouteAction route_action, BasicDeliverEventArgs ea, Stopwatch stopwatch)
+        private void Excute(RouteAction route_action, BasicDeliverEventArgs ea)
         {
             object invoke_data = null;
-            if (route_action.InArgumentType != null)
-            {
-                var data = ea.Body;
-                var v = Configs.Encode.GetString(data, 8, data.Length - 8);
-                invoke_data = v.JsonTo(route_action.InArgumentType);
-            }
-            var token = new Token() { Stopwatch = stopwatch, Action = route_action, Data = invoke_data, Eargs = ea };
+            if (route_action.InArgumentType != null) invoke_data = Seralize.DeserializeObject(ea.Body, route_action.InArgumentType);
+            var token = new Token() { InTime = DateTime.Now, Action = route_action, Data = invoke_data, Eargs = ea };
             var action = token.Action;
             var argu = token.Data;
             var controller = GetController(token.Action, out ILifetimeScope scope);
             var replayData = new ResponseBase();
             if (argu != null)
             {
-                var res = token.Action.CurrentMethod(controller, new object[] { argu }) as ActionResult;
+                var res = token.Action.CurrentMethod(controller, new object[] { argu });
                 replayData.Data = res.GetResult();
             }
             else
@@ -172,8 +165,8 @@ namespace YiDian.EventBus.MQ
             ReplayTo(token.Eargs, replayData);
             ResetController(action.ControllerType, controller, scope);
             _qps.Add("task");
-            token.Stopwatch.Stop();
-            _logger.LogInformation($"请求 {ea.RoutingKey} 耗时 {token.Stopwatch.ElapsedMilliseconds.ToString()}ms");
+            token.InTime.Stop();
+            _logger.LogInformation($"请求 {ea.RoutingKey} 耗时 {token.InTime.ElapsedMilliseconds.ToString()}ms");
         }
 
         private RpcController GetController(RouteAction action, out ILifetimeScope scope)

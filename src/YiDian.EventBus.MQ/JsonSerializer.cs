@@ -45,6 +45,13 @@ namespace YiDian.EventBus.MQ
             var str = Encoding.GetString(data);
             return str.JsonTo(type, opt);
         }
+
+        public object DeserializeObject(byte[] data, Type type, int index, int count)
+        {
+            var str = Encoding.GetString(data, index, count);
+            return str.JsonTo(type, opt);
+        }
+
         /// <summary>
         /// 序列化对象为字节数组
         /// </summary>
@@ -55,6 +62,18 @@ namespace YiDian.EventBus.MQ
         {
             var str = @event.ToJson(opt);
             return Encoding.GetBytes(str);
+        }
+
+        public byte[] Serialize(object @event, Type type)
+        {
+            var str = @event.ToJson(opt);
+            return Encoding.GetBytes(str);
+        }
+
+        public int Serialize(object @event, Type type, byte[] bs, int offset)
+        {
+            var str = @event.ToJson(opt);
+            return Encoding.GetBytes(str, 0, str.Length, bs, offset);
         }
     }
 }

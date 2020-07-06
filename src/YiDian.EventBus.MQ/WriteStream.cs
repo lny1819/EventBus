@@ -16,6 +16,11 @@ namespace YiDian.EventBus.MQ
             offset = 0;
             orginal = new byte[size];
         }
+        public WriteStream(byte[] bs, int index)
+        {
+            offset = index;
+            orginal = bs;
+        }
         public Span<byte> Advance(int length)
         {
             var span = new Span<byte>(orginal, offset, length);

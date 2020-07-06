@@ -81,10 +81,11 @@ namespace YiDian.EventBus.MQ
             }
         }
 
-        public Task<byte[]> Request(string serverId, string uri, byte[] data)
+        public Task<byte[]> Request(string serverId, string uri, byte[] data, out long mid)
         {
             string str = CreateServerKey(serverId).ToLower();
             var callmeta = new CallMeta();
+            mid = callmeta.MethodId;
             AddToMethodPool(callmeta);
             var basicProperties = _consumerchannel.CreateBasicProperties();
             basicProperties.CorrelationId = callmeta.MethodId.ToString();

@@ -18,9 +18,9 @@ namespace YiDian.Soa.Sp.Extensions
         /// <param name="config"></param>
         /// <param name="seralize"></param>
         /// <returns></returns>
-        public static SoaServiceContainerBuilder UseRpc(this SoaServiceContainerBuilder builder, RpcServerConfig config, IEventSeralize seralize = null)
+        public static SoaServiceContainerBuilder UseRpc(this SoaServiceContainerBuilder builder, RpcServerConfig config)
         {
-            builder.Services.AddSingleton<IRpcServer, RPCServer>(sp =>
+            builder.Services.AddSingleton<IRPCServer, RPCServer>(sp =>
             {
                 var source = sp.GetService<DefaultMqConnectSource>();
                 var conn = source.Get(config.MQName) ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
@@ -28,7 +28,7 @@ namespace YiDian.Soa.Sp.Extensions
                 var qps = sp.GetService<IQpsCounter>();
                 var scope = sp.GetService<ILifetimeScope>();
                 var logger = sp.GetService<ILogger<RPCServer>>();
-                var rpc = new RPCServer(conn, logger, config, scope, qps, seralize);
+                var rpc = new RPCServer(conn, logger, config, scope, qps);
                 return rpc;
             });
             return builder;

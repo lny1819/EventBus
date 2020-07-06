@@ -11,7 +11,7 @@ namespace YiDian.EventBus
         bool IsConnect { get; set; }
         event EventHandler ConnectionError;
     }
-    public interface IRpcServer
+    public interface IRPCServer
     {
         string ServerId { get; }
     }

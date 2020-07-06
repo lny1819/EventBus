@@ -41,7 +41,7 @@ namespace YiDian.EventBus.MQ.Rpc
             write.WriteString(encoding);
             var contenttype = "content-type:" + GetContentTypeName(type);
             write.WriteString(contenttype);
-            write.WriteContent(type, data, typeof(Tin));
+            write.WriteContent(type, data, typeof(Tin), Encode);
             var task = mqRpc.Request(ServerId, write.GetDatas(), out _);
             var flag = task.Wait(TimeOut * 1000);
             if (!flag || !task.IsCompletedSuccessfully)
@@ -87,18 +87,26 @@ namespace YiDian.EventBus.MQ.Rpc
                 offset += 1;
                 return (uint)l + 1;
             }
-            unsafe public void WriteContent(ContentType type, object data, Type datatype)
+            unsafe public void WriteContent(ContentType type, object data, Type datatype, Encoding encoding)
             {
                 orginal[offset] = (byte)'\r';
                 offset += 1;
                 var span = Advance(4);
-                var ser = CreateSeralize(type);
+                var ser = CreateSeralize(type, encoding);
                 var length = ser.Serialize(data, datatype, orginal, offset);
                 BitConverter.TryWriteBytes(span, length);
             }
-            private IEventSeralize CreateSeralize(ContentType type)
+            private IEventSeralize CreateSeralize(ContentType contentType, Encoding encoding)
             {
-                throw new NotImplementedException();
+                switch (contentType)
+                {
+                    case ContentType.Text:
+                        return new TextSeralize(encoding);
+                    case ContentType.Json:
+                        return new JsonSerializer(encoding);
+                    default:
+                        return new DefaultSeralizer(encoding);
+                }
             }
             public ReadOnlyMemory<byte> GetDatas()
             {
@@ -107,7 +115,15 @@ namespace YiDian.EventBus.MQ.Rpc
         }
         private string GetContentTypeName(ContentType type)
         {
-            throw new NotImplementedException();
+            switch (type)
+            {
+                case ContentType.Json:
+                    return "json";
+                case ContentType.Text:
+                    return "text";
+                default:
+                    return "yddata";
+            }
         }
 
         //private async ResponseBase<T> CallAsync<T>(string uri, byte[] data)

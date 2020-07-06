@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System;
+using System.Text;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.DefaultConnection;
@@ -141,7 +142,7 @@ namespace YiDian.Soa.Sp.Extensions
         {
             builder.Services.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
             {
-                seralizer = seralizer ?? new DefaultSeralizer();
+                seralizer = seralizer ?? new DefaultSeralizer(Encoding.UTF8);
                 var source = sp.GetService<DefaultMqConnectSource>();
                 var conn = source.Get("") ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                 var logger = sp.GetService<ILogger<IDirectEventBus>>();
@@ -166,7 +167,7 @@ namespace YiDian.Soa.Sp.Extensions
         {
             builder.Services.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
              {
-                 seralizer = seralizer ?? new DefaultSeralizer();
+                 seralizer = seralizer ?? new DefaultSeralizer(Encoding.UTF8);
                  var source = sp.GetService<DefaultMqConnectSource>();
                  var conn = source.Get("") ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
                  var logger = sp.GetService<ILogger<ITopicEventBus>>();

@@ -14,8 +14,9 @@ namespace YiDian.EventBus.MQ
         /// <summary>
         /// 创建一个JSON序列化实例 
         /// </summary>
-        public JsonSerializer()
+        public JsonSerializer(Encoding encoding)
         {
+            Encoding = encoding;
             opt = new JsonSerializerOptions();
         }
         /// <summary>
@@ -33,7 +34,7 @@ namespace YiDian.EventBus.MQ
         /// <summary>
         /// 编码格式
         /// </summary>
-        public Encoding Encoding { get; set; } = Encoding.UTF8;
+        public Encoding Encoding { get; }
         /// <summary>
         /// 反序列化字节数组
         /// </summary>

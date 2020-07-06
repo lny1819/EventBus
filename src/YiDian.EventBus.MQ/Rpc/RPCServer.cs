@@ -11,7 +11,7 @@ using YiDian.EventBus.MQ.Rpc.Abstractions;
 
 namespace YiDian.EventBus.MQ.Rpc
 {
-    public class RPCServer : IRpcServer
+    public class RPCServer : IRPCServer
     {
         const string BROKER_NAME = "rpc_event_bus";
         const string AUTOFAC_NAME = "rpc_event_bus";
@@ -21,11 +21,10 @@ namespace YiDian.EventBus.MQ.Rpc
         readonly IQpsCounter _qps;
         IModel _consumerChannel;
         IModel _pubChannel;
-        internal RPCServer(IRabbitMQPersistentConnection conn, ILogger<RPCServer> logger, RpcServerConfig config, ILifetimeScope autofac, IQpsCounter qps, IEventSeralize seralize)
+        internal RPCServer(IRabbitMQPersistentConnection conn, ILogger<RPCServer> logger, RpcServerConfig config, ILifetimeScope autofac, IQpsCounter qps)
         {
             config.ApplicationId = config.ApplicationId.ToLower();
             RoutingTables.LoadControlers(config.ApplicationId);
-            Seralize = seralize ?? new DefaultSeralizer();
             _autofac = autofac;
             _logger = logger;
             _conn = conn;
@@ -54,8 +53,6 @@ namespace YiDian.EventBus.MQ.Rpc
         }
         internal static string RoutePrefix { get; private set; }
         public RpcServerConfig Configs { get; }
-
-        public IEventSeralize Seralize { get; }
 
         public string ServerId => Configs.ApplicationId;
 
@@ -104,7 +101,7 @@ namespace YiDian.EventBus.MQ.Rpc
                 Headers = header.Headers,
                 Action = action,
                 QueryString = header.Query,
-                Seralize = CreateSeralize(header.ContentType),
+                Seralize = CreateSeralize(header.ContentType, header.Encoding),
                 ContentLength = header.ContentLength
             };
             Excute(reques, ea);
@@ -119,9 +116,17 @@ namespace YiDian.EventBus.MQ.Rpc
             //});
         }
 
-        private IEventSeralize CreateSeralize(ContentType contentType)
+        private IEventSeralize CreateSeralize(ContentType contentType, System.Text.Encoding encoding)
         {
-            throw new NotImplementedException();
+            switch (contentType)
+            {
+                case ContentType.Text:
+                    return new TextSeralize(encoding);
+                case ContentType.Json:
+                    return new JsonSerializer(encoding);
+                default:
+                    return new DefaultSeralizer(encoding);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -131,8 +136,8 @@ namespace YiDian.EventBus.MQ.Rpc
             var replyTold = ea.BasicProperties.CorrelationId;
             var replyProps = _pubChannel.CreateBasicProperties();
             replyProps.CorrelationId = replyTold;
-            var bs = Seralize.Serialize(obj, objType);
-            _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: bs);
+            //var bs = Seralize.Serialize(obj, objType);
+            //_pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: bs);
         }
 
         readonly static DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -152,7 +157,7 @@ namespace YiDian.EventBus.MQ.Rpc
         {
             var route_action = req.Action;
             object invoke_data = null;
-            if (route_action.InArgumentType != null) invoke_data = Seralize.DeserializeObject(ea.Body, route_action.InArgumentType);
+            if (route_action.InArgumentType != null) invoke_data = req.Seralize.DeserializeObject(ea.Body, route_action.InArgumentType);
             var token = new Token() { InTime = DateTime.Now, Action = route_action, Data = invoke_data, Eargs = ea };
             var action = token.Action;
             var argu = token.Data;

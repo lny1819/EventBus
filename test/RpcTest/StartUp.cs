@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.Rpc;
 using YiDian.Soa.Sp;
@@ -32,6 +33,7 @@ namespace RpcTest
         }
         public void Start(IServiceProvider sp, string[] args)
         {
+            var server = sp.GetService<IRPCServer>();
             var fac = sp.GetService<IRpcClientFactory>();
             var client = fac.Create("test", 10);
 

@@ -31,7 +31,6 @@ namespace YiDian.EventBus.MQ
         {
             _conn = persistentConnection ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
             ConnectionName = _conn.Name;
-            _conn.OnConnectRecovery += _persistentConnection_OnConnectRecovery;
             _logger = logger ?? throw new ArgumentNullException(nameof(ILogger<TEventBus>));
             __seralize = seralize ?? throw new ArgumentNullException(nameof(IEventSeralize));
             consumerInfos = new List<ConsumerConfig<TEventBus, TSub>>();

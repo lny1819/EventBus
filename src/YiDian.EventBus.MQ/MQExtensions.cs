@@ -55,23 +55,6 @@ namespace YiDian.Soa.Sp.Extensions
             });
             return builder;
         }
-        public static SoaServiceContainerBuilder UseMqRpcClient(this SoaServiceContainerBuilder builder, string clientName)
-        {
-            if (string.IsNullOrEmpty(clientName)) return builder;
-            var now = DateTime.Now.ToString("MMddHHmmss");
-            clientName = "rpcC-" + now + "-" + clientName;
-            builder.Services.AddSingleton<IRpcClientFactory, RpcClientFactory>(sp =>
-            {
-                var source = sp.GetService<DefaultMqConnectSource>();
-                var conn = source.Get("") ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
-                var loggerfact = sp.GetService<ILoggerFactory>();
-                var qps = sp.GetService<IQpsCounter>();
-                var logger = sp.GetService<ILogger<IMQRpcClient>>();
-                var rpc = new MQRpcClientBase(conn, clientName, logger, qps);
-                return new RpcClientFactory(rpc);
-            });
-            return builder;
-        }
         /// <summary>
         /// 使用RabbitMq
         /// </summary>

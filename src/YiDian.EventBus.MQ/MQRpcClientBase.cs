@@ -66,6 +66,20 @@ namespace YiDian.EventBus.MQ
                 StartConsumer();
             }
         }
+
+        internal Task<ReadOnlyMemory<byte>> Request(string serverId, ReadOnlyMemory<byte> readOnlyMemory, out long mid)
+        {
+            string str = CreateServerKey(serverId).ToLower();
+            var callmeta = new CallMeta();
+            mid = callmeta.MethodId;
+            AddToMethodPool(callmeta);
+            var basicProperties = _consumerchannel.CreateBasicProperties();
+            basicProperties.CorrelationId = callmeta.MethodId.ToString();
+            basicProperties.ReplyTo = _clientName;
+            _consumerchannel.BasicPublish(BROKER_NAME, str, basicProperties, readOnlyMemory);
+            return callmeta.Task;
+        }
+
         private void StartConsumer()
         {
             EventingBasicConsumer consumer = new EventingBasicConsumer(_consumerchannel);
@@ -80,20 +94,7 @@ namespace YiDian.EventBus.MQ
                 meta.SetResult(o.Body);
             }
         }
-
-        public Task<byte[]> Request(string serverId, string uri, byte[] data, out long mid)
-        {
-            string str = CreateServerKey(serverId).ToLower();
-            var callmeta = new CallMeta();
-            mid = callmeta.MethodId;
-            AddToMethodPool(callmeta);
-            var basicProperties = _consumerchannel.CreateBasicProperties();
-            basicProperties.CorrelationId = callmeta.MethodId.ToString();
-            basicProperties.ReplyTo = _clientName;
-            _consumerchannel.BasicPublish(BROKER_NAME, str + uri, basicProperties, data);
-            return callmeta.Task;
-        }
-        class CallMeta : TaskCompletionSource<byte[]>
+        class CallMeta : TaskCompletionSource<ReadOnlyMemory<byte>>
         {
             private static long callid;
             public long MethodId { get; }

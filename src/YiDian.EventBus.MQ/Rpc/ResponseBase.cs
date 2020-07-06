@@ -1,6 +1,6 @@
 ﻿namespace YiDian.EventBus
 {
-    public class ResponseBase<T> : ResponseBase where T : IMQEvent
+    public class ResponseBase<T> : ResponseBase
     {
         public T Data { get; set; }
     }

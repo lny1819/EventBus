@@ -40,15 +40,9 @@ namespace YiDian.EventBus.MQ
         /// <param name="data"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        public object DeserializeObject(byte[] data, Type type)
+        public object DeserializeObject(ReadOnlyMemory<byte> data, Type type)
         {
-            var str = Encoding.GetString(data);
-            return str.JsonTo(type, opt);
-        }
-
-        public object DeserializeObject(byte[] data, Type type, int index, int count)
-        {
-            var str = Encoding.GetString(data, index, count);
+            var str = Encoding.GetString(data.Span);
             return str.JsonTo(type, opt);
         }
 

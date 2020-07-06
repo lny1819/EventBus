@@ -4,22 +4,12 @@ namespace YiDian.EventBus.MQ
 {
     public class DefaultSeralizer : IEventSeralize
     {
-        public object DeserializeObject(byte[] data, Type type)
+        public object DeserializeObject(ReadOnlyMemory<byte> data, Type type)
         {
             var constructor = type.GetConstructor(Type.EmptyTypes);
             var obj = constructor.Invoke(null) as IYiDianSeralize;
             if (obj == null) throw new ArgumentNullException("the type " + type.Name + " can not be convert as " + nameof(IYiDianSeralize));
             var readstream = new ReadStream(data);
-            obj.BytesTo(ref readstream);
-            return obj;
-        }
-
-        public object DeserializeObject(byte[] data, Type type, int index, int count)
-        {
-            var constructor = type.GetConstructor(Type.EmptyTypes);
-            var obj = constructor.Invoke(null) as IYiDianSeralize;
-            if (obj == null) throw new ArgumentNullException("the type " + type.Name + " can not be convert as " + nameof(IYiDianSeralize));
-            var readstream = new ReadStream(data, index);
             obj.BytesTo(ref readstream);
             return obj;
         }

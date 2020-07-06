@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace YiDian.EventBus.MQ.Rpc
 {
@@ -8,9 +9,8 @@ namespace YiDian.EventBus.MQ.Rpc
     {
         readonly MQRpcClientBase mqRpc;
 
-        public MQRpcClient(string serverName, MQRpcClientBase client, int timeOut, IEventSeralize seralize = null)
+        public MQRpcClient(string serverName, MQRpcClientBase client, int timeOut)
         {
-            this.Seralize = seralize ?? new DefaultSeralizer();
             mqRpc = client;
             TimeOut = timeOut;
             ServerId = serverName.ToLower();
@@ -22,38 +22,94 @@ namespace YiDian.EventBus.MQ.Rpc
         public bool IsConnect { get; set; }
         public string ServerId { get; }
 
-        public IEventSeralize Seralize { get; }
 
-        public ResponseBase<TOut> Call<TOut, Tin>(string uri, Tin data) where Tin : IMQEvent where TOut : IMQEvent
-        {
-            var bytes = Seralize.Serialize(data);
-            return Call<TOut>(uri, bytes);
-        }
         static readonly DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long ToUnixTimestamp(DateTime dateTime)
         {
             return Convert.ToInt64((dateTime.ToUniversalTime() - start).TotalSeconds);
         }
-        public ResponseBase<T> Call<T>(string uri) where T : IMQEvent
+        public ResponseBase<TOut> Call<TOut, Tin>(string uri, Tin data, ContentType type)
         {
-            return Call<T>(uri, new byte[0]);
-        }
-        private ResponseBase<T> Call<T>(string uri, byte[] data) where T : IMQEvent
-        {
-            var now = BitConverter.GetBytes(ToUnixTimestamp(DateTime.Now));
-            var newdata = new byte[data.Length + now.Length];
-            Buffer.BlockCopy(now, 0, newdata, 0, now.Length);
-            Buffer.BlockCopy(data, 0, newdata, now.Length, data.Length);
-            var task = mqRpc.Request(ServerId, uri, newdata, out _);
+            var datas = new byte[2000];
+            var write = new Write(datas);
+            var url = "url:" + uri;
+            write.WriteString(url);
+            var now = "clientTime:" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            write.WriteString(now);
+            var encoding = "encoding:" + Encode.EncodingName;
+            write.WriteString(encoding);
+            var contenttype = "content-type:" + GetContentTypeName(type);
+            write.WriteString(contenttype);
+            write.WriteContent(type, data, typeof(Tin));
+            var task = mqRpc.Request(ServerId, write.GetDatas(), out _);
             var flag = task.Wait(TimeOut * 1000);
             if (!flag || !task.IsCompletedSuccessfully)
             {
-                return new ResponseBase<T>() { ServerState = -1, ServerMsg = "请求已超时" };
+                return new ResponseBase<TOut>() { ServerState = -1, ServerMsg = "请求已超时" };
             }
-            var res = Encode.GetString(task.Result).JsonTo(typeof(ResponseBase<T>));
-            return res as ResponseBase<T>;
+            var res = Encode.GetString(task.Result.Span).JsonTo(typeof(ResponseBase<TOut>));
+            return res as ResponseBase<TOut>;
         }
+
+        class Write
+        {
+            byte[] orginal;
+            int offset = 0;
+            public Write(byte[] datas)
+            {
+                orginal = datas;
+            }
+            public Span<byte> Advance(int length)
+            {
+                var span = new Span<byte>(orginal, offset, length);
+                offset += length;
+                return span;
+            }
+            unsafe public uint WriteString(string value)
+            {
+                if (string.IsNullOrEmpty(value))
+                {
+                    orginal[offset] = (byte)'\r';
+                    offset += 1;
+                    return 1;
+                }
+                var l = Encoding.UTF8.GetByteCount(value);
+                var span = Advance(l);
+                fixed (char* cPtr = value)
+                {
+                    fixed (byte* bPtr = &MemoryMarshal.GetReference(span))
+                    {
+                        Encoding.ASCII.GetBytes(cPtr, value.Length, bPtr, l);
+                    }
+                }
+                orginal[offset] = (byte)'\r';
+                offset += 1;
+                return (uint)l + 1;
+            }
+            unsafe public void WriteContent(ContentType type, object data, Type datatype)
+            {
+                orginal[offset] = (byte)'\r';
+                offset += 1;
+                var span = Advance(4);
+                var ser = CreateSeralize(type);
+                var length = ser.Serialize(data, datatype, orginal, offset);
+                BitConverter.TryWriteBytes(span, length);
+            }
+            private IEventSeralize CreateSeralize(ContentType type)
+            {
+                throw new NotImplementedException();
+            }
+            public ReadOnlyMemory<byte> GetDatas()
+            {
+                return new ReadOnlyMemory<byte>(orginal, 0, offset);
+            }
+        }
+        private string GetContentTypeName(ContentType type)
+        {
+            throw new NotImplementedException();
+        }
+
         //private async ResponseBase<T> CallAsync<T>(string uri, byte[] data)
         //{
         //    var now = BitConverter.GetBytes(ToUnixTimestamp(DateTime.Now));

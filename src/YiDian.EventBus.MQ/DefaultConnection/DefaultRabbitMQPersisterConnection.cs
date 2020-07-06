@@ -19,8 +19,6 @@ namespace YiDian.EventBus.MQ.DefaultConnection
         bool _disposed;
         readonly object sync_root = new object();
 
-        public event EventHandler OnConnectRecovery;
-
         public DefaultRabbitMQPersistentConnection(IConnectionFactory connectionFactory, string name, int retryCount, IEventBusSubManagerFactory fact)
         {
             Name = name;
@@ -87,8 +85,6 @@ namespace YiDian.EventBus.MQ.DefaultConnection
                 if (IsConnected)
                 {
                     _connection.ConnectionShutdown += OnConnectionShutdown;
-                    _connection.RecoverySucceeded += _connection_RecoverySucceeded;
-                    _connection.ConnectionRecoveryError += _connection_ConnectionRecoveryError;
                     _connection.CallbackException += OnCallbackException;
                     _connection.ConnectionBlocked += OnConnectionBlocked;
 
@@ -104,18 +100,6 @@ namespace YiDian.EventBus.MQ.DefaultConnection
                 }
             }
         }
-
-        private void _connection_ConnectionRecoveryError(object sender, ConnectionRecoveryErrorEventArgs e)
-        {
-            _logger.LogWarning("A RabbitMQ Connection RecoveryError");
-        }
-
-        private void _connection_RecoverySucceeded(object sender, EventArgs e)
-        {
-            _logger.LogWarning("A RabbitMQ Connection RecoverySucceeded");
-            OnConnectRecovery?.Invoke(this, null);
-        }
-
         private void OnConnectionBlocked(object sender, ConnectionBlockedEventArgs e)
         {
             if (_disposed) return;

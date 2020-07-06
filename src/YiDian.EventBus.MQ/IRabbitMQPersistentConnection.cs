@@ -7,7 +7,6 @@ namespace YiDian.EventBus.MQ
         : IDisposable
     {
         string Name { get; }
-        event EventHandler OnConnectRecovery;
         bool IsConnected { get; }
         IEventBusSubManagerFactory SubsFactory { get; }
         bool TryConnect();

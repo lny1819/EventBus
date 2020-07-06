@@ -15,14 +15,13 @@ namespace YiDian.EventBus.MQ.Rpc
     {
         const string BROKER_NAME = "rpc_event_bus";
         const string AUTOFAC_NAME = "rpc_event_bus";
-        readonly ILogger _logger;
+        readonly ILogger<RPCServer> _logger;
         readonly ILifetimeScope _autofac;
         readonly IRabbitMQPersistentConnection _conn;
         readonly IQpsCounter _qps;
-        readonly TaskFactory _factory;
         IModel _consumerChannel;
         IModel _pubChannel;
-        internal RPCServer(IRabbitMQPersistentConnection conn, ILogger logger, RpcServerConfig config, ILifetimeScope autofac, IQpsCounter qps, IEventSeralize seralize = null)
+        internal RPCServer(IRabbitMQPersistentConnection conn, ILogger<RPCServer> logger, RpcServerConfig config, ILifetimeScope autofac, IQpsCounter qps, IEventSeralize seralize)
         {
             config.ApplicationId = config.ApplicationId.ToLower();
             RoutingTables.LoadControlers(config.ApplicationId);
@@ -32,7 +31,6 @@ namespace YiDian.EventBus.MQ.Rpc
             _conn = conn;
             _qps = qps;
             Configs = config;
-
             RoutePrefix = string.Format($"{config.ApplicationId}.#");
             CreatePublishChannel();
             CreateConsumerChannel();
@@ -94,14 +92,22 @@ namespace YiDian.EventBus.MQ.Rpc
                 return;
             }
             var header = new HeadersAnalysis(ea.Body);
-            var clienttime = UnixTimestampToDate(BitConverter.ToInt64(ea.Body, 0));
+            var clienttime = header.ClientDate;
             var span = Math.Abs((DateTime.Now - clienttime).TotalSeconds);
-            if (span > 10)
+            if (span > Configs.Delay)
             {
                 ReplayTo(ea, 402, $"请求已超时 请求 {ea.RoutingKey} 耗时 {span.ToString()}ms");
                 return;
             }
-            Excute(action, ea);
+            var reques = new Request()
+            {
+                Headers = header.Headers,
+                Action = action,
+                QueryString = header.Query,
+                Seralize = CreateSeralize(header.ContentType),
+                ContentLength = header.ContentLength
+            };
+            Excute(reques, ea);
             //_factory.StartNew(() => Excute(action, ea, stopwatch)).ContinueWith(x =>
             //{
             //    if (x.Status == TaskStatus.Faulted)
@@ -112,6 +118,12 @@ namespace YiDian.EventBus.MQ.Rpc
             //    }
             //});
         }
+
+        private IEventSeralize CreateSeralize(ContentType contentType)
+        {
+            throw new NotImplementedException();
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ReplayTo(BasicDeliverEventArgs ea, int state, string msg, object obj = null, Type objType = null)
         {
@@ -136,8 +148,9 @@ namespace YiDian.EventBus.MQ.Rpc
             public object Data { get; set; }
             public DateTime InTime { get; set; }
         }
-        private void Excute(RouteAction route_action, BasicDeliverEventArgs ea)
+        private void Excute(Request req, BasicDeliverEventArgs ea)
         {
+            var route_action = req.Action;
             object invoke_data = null;
             if (route_action.InArgumentType != null) invoke_data = Seralize.DeserializeObject(ea.Body, route_action.InArgumentType);
             var token = new Token() { InTime = DateTime.Now, Action = route_action, Data = invoke_data, Eargs = ea };

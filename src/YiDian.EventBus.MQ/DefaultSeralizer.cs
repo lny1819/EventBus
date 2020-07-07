@@ -15,27 +15,28 @@ namespace YiDian.EventBus.MQ
 
         public object DeserializeObject(ReadOnlyMemory<byte> data, Type type)
         {
-            try
-            {
-                var constructor = type.GetConstructor(Type.EmptyTypes);
-                var obj = constructor.Invoke(null) as IYiDianSeralize;
-                if (obj == null) throw new ArgumentNullException("the type " + type.Name + " can not be convert as " + nameof(IYiDianSeralize));
-                var readstream = new ReadStream(data) { Encoding = encoding };
-                obj.BytesTo(ref readstream);
-                Console.Write(data.Length + " ");
-                return obj;
-            }
-            catch (Exception)
-            {
-                if (!flag)
-                {
-                    flag = true;
-                    var datas = data.ToArray();
-                    var s = Convert.ToBase64String(datas);
-                    Console.WriteLine(s);
-                }
-                throw;
-            }
+            if (type.Name.ToLower() == "CommodityInfo".ToLower()) Console.Write(data.Length + " ");
+            var constructor = type.GetConstructor(Type.EmptyTypes);
+            var obj = constructor.Invoke(null) as IYiDianSeralize;
+            if (obj == null) throw new ArgumentNullException("the type " + type.Name + " can not be convert as " + nameof(IYiDianSeralize));
+            var readstream = new ReadStream(data) { Encoding = encoding };
+            obj.BytesTo(ref readstream);
+            return obj;
+            //try
+            //{
+
+            //}
+            //catch (Exception)
+            //{
+            //    if (!flag)
+            //    {
+            //        flag = true;
+            //        var datas = data.ToArray();
+            //        var s = Convert.ToBase64String(datas);
+            //        Console.WriteLine(s);
+            //    }
+            //    throw;
+            //}
         }
 
         public ReadOnlyMemory<byte> Serialize<T>(T @event)

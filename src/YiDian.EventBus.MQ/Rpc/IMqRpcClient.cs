@@ -1,14 +1,17 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace YiDian.EventBus.MQ.Rpc
 {
     public interface IMQRpcClient
     {
         string ServerId { get; }
-        ResponseBase<TOut> Call<TOut, Tin>(string uri, Tin data, ContentType type);
+        public bool IsConnected { get; }
+        ResponseBase<TOut> Call<Tin, TOut>(string uri, Tin data, ContentType type);
+        Task<ResponseBase<TOut>> CallAsync<Tin, TOut>(string uri, Tin data, ContentType type);
+        ResponseBase<TOut> Call<TOut>(string uri);
+        Task<ResponseBase<TOut>> CallAsync<TOut>(string uri);
         void Cancel(long mid);
-        bool IsConnect { get; set; }
-        event EventHandler ConnectionError;
     }
     public interface IRPCServer
     {

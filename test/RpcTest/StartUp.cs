@@ -1,8 +1,10 @@
 ﻿using Autofac;
+using EventModels.es_quote;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Reflection;
+using System.Threading;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.Rpc;
@@ -37,13 +39,18 @@ namespace RpcTest
             var curAssembly = Assembly.GetEntryAssembly();
             builder.RegisterAssemblyTypes(curAssembly).Where(e => e.Name.EndsWith("Controller")).PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies).SingleInstance();
         }
-        public void Start(IServiceProvider sp, string[] args)
+        public object Start(IServiceProvider sp, string[] args)
         {
             var server = sp.GetService<IRPCServer>();
             var fac = sp.GetService<IRpcClientFactory>();
             var client = fac.Create("test", 10);
 
-            client.Call<string, string>("/home/getid?a=1&b=2", "", ContentType.Text);
+            var r1 = client.Call<string>("/home/getid?a=1&b=2");
+            Thread.Sleep(10000);
+            r1 = client.Call<string>("/home/getid?a=1&b=2");
+            r1 = client.Call<string>("/home/getid?a=1&b=2");
+            var r2 = client.Call<Exchange>("/home/GetExchange3");
+            return server;
         }
     }
 }

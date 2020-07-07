@@ -87,7 +87,7 @@ namespace YiDian.EventBus.MQ.Rpc.Route
             if (getter == null) throw new ArgumentNullException(nameof(getter), "used for task result");
             return getter(obj);
         }
-        internal Type ActionResultType { get; }
+        internal Type ActionResultType { get; private set; }
         internal void SetResGetter()
         {
             var e = ReturnType.GetProperty("Result");

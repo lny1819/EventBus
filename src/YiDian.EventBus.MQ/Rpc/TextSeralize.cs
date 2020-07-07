@@ -15,17 +15,17 @@ namespace YiDian.EventBus.MQ.Rpc
 
         public object DeserializeObject(ReadOnlyMemory<byte> data, Type type)
         {
-            throw new NotImplementedException();
+            return encoding.GetString(data.Span);
         }
 
-        public byte[] Serialize<T>(T @event) where T : IMQEvent
+        public byte[] Serialize<T>(T @event)
         {
-            throw new NotImplementedException();
+            return encoding.GetBytes(@event.ToString());
         }
 
         public byte[] Serialize(object @event, Type type)
         {
-            throw new NotImplementedException();
+            return encoding.GetBytes(@event.ToString());
         }
 
         public unsafe int Serialize(object @event, Type type, byte[] bs, int offset)

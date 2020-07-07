@@ -53,7 +53,7 @@ namespace YiDian.EventBus.MQ
         /// <typeparam name="T"></typeparam>
         /// <param name="event"></param>
         /// <returns></returns>
-        public byte[] Serialize<T>(T @event) where T : IMQEvent
+        public byte[] Serialize<T>(T @event)
         {
             var str = @event.ToJson(opt);
             return Encoding.GetBytes(str);

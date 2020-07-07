@@ -28,6 +28,7 @@ namespace YiDian.EventBus.MQ
             methodPoll = new ConcurrentDictionary<long, CallMeta>();
             CreateConsumerChannel();
         }
+        public bool IsConnnected { get { return _persistentConnection.IsConnected; } }
         private string CreateServerKey(string serverName)
         {
             if (serverName.IndexOf(".") > -1)

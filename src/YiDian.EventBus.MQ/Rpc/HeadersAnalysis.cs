@@ -10,16 +10,16 @@ namespace YiDian.EventBus.MQ.Rpc
         YDData,
         Text
     }
-    public class HeadersAnalysis
+    internal class HeadersAnalysis
     {
         readonly ReadOnlyMemory<byte> orginal;
-        readonly Dictionary<string, string> dic;
         int offset = 0;
         int bodyoffset = 0;
         public HeadersAnalysis(ReadOnlyMemory<byte> datas)
         {
             orginal = datas;
-            dic = new Dictionary<string, string>();
+            Headers = new Dictionary<string, string>();
+            Encode = Encoding.ASCII;
             Do();
         }
         public DateTime ClientDate { get; private set; }
@@ -80,7 +80,7 @@ namespace YiDian.EventBus.MQ.Rpc
                     ContentType = ContentType.YDData;
                 }
             }
-            else dic.TryAdd(tag, text);
+            else Headers.TryAdd(tag, text);
         }
 
         private void DealBodyDatas()
@@ -113,7 +113,7 @@ namespace YiDian.EventBus.MQ.Rpc
 
         private string ReadString(int i)
         {
-            var value = Encoding.UTF8.GetString(orginal.Slice(offset, i).Span);
+            var value = Encode.GetString(orginal.Slice(offset, i).Span);
             offset += i + 1;
             return value;
         }

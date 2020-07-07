@@ -22,7 +22,7 @@ namespace YiDian.EventBus.MQ
             return obj;
         }
 
-        public byte[] Serialize<T>(T @event) where T : IMQEvent
+        public byte[] Serialize<T>(T @event)
         {
             return Serialize(@event, typeof(T));
         }

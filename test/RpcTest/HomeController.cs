@@ -8,12 +8,12 @@ namespace RpcTest
 {
     public class HomeController : RpcController
     {
-        public async Task<ActionResult<string>> GetId(string a, string b)
+        public async Task<ActionResult<string>> GetId(int a, int b)
         {
             await Task.Delay(20);
-            return a + b;
+            return (a + b).ToString();
         }
-        public ActionResult<Exchange> GetOrderAction(string orderId)
+        public ActionResult<Exchange> GetExchange()
         {
             return new Exchange()
             {

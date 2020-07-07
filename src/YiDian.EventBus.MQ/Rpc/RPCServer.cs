@@ -84,18 +84,19 @@ namespace YiDian.EventBus.MQ.Rpc
 
         private void ProcessEvent(BasicDeliverEventArgs ea)
         {
+            _qps.Add("r");
             var header = new HeadersAnalysis(ea.Body);
             var clienttime = header.ClientDate;
             var span = Math.Abs((DateTime.Now - clienttime).TotalSeconds);
             if (Configs.Delay != 0 && span > Configs.Delay)
             {
-                ReplayTo(ea, 402, $"请求已超时 请求 {ea.RoutingKey} 耗时 {span.ToString()}ms");
+                ReplayTo(ea, 402, $"请求已超时 请求 {ea.RoutingKey} 耗时 {span.ToString()}ms", ContentType.Text);
                 return;
             }
             var action = _routing.Route(header.Url.AbsolutePath);
             if (action == null)
             {
-                ReplayTo(ea, 401, "未找到匹配请求的控制器或方法");
+                ReplayTo(ea, 401, "未找到匹配请求的控制器或方法", ContentType.Text);
                 return;
             }
             var reques = new Request()
@@ -108,15 +109,6 @@ namespace YiDian.EventBus.MQ.Rpc
                 Body = header.GetBodys()
             };
             Excute(reques, ea);
-            //_factory.StartNew(() => Excute(action, ea, stopwatch)).ContinueWith(x =>
-            //{
-            //    if (x.Status == TaskStatus.Faulted)
-            //    {
-            //        _logger?.LogError(x.Exception.ToString());
-            //        stopwatch.Stop();
-            //        _logger.LogError($" 请求出错 {ea.RoutingKey} 耗时 {stopwatch.ElapsedMilliseconds.ToString()}ms");
-            //    }
-            //});
         }
 
         private IEventSeralize CreateSeralize(ContentType contentType, System.Text.Encoding encoding)
@@ -133,29 +125,20 @@ namespace YiDian.EventBus.MQ.Rpc
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ReplayTo(BasicDeliverEventArgs ea, int state, string msg, object obj = null, Type objType = null)
+        private void ReplayTo(BasicDeliverEventArgs ea, int state, string msg, ContentType type, object obj = null, Type objType = null)
         {
             var replyTo = ea.BasicProperties.ReplyTo;
             var replyTold = ea.BasicProperties.CorrelationId;
             var replyProps = _pubChannel.CreateBasicProperties();
+            replyProps.CorrelationId = replyTold;
             var datas = new byte[2000];
-            var write = new RPCWrite(datas);
+            var write = new RPCWrite(datas, Encoding.UTF8);
+            write.WriteString("encoding:utf-8");
             write.WriteString("state:" + state.ToString());
             write.WriteString("msg:" + msg);
-            write.WriteString("encode:utf-8");
-            write.WriteContent(GetContentType(objType), obj, objType, Encoding.UTF8);
-            if (obj == null)
-            {
-                _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: bs);
-            }
-            replyProps.CorrelationId = replyTold;
-            var bs = Seralize.Serialize(obj, objType);
-            _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: bs);
-        }
-
-        private ContentType GetContentType(Type objType)
-        {
-            if (objType == )
+            write.WriteString("content-type:" + (type == ContentType.YDData ? "yddata" : (type == ContentType.Json ? "json" : "text")));
+            write.WriteContent(type, obj, objType);
+            _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: write.GetDatas());
         }
 
         readonly static DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -167,12 +150,15 @@ namespace YiDian.EventBus.MQ.Rpc
         private async void Excute(Request req, BasicDeliverEventArgs ea)
         {
             req.InTime = DateTime.Now;
-            var args = req.Url.Query.Substring(1).Split('&');
             var dic = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var item in args)
+            if (!string.IsNullOrEmpty(req.Url.Query))
             {
-                var arr = item.Split('=');
-                dic.Add(arr[0], arr[1]);
+                var args = req.Url.Query.Substring(1).Split('&');
+                foreach (var item in args)
+                {
+                    var arr = item.Split('=');
+                    dic.Add(arr[0], arr[1]);
+                }
             }
             object[] m_args = new object[req.Action.InAags.Length];
             if (req.Action.InAags != null && req.Action.InAags.Length > 0)
@@ -183,7 +169,7 @@ namespace YiDian.EventBus.MQ.Rpc
                     var list = p.GetCustomAttributes(typeof(FromBodyAttribute), false);
                     if (list.Length <= 0)
                     {
-                        if (dic.TryGetValue(p.Name, out string v)) m_args[i] = v;
+                        if (dic.TryGetValue(p.Name, out string v)) m_args[i] = CreateParam(v, p.ParameterType);
                     }
                     else m_args[i] = ReadFromBody(req, p.ParameterType);
                 }
@@ -202,16 +188,33 @@ namespace YiDian.EventBus.MQ.Rpc
                     res = ((ActionResult)req.Action.GetTaskResult(obj)).GetResult();
                 }
                 else res = ((ActionResult)obj).GetResult();
-                ReplayTo(ea, 200, "", res, req.Action.ActionResultType);
+                var type = req.Action.ActionResultType.GetInterface(nameof(IMQEvent)) != null ? ContentType.YDData : ContentType.Text;
+                ReplayTo(ea, 200, "", type, res, req.Action.ActionResultType);
             }
             catch (Exception ex)
             {
-                ReplayTo(ea, 500, ex.Message);
+                ReplayTo(ea, 500, ex.Message, ContentType.Text);
+                _logger.LogError(ex.ToString());
             }
             var now = DateTime.Now;
             var ms = (now - req.InTime).TotalMilliseconds;
             _qps.Set("c", (int)ms);
             scope?.Dispose();
+        }
+
+        private object CreateParam(string v, Type t)
+        {
+            if (t == typeof(int)) return int.Parse(v);
+            else if (t == typeof(uint)) return uint.Parse(v);
+            else if (t == typeof(long)) return long.Parse(v);
+            else if (t == typeof(ulong)) return ulong.Parse(v);
+            else if (t == typeof(short)) return short.Parse(v);
+            else if (t == typeof(ushort)) return ushort.Parse(v);
+            else if (t == typeof(byte)) return byte.Parse(v);
+            else if (t == typeof(double)) return double.Parse(v);
+            else if (t == typeof(float)) return float.Parse(v);
+            else if (t.IsEnum) return Enum.Parse(t, v);
+            else return v;
         }
 
         private object ReadFromBody(Request req, Type type)
@@ -224,10 +227,6 @@ namespace YiDian.EventBus.MQ.Rpc
         {
             scope = _autofac.BeginLifetimeScope(AUTOFAC_NAME);
             return scope.ResolveOptional(action.ControllerType) as RpcController;
-        }
-        private void ResetController(Type type, RpcController controller, ILifetimeScope scope)
-        {
-            scope?.Dispose();
         }
     }
 }

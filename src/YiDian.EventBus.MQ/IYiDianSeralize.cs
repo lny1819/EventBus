@@ -8,7 +8,7 @@ namespace YiDian.EventBus.MQ
     {
         uint ToBytes(ref WriteStream stream);
         void BytesTo(ref ReadStream stream);
-        uint BytesSize();
+        uint BytesSize(Encoding encoding);
     }
     public struct Header
     {

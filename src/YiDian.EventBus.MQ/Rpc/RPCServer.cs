@@ -19,12 +19,14 @@ namespace YiDian.EventBus.MQ.Rpc
         readonly ILifetimeScope _autofac;
         readonly IRabbitMQPersistentConnection _conn;
         readonly IQpsCounter _qps;
+        readonly RoutingTables _routing;
         IModel _consumerChannel;
         IModel _pubChannel;
         internal RPCServer(IRabbitMQPersistentConnection conn, ILogger<RPCServer> logger, RpcServerConfig config, ILifetimeScope autofac, IQpsCounter qps)
         {
             config.ApplicationId = config.ApplicationId.ToLower();
-            RoutingTables.LoadControlers(config.ApplicationId);
+            _routing = new RoutingTables();
+            _routing.LoadControlers(config.ApplicationId);
             _autofac = autofac;
             _logger = logger;
             _conn = conn;
@@ -88,7 +90,7 @@ namespace YiDian.EventBus.MQ.Rpc
                 ReplayTo(ea, 402, $"请求已超时 请求 {ea.RoutingKey} 耗时 {span.ToString()}ms");
                 return;
             }
-            var action = RoutingTables.Route(header.Url.AbsolutePath, Configs.ApplicationId, out string msg);
+            var action = _routing.Route(header.Url.AbsolutePath, Configs.ApplicationId, out string msg);
             if (action == null)
             {
                 ReplayTo(ea, 401, msg);
@@ -153,27 +155,27 @@ namespace YiDian.EventBus.MQ.Rpc
         }
         private void Excute(Request req, BasicDeliverEventArgs ea)
         {
-            var route_action = req.Action;
-            object invoke_data = null;
-            if (route_action.InArgumentType != null) invoke_data = req.Seralize.DeserializeObject(ea.Body, route_action.InArgumentType);
-            var token = new Token() { InTime = DateTime.Now, Action = route_action, Data = invoke_data, Eargs = ea };
-            var action = token.Action;
-            var argu = token.Data;
-            var controller = GetController(token.Action, out ILifetimeScope scope);
-            object res;
-            if (argu != null) res = token.Action.CurrentMethod(controller, new object[] { argu });
-            else res = action.CurrentMethod(controller, null);
-            var t = typeof(ActionResult<>);
-            if (res is ActionResult result)
-            {
-                var obj = result.GetResult();
-                ReplayTo(token.Eargs, 0, "", obj, res.GetType());
-            }
-            else if (res is Task)
-            {
+            //var route_action = req.Action;
+            //object invoke_data = null;
+            //if (route_action.InArgumentType != null) invoke_data = req.Seralize.DeserializeObject(ea.Body, route_action.InArgumentType);
+            //var token = new Token() { InTime = DateTime.Now, Action = route_action, Data = invoke_data, Eargs = ea };
+            //var action = token.Action;
+            //var argu = token.Data;
+            //var controller = GetController(token.Action, out ILifetimeScope scope);
+            //object res;
+            //if (argu != null) res = token.Action.CurrentMethod(controller, new object[] { argu });
+            //else res = action.CurrentMethod(controller, null);
+            //var t = typeof(ActionResult<>);
+            //if (res is ActionResult result)
+            //{
+            //    var obj = result.GetResult();
+            //    ReplayTo(token.Eargs, 0, "", obj, res.GetType());
+            //}
+            //else if (res is Task)
+            //{
 
-            }
-            scope?.Dispose();
+            //}
+            //scope?.Dispose();
         }
 
         private RpcController GetController(RouteAction action, out ILifetimeScope scope)

@@ -384,12 +384,12 @@ namespace YiDian.EventBus.MQ
             Array.Copy(orginal, res, offset);
             return res;
         }
-        public uint GetStringSize(string value)
+        public static uint GetStringSize(string value, Encoding encoding)
         {
-            var l = (uint)Encoding.GetByteCount(value);
+            var l = (uint)encoding.GetByteCount(value);
             return l + 4;
         }
-        public uint GetArrayStringSize(IEnumerable<string> arr)
+        public static uint GetArrayStringSize(IEnumerable<string> arr, Encoding encoding)
         {
             var count = arr == null ? 0 : (uint)arr.Count();
             if (count == 0) return 8;
@@ -397,16 +397,16 @@ namespace YiDian.EventBus.MQ
             var ider = arr.GetEnumerator();
             while (ider.MoveNext())
             {
-                size += GetStringSize(ider.Current);
+                size += GetStringSize(ider.Current, encoding);
             }
             return size + 8;
         }
-        public uint GetValueArraySize<T>(byte perszie, IEnumerable<T> arr)
+        public static uint GetValueArraySize<T>(byte perszie, IEnumerable<T> arr)
         {
             var count = arr == null ? 0 : (uint)arr.Count();
             return perszie * count + 8;
         }
-        public uint GetArrayEventObjSize<T>(IEnumerable<T> arr) where T : IYiDianSeralize
+        public static uint GetArrayEventObjSize<T>(IEnumerable<T> arr, Encoding encoding) where T : IYiDianSeralize
         {
             var count = arr == null ? 0 : (uint)arr.Count();
             if (count == 0) return 8;
@@ -414,7 +414,7 @@ namespace YiDian.EventBus.MQ
             var ider = arr.GetEnumerator();
             while (ider.MoveNext())
             {
-                size += ider.Current.BytesSize();
+                size += ider.Current.BytesSize(encoding);
             }
             return size + 8;
         }

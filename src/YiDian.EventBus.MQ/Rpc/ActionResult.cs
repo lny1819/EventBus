@@ -1,6 +1,6 @@
 ﻿namespace YiDian.EventBus.MQ.Rpc
 {
-    public class ActionResult<T> : ActionResult where T : IMQEvent
+    public class ActionResult<T> : ActionResult
     {
         public ActionResult(T t)
         {

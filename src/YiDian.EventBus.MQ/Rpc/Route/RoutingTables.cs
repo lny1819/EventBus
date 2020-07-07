@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using YiDian.EventBus.MQ.KeyAttribute;
 using YiDian.EventBus.MQ.Rpc.Abstractions;
 
 namespace YiDian.EventBus.MQ.Rpc.Route
@@ -12,9 +13,9 @@ namespace YiDian.EventBus.MQ.Rpc.Route
         /// <summary>
         /// Action名称字典 Action名称=methodInfo
         /// </summary>
-        static Dictionary<string, ActionInfo> ActionsDic = new Dictionary<string, ActionInfo>(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, ActionInfo> actionsDic = new Dictionary<string, ActionInfo>(StringComparer.OrdinalIgnoreCase);
 
-        public static void LoadControlers(string appId)
+        public void LoadControlers(string appId)
         {
             var ass = Assembly.GetEntryAssembly();
             foreach (var t in ass.GetTypes())
@@ -27,37 +28,30 @@ namespace YiDian.EventBus.MQ.Rpc.Route
                     MethodInfo[] methods = t.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
                     foreach (var m in methods)
                     {
-                        //if (!m.ReturnType.IsGenericType || m.ReturnType.GetGenericTypeDefinition() != typeof(Task<>)
-                        //      || m.ReturnType.GenericTypeArguments.Length == 0
-                        //      || m.ReturnType.GenericTypeArguments[0].GetGenericTypeDefinition() != typeof(ActionResult<>)
-                        //      ) continue;
-                        if (!m.ReturnType.IsGenericType
-                            || m.ReturnType.GenericTypeArguments.Length == 0
-                            || m.ReturnType.GetGenericTypeDefinition() != typeof(ActionResult<>)
-                            ) continue;
+                        if (!m.ReturnType.IsGenericType || m.ReturnType.GenericTypeArguments.Length == 0 || m.ReturnType.GetGenericTypeDefinition() != typeof(ActionResult<>)) continue;
                         var sb = new StringBuilder();
                         sb.Append(appId);
-                        sb.Append('.');
+                        sb.Append('/');
                         sb.Append(typename.Substring(0, length));
-                        sb.Append('.');
+                        sb.Append('/');
                         sb.Append(m.Name);
                         var key = sb.ToString();
                         var info = new ActionInfo()
                         {
                             ControllerType = t,
-                            //Method =GetMethodInvoker(m),
-                            AaguType = m.GetParameters().Length > 0 ? m.GetParameters()[0].ParameterType : null,
+                            Method = FastInvoke.GetMethodInvoker(m),
+                            AaguType = m.GetParameters(),
                             ReturnType = m.ReturnType
                         };
-                        ActionsDic.Add(key, info);
+                        actionsDic.Add(key, info);
                     }
                 }
             }
         }
 
-        public static RouteAction Route(string routingKey, string appid, out string msg)
+        public RouteAction Route(string routingKey, string appid, out string msg)
         {
-            if (!ActionsDic.TryGetValue(routingKey, out ActionInfo action))
+            if (!actionsDic.TryGetValue(routingKey, out ActionInfo action))
             {
                 msg = NOT_FOUND;
                 return null;
@@ -76,6 +70,6 @@ namespace YiDian.EventBus.MQ.Rpc.Route
         public Type ControllerType { get; set; }
         public FastInvokeHandler Method { get; set; }
         public Type ReturnType { get; set; }
-        public Type AaguType { get; set; }
+        public ParameterInfo[] AaguType { get; set; }
     }
 }

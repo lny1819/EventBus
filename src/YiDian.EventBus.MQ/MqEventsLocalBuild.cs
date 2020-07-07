@@ -200,6 +200,7 @@ namespace YiDian.EventBus.MQ
             {
                 file = File.Create(Path.Combine(dir, meta.Name + "_s.cs"));
                 file.WriteLine("using System;");
+                file.WriteLine("using System.Text;");
                 file.WriteLine("using System.Collections.Generic;");
                 file.WriteLine("using YiDian.EventBus;");
                 file.WriteLine("using YiDian.EventBus.MQ;");
@@ -700,7 +701,7 @@ namespace YiDian.EventBus.MQ
                 file.WriteLine("        }");
 
 
-                file.WriteLine("        public uint BytesSize()");
+                file.WriteLine("        public uint BytesSize(Encoding encoding)");
                 file.WriteLine("        {");
                 var size = 5 + dic.Count * 2 + meta.Properties.Count + (l8_props == null ? 0 : l8_props.Count) + (ldate_props == null ? 0 : ldate_props.Count * 11) + (l16_props == null ? 0 : l16_props.Count * 2) + (l32_props == null ? 0 : l32_props.Count * 4) + (l64_props == null ? 0 : l64_props.Count * 8);
                 file.Write($"                var size={size}+");
@@ -709,7 +710,7 @@ namespace YiDian.EventBus.MQ
                     foreach (var s_pty in lstr_props)
                     {
                         if (s_pty.Type == PropertyMetaInfo.P_Date) file.Write("11+");
-                        else file.Write($"WriteStream.GetStringSize({s_pty.Name})+");
+                        else file.Write($"WriteStream.GetStringSize({s_pty.Name},encoding)+");
                     }
                 }
                 if (larr_props != null)
@@ -743,11 +744,11 @@ namespace YiDian.EventBus.MQ
                         }
                         else if (arrtype == PropertyMetaInfo.P_String)
                         {
-                            file.Write($"WriteStream.GetArrayStringSize({item.Name})+");
+                            file.Write($"WriteStream.GetArrayStringSize({item.Name},encoding)+");
                         }
                         else
                         {
-                            file.Write($"WriteStream.GetArrayEventObjSize({item.Name})+");
+                            file.Write($"WriteStream.GetArrayEventObjSize({item.Name},encoding)+");
                         }
                     }
                 }
@@ -755,7 +756,7 @@ namespace YiDian.EventBus.MQ
                 {
                     foreach (var item in ln_props)
                     {
-                        file.Write($"{item.Name}.BytesSize()+");
+                        file.Write($"{item.Name}.BytesSize(encoding)+");
                     }
                 }
                 file.WriteLine($" 0;");

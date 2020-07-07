@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using YiDian.EventBus.MQ.KeyAttribute;
 using YiDian.EventBus.MQ.Rpc.Abstractions;
 
@@ -25,27 +26,40 @@ namespace YiDian.EventBus.MQ.Rpc.Route
                     var typename = t.Name;
                     var length = typename.LastIndexOf("controller", StringComparison.OrdinalIgnoreCase);
                     if (length == -1) continue;
+                    var ctl_name = typename.Substring(0, length);
                     MethodInfo[] methods = t.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
                     foreach (var m in methods)
                     {
-                        if (!m.ReturnType.IsGenericType || m.ReturnType.GenericTypeArguments.Length == 0 || m.ReturnType.GetGenericTypeDefinition() != typeof(ActionResult<>)) continue;
-                        var sb = new StringBuilder();
-                        sb.Append('/');
-                        sb.Append(typename.Substring(0, length));
-                        sb.Append('/');
-                        sb.Append(m.Name);
-                        var key = sb.ToString();
-                        var info = new ActionInfo()
+                        if (m.ReturnType.IsGenericType)
                         {
-                            ControllerType = t,
-                            Method = FastInvoke.GetMethodInvoker(m),
-                            InAags = m.GetParameters(),
-                            ReturnType = m.ReturnType
-                        };
-                        actionsDic.Add(key, info);
+                            if (m.ReturnType.GetGenericTypeDefinition() == typeof(ActionResult<>)) Add(m, ctl_name, t, false);
+                            else if (m.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
+                            {
+                                if (m.ReturnType.GenericTypeArguments[0].Name == typeof(ActionResult<>).Name) Add(m, ctl_name, t, true);
+                            }
+                        }
                     }
                 }
             }
+        }
+
+        private void Add(MethodInfo m, string ctl_name, Type ctl_type, bool isTask)
+        {
+            var sb = new StringBuilder();
+            sb.Append('/');
+            sb.Append(ctl_name);
+            sb.Append('/');
+            sb.Append(m.Name);
+            var key = sb.ToString();
+            var info = new ActionInfo()
+            {
+                ControllerType = ctl_type,
+                Method = FastInvoke.GetMethodInvoker(m),
+                InAags = m.GetParameters()
+            };
+            info.SetReturnType(m.ReturnType, isTask);
+            if (info.IsTask) info.SetResGetter();
+            actionsDic.Add(key, info);
         }
 
         public ActionInfo Route(string routingKey)
@@ -59,11 +73,38 @@ namespace YiDian.EventBus.MQ.Rpc.Route
     }
 
 
-    public class ActionInfo
+    internal class ActionInfo
     {
-        public Type ControllerType { get; set; }
-        public FastInvokeHandler Method { get; set; }
-        public Type ReturnType { get; set; }
-        public ParameterInfo[] InAags { get; set; }
+        Func<object, object> getter;
+        internal Type ControllerType { get; set; }
+        internal FastInvokeHandler Method { get; set; }
+        internal Type ReturnType { get; private set; }
+        internal ParameterInfo[] InAags { get; set; }
+        internal bool IsTask { get; private set; }
+
+        internal object GetTaskResult(object obj)
+        {
+            if (getter == null) throw new ArgumentNullException(nameof(getter), "used for task result");
+            return getter(obj);
+        }
+        internal Type ActionResultType { get; }
+        internal void SetResGetter()
+        {
+            var e = ReturnType.GetProperty("Result");
+            getter = FastInvoke.EmitGetter(e);
+        }
+        internal void SetReturnType(Type returnType, bool isTask)
+        {
+            ReturnType = returnType;
+            IsTask = isTask;
+            if (isTask)
+            {
+                ActionResultType = returnType.GenericTypeArguments[0].GenericTypeArguments[0];
+            }
+            else
+            {
+                ActionResultType = returnType.GenericTypeArguments[0];
+            }
+        }
     }
 }

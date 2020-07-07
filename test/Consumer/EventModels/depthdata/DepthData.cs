@@ -1,4 +1,3 @@
-using EventModels.es_quote;
 using System;
 using System.Collections.Generic;
 using YiDian.EventBus;
@@ -53,10 +52,12 @@ namespace EventModels.depthdata
         public UInt64 BidVolume5 { get; set; }
         [SeralizeIndex(22)]
         public double ClosePrice { get; set; }
+        [KeyIndex(1)]
         [SeralizeIndex(23)]
         public string CommodityNo { get; set; }
         [SeralizeIndex(24)]
         public CommodityType CommodityType { get; set; }
+        [KeyIndex(0)]
         [SeralizeIndex(25)]
         public string ExchangeID { get; set; }
         [SeralizeIndex(26)]
@@ -65,6 +66,7 @@ namespace EventModels.depthdata
         public double HisHighPrice { get; set; }
         [SeralizeIndex(28)]
         public double HisLowPrice { get; set; }
+        [KeyIndex(2)]
         [SeralizeIndex(29)]
         public string InstrumentID { get; set; }
         [SeralizeIndex(30)]

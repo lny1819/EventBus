@@ -9,6 +9,7 @@ using YiDian.Soa.Sp;
 using YiDian.EventBus.MQ.Rpc.Route;
 using YiDian.EventBus.MQ.Rpc.Abstractions;
 using System.Collections.Generic;
+using System.Text;
 
 namespace YiDian.EventBus.MQ.Rpc
 {
@@ -137,9 +138,24 @@ namespace YiDian.EventBus.MQ.Rpc
             var replyTo = ea.BasicProperties.ReplyTo;
             var replyTold = ea.BasicProperties.CorrelationId;
             var replyProps = _pubChannel.CreateBasicProperties();
+            var datas = new byte[2000];
+            var write = new RPCWrite(datas);
+            write.WriteString("state:" + state.ToString());
+            write.WriteString("msg:" + msg);
+            write.WriteString("encode:utf-8");
+            write.WriteContent(GetContentType(objType), obj, objType, Encoding.UTF8);
+            if (obj == null)
+            {
+                _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: bs);
+            }
             replyProps.CorrelationId = replyTold;
-            //var bs = Seralize.Serialize(obj, objType);
-            //_pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: bs);
+            var bs = Seralize.Serialize(obj, objType);
+            _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: bs);
+        }
+
+        private ContentType GetContentType(Type objType)
+        {
+            if (objType == )
         }
 
         readonly static DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -148,8 +164,9 @@ namespace YiDian.EventBus.MQ.Rpc
         {
             return start.AddSeconds(timestamp).ToLocalTime();
         }
-        private void Excute(Request req, BasicDeliverEventArgs ea)
+        private async void Excute(Request req, BasicDeliverEventArgs ea)
         {
+            req.InTime = DateTime.Now;
             var args = req.Url.Query.Substring(1).Split('&');
             var dic = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (var item in args)
@@ -172,7 +189,28 @@ namespace YiDian.EventBus.MQ.Rpc
                 }
             }
             var controller = GetController(req.Action, out ILifetimeScope scope);
-            var obj = req.Action.Method(controller, m_args);
+            controller.Request = req;
+            try
+            {
+                var obj = req.Action.Method(controller, m_args);
+                if (obj == null) return;
+                object res;
+                if (req.Action.IsTask)
+                {
+                    var task = obj as Task;
+                    await task;
+                    res = ((ActionResult)req.Action.GetTaskResult(obj)).GetResult();
+                }
+                else res = ((ActionResult)obj).GetResult();
+                ReplayTo(ea, 200, "", res, req.Action.ActionResultType);
+            }
+            catch (Exception ex)
+            {
+                ReplayTo(ea, 500, ex.Message);
+            }
+            var now = DateTime.Now;
+            var ms = (now - req.InTime).TotalMilliseconds;
+            _qps.Set("c", (int)ms);
             scope?.Dispose();
         }
 

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Reflection;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.Rpc;
@@ -33,6 +34,8 @@ namespace RpcTest
         }
         public void ConfigContainer(ContainerBuilder builder)
         {
+            var curAssembly = Assembly.GetEntryAssembly();
+            builder.RegisterAssemblyTypes(curAssembly).Where(e => e.Name.EndsWith("Controller")).PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies).SingleInstance();
         }
         public void Start(IServiceProvider sp, string[] args)
         {

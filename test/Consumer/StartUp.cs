@@ -22,7 +22,16 @@ namespace Consumer
         {
             Configuration = config;
         }
-        public void ConfigService(SoaServiceContainerBuilder soa, ContainerBuilder builder)
+        public void ConfigService(SoaServiceContainerBuilder soa)
+        {
+            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"])
+                 .UseDirectEventBus(0)
+                 .UseTopicEventBus(0);
+            //#if DEBUG
+            //            soa.AutoCreateAppEvents("es_quote,depthdata");
+            //#endif
+        }
+        public void ConfigContainer(ContainerBuilder builder)
         {
             var curAssembly = Assembly.GetEntryAssembly();
             builder.RegisterAssemblyTypes(curAssembly).Where(e => e.Name.EndsWith("Handler")).PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies).SingleInstance();
@@ -38,12 +47,6 @@ namespace Consumer
                 };
                 return hdl;
             }).SingleInstance();
-            soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"])
-                 .UseDirectEventBus(0)
-                 .UseTopicEventBus(0);
-#if DEBUG
-            soa.AutoCreateAppEvents("es_quote,depthdata");
-#endif
         }
         public void Start(IServiceProvider sp, string[] args)
         {
@@ -52,6 +55,7 @@ namespace Consumer
             {
                 x.Subscribe<Exchange, MyHandler>();
             }, queueLength: 10000000, autodel: false, fetchCount: 2000);
+            direct.Publish(new Exchange() { ExchangeName = "HKEX" });
             //var host = sp.GetService<ISoaServiceHost>();
             //var topic = sp.GetService<ITopicEventBus>();
             //topic.RegisterConsumer("test-topic-1", x =>

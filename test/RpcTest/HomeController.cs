@@ -1,5 +1,6 @@
 ﻿using EventModels.depthdata;
 using EventModels.es_quote;
+using System.Threading.Tasks;
 using YiDian.EventBus.MQ.Rpc;
 using YiDian.EventBus.MQ.Rpc.Abstractions;
 
@@ -7,8 +8,9 @@ namespace RpcTest
 {
     public class HomeController : RpcController
     {
-        public ActionResult<string> GetId(string a, string b)
+        public async Task<ActionResult<string>> GetId(string a, string b)
         {
+            await Task.Delay(20);
             return a + b;
         }
         public ActionResult<Exchange> GetOrderAction(string orderId)

@@ -111,7 +111,7 @@
             实现IEventSeralize的Json序列化
             </summary>
         </member>
-        <member name="M:YiDian.EventBus.MQ.JsonSerializer.#ctor">
+        <member name="M:YiDian.EventBus.MQ.JsonSerializer.#ctor(System.Text.Encoding)">
             <summary>
             创建一个JSON序列化实例 
             </summary>
@@ -126,7 +126,7 @@
             编码格式
             </summary>
         </member>
-        <member name="M:YiDian.EventBus.MQ.JsonSerializer.DeserializeObject(System.Byte[],System.Type)">
+        <member name="M:YiDian.EventBus.MQ.JsonSerializer.DeserializeObject(System.ReadOnlyMemory{System.Byte},System.Type)">
             <summary>
             反序列化字节数组
             </summary>
@@ -219,31 +219,19 @@
             <param name="propertyName"></param>
             <returns></returns>
         </member>
-        <member name="P:YiDian.EventBus.MQ.Abstractions.ResponseBase.ServerState">
-            <summary>
-            20000 握手响应
-            401  指定方法不存在
-            500  服务器内部异常
-            </summary>
-        </member>
-        <member name="F:YiDian.EventBus.MQ.Route.RoutingTables.ActionsDic">
+        <member name="F:YiDian.EventBus.MQ.Rpc.Route.RoutingTables.actionsDic">
             <summary>
             Action名称字典 Action名称=methodInfo
             </summary>
         </member>
-        <member name="P:YiDian.EventBus.MQ.RpcServerConfig.ApplicationId">
+        <member name="P:YiDian.EventBus.MQ.Rpc.RpcServerConfig.ApplicationId">
             <summary>
             服务器ID
             <para>连接在同一个MQ集群上的不同应用应该具有不同的名称</para>
             通过配置相同名称的服务器达到服务器间的负载均衡
             </summary>
         </member>
-        <member name="P:YiDian.EventBus.MQ.RpcServerConfig.Encode">
-            <summary>
-            系统序列化编码字符集
-            </summary>
-        </member>
-        <member name="P:YiDian.EventBus.MQ.RpcServerConfig.Fetchout">
+        <member name="P:YiDian.EventBus.MQ.Rpc.RpcServerConfig.Fetchout">
             <summary>
             批量从队列获取消息数量
             </summary>
@@ -255,7 +243,8 @@
             eventsmgr=inmemory
             </summary>
             <param name="builder"></param>
-            <param name="getconnstr"></param>
+            <param name="action"></param>
+            <param name="eventsManager"></param>
             <returns></returns>
         </member>
         <member name="M:YiDian.Soa.Sp.Extensions.MQExtensions.UseRabbitMq(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.String,System.String)">
@@ -308,6 +297,24 @@
             <param name="cacheLength"></param>
             <param name="seralizer"></param>
             <param name="broker_name">交换机名称</param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.Soa.Sp.Extensions.RPCServerExtensions.UseRpc(YiDian.Soa.Sp.SoaServiceContainerBuilder,YiDian.EventBus.MQ.Rpc.RpcServerConfig)">
+            <summary>
+            在指定的MQ上创建一个RPC服务器
+            </summary>
+            <param name="builder"></param>
+            <param name="config"></param>
+            <param name="seralize"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.Soa.Sp.Extensions.RPCServerExtensions.UseMqRpcClient(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.String,System.String)">
+            <summary>
+            在指定的MQ上创建RPC客户端工厂
+            </summary>
+            <param name="builder"></param>
+            <param name="clientName"></param>
+            <param name="mqname"></param>
             <returns></returns>
         </member>
         <member name="M:System.JsonHelper.UseUtcKindDataParse">

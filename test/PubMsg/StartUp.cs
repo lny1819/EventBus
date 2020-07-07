@@ -25,7 +25,7 @@ namespace ConsoleApp
                  .UseDirectEventBus()
                  .UseTopicEventBus();
 #if DEBUG
-            soa.AutoCreateAppEvents("userinfo,es_quote");
+            //soa.AutoCreateAppEvents("userinfo,es_quote");
 #endif
         }
         public void ConfigContainer(ContainerBuilder builder)
@@ -40,7 +40,7 @@ namespace ConsoleApp
             //var s_2 = Convert.ToBase64String(ws.GetBytes().ToArray());
             //var commodity3 = new CommodityInfo();
             //commodity3.BytesTo(ref read2);
-            var s_quoteinfo = "aQAAAAMCBQQDBQcCAgAAAAoCAAAACwEAAAAMAAAAAA4AAAAABwAAAAAAAAAACAAAAAAAAAAACXsUrkfheoQ/AAQAAABIS0VYAQAAAAADAwAAAEtTTwQAAAAABQAAAAAGAAAAAA0AAAA=";
+            var s_quoteinfo = "aQAAAAMCBQQDBQcCAgAAAAoCAAAACwEAAAAMAAAAAA4AAAAABwAAAAAAAAAACAAAAAAAAAAACXsUrkfheoQ/AAQAAABIS0VYAQAAAAADAwAAAEhOUAQAAAAABQAAAAAGAAAAAA0AAAA=";
             var bytes = Convert.FromBase64String(s_quoteinfo);
             var read = new ReadStream(bytes);
             var commodity = new CommodityInfo();

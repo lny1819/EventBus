@@ -386,6 +386,7 @@ namespace YiDian.EventBus.MQ
         }
         public static uint GetStringSize(string value, Encoding encoding)
         {
+            if (string.IsNullOrEmpty(value)) return 4;
             var l = (uint)encoding.GetByteCount(value);
             return l + 4;
         }

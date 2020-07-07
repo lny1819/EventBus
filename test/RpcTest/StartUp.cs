@@ -46,10 +46,14 @@ namespace RpcTest
             var client = fac.Create("test", 10);
 
             var r1 = client.Call<string>("/home/getid?a=1&b=2");
-            Thread.Sleep(10000);
-            r1 = client.Call<string>("/home/getid?a=1&b=2");
-            r1 = client.Call<string>("/home/getid?a=1&b=2");
-            var r2 = client.Call<Exchange>("/home/GetExchange3");
+            Thread.Sleep(3000);
+            for (var i = 0; i < 10000; i++)
+            {
+                r1 = client.Call<string>("/home/getid?a=1&b=2");
+                r1 = client.Call<string>("/home/getid?a=1&b=2");
+                var r2 = client.Call<Exchange>("/home/GetExchange");
+                Thread.Sleep(1);
+            }
             return server;
         }
     }

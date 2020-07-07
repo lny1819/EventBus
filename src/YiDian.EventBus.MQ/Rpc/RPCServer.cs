@@ -64,7 +64,7 @@ namespace YiDian.EventBus.MQ.Rpc
             if (!_conn.IsConnected) _conn.TryConnect();
             var channel = _conn.CreateModel();
             channel.ExchangeDeclare(BROKER_NAME, "direct", true, false);
-            channel.BasicQos(0, 1, false);
+            channel.BasicQos(0, Configs.Fetchout, false);
             channel.QueueDeclare(queue: Configs.ApplicationId, durable: false, exclusive: false, autoDelete: false, arguments: null);
             channel.QueueBind(Configs.ApplicationId, BROKER_NAME, Configs.ApplicationId, null);
             _consumerChannel = channel;
@@ -75,7 +75,6 @@ namespace YiDian.EventBus.MQ.Rpc
             var consumer = new EventingBasicConsumer(_consumerChannel);
             consumer.Received += (model, ea) =>
             {
-                _qps.Add("consumer");
                 ProcessEvent(ea);
             };
             _consumerChannel.BasicConsume(queue: Configs.ApplicationId, autoAck: true, consumer: consumer);
@@ -87,16 +86,16 @@ namespace YiDian.EventBus.MQ.Rpc
             _qps.Add("r");
             var header = new HeadersAnalysis(ea.Body);
             var clienttime = header.ClientDate;
-            var span = Math.Abs((DateTime.Now - clienttime).TotalSeconds);
-            if (Configs.Delay != 0 && span > Configs.Delay)
+            var span = Math.Abs((DateTime.Now - clienttime).TotalMilliseconds);
+            if (Configs.Delay != 0 && span > Configs.Delay * 1000)
             {
-                ReplayTo(ea, 402, $"请求已超时 请求 {ea.RoutingKey} 耗时 {span.ToString()}ms", ContentType.Text);
+                ReplayTo(clienttime, ea, 402, $"请求已超时 请求 {ea.RoutingKey} 耗时 {span.ToString()}ms", ContentType.Text);
                 return;
             }
             var action = _routing.Route(header.Url.AbsolutePath);
             if (action == null)
             {
-                ReplayTo(ea, 401, "未找到匹配请求的控制器或方法", ContentType.Text);
+                ReplayTo(clienttime, ea, 401, "未找到匹配请求的控制器或方法", ContentType.Text);
                 return;
             }
             var reques = new Request()
@@ -125,7 +124,7 @@ namespace YiDian.EventBus.MQ.Rpc
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ReplayTo(BasicDeliverEventArgs ea, int state, string msg, ContentType type, object obj = null, Type objType = null)
+        private void ReplayTo(DateTime intime, BasicDeliverEventArgs ea, int state, string msg, ContentType type, object obj = null, Type objType = null)
         {
             var replyTo = ea.BasicProperties.ReplyTo;
             var replyTold = ea.BasicProperties.CorrelationId;
@@ -139,6 +138,10 @@ namespace YiDian.EventBus.MQ.Rpc
             write.WriteString("content-type:" + (type == ContentType.YDData ? "yddata" : (type == ContentType.Json ? "json" : "text")));
             write.WriteContent(type, obj, objType);
             _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: write.GetDatas());
+
+            var now = DateTime.Now;
+            var ms = (now - intime).TotalMilliseconds;
+            _qps.Set("c", (int)ms);
         }
 
         readonly static DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -189,16 +192,13 @@ namespace YiDian.EventBus.MQ.Rpc
                 }
                 else res = ((ActionResult)obj).GetResult();
                 var type = req.Action.ActionResultType.GetInterface(nameof(IMQEvent)) != null ? ContentType.YDData : ContentType.Text;
-                ReplayTo(ea, 200, "", type, res, req.Action.ActionResultType);
+                ReplayTo(req.InTime, ea, 200, "", type, res, req.Action.ActionResultType);
             }
             catch (Exception ex)
             {
-                ReplayTo(ea, 500, ex.Message, ContentType.Text);
+                ReplayTo(req.InTime, ea, 500, ex.Message, ContentType.Text);
                 _logger.LogError(ex.ToString());
             }
-            var now = DateTime.Now;
-            var ms = (now - req.InTime).TotalMilliseconds;
-            _qps.Set("c", (int)ms);
             scope?.Dispose();
         }
 

@@ -382,7 +382,7 @@ namespace YiDian.EventBus.MQ
         }
         public ReadOnlyMemory<byte> GetBytes()
         {
-            return new ReadOnlyMemory<byte>(orginal, start, offset);
+            return new ReadOnlyMemory<byte>(orginal, start, offset + 1);
         }
         public static uint GetStringSize(string value, Encoding encoding)
         {

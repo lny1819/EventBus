@@ -11,15 +11,17 @@ namespace YiDian.EventBus.MQ
     {
         readonly byte[] orginal;
         int offset;
+        int start;
         public WriteStream(uint size)
         {
-            offset = 0;
+            start = offset = 0;
             orginal = new byte[size];
             Encoding = Encoding.UTF8;
         }
         public WriteStream(byte[] bs, int index)
         {
-            offset = index;
+            start = index;
+            offset = 0;
             orginal = bs;
             Encoding = Encoding.UTF8;
         }
@@ -380,7 +382,7 @@ namespace YiDian.EventBus.MQ
         }
         public ReadOnlyMemory<byte> GetBytes()
         {
-            return new ReadOnlyMemory<byte>(orginal, 0, offset);
+            return new ReadOnlyMemory<byte>(orginal, start, offset);
         }
         public static uint GetStringSize(string value, Encoding encoding)
         {

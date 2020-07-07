@@ -15,6 +15,7 @@ namespace YiDian.EventBus.MQ.Rpc
         readonly ReadOnlyMemory<byte> orginal;
         readonly Dictionary<string, string> dic;
         int offset = 0;
+        int bodyoffset = 0;
         public HeadersAnalysis(ReadOnlyMemory<byte> datas)
         {
             orginal = datas;
@@ -87,8 +88,12 @@ namespace YiDian.EventBus.MQ.Rpc
             var length = BitConverter.ToInt32(orginal.Slice(offset, 4).Span);
             offset += 4;
             ContentLength = length;
+            bodyoffset = offset;
         }
-
+        public ReadOnlyMemory<byte> GetBodys()
+        {
+            return orginal.Slice(bodyoffset, (int)ContentLength);
+        }
         const byte a_r = (byte)'\r';
         internal bool ReadLine(out string value)
         {

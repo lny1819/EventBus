@@ -30,7 +30,6 @@ namespace YiDian.EventBus.MQ.Rpc.Route
                     {
                         if (!m.ReturnType.IsGenericType || m.ReturnType.GenericTypeArguments.Length == 0 || m.ReturnType.GetGenericTypeDefinition() != typeof(ActionResult<>)) continue;
                         var sb = new StringBuilder();
-                        sb.Append(appId);
                         sb.Append('/');
                         sb.Append(typename.Substring(0, length));
                         sb.Append('/');
@@ -40,7 +39,7 @@ namespace YiDian.EventBus.MQ.Rpc.Route
                         {
                             ControllerType = t,
                             Method = FastInvoke.GetMethodInvoker(m),
-                            AaguType = m.GetParameters(),
+                            InAags = m.GetParameters(),
                             ReturnType = m.ReturnType
                         };
                         actionsDic.Add(key, info);
@@ -49,27 +48,22 @@ namespace YiDian.EventBus.MQ.Rpc.Route
             }
         }
 
-        public RouteAction Route(string routingKey, string appid, out string msg)
+        public ActionInfo Route(string routingKey)
         {
             if (!actionsDic.TryGetValue(routingKey, out ActionInfo action))
             {
-                msg = NOT_FOUND;
                 return null;
             };
-            msg = string.Empty;
-            return new RouteAction(action)
-            {
-                RequestUri = routingKey
-            };
+            return action;
         }
     }
 
 
-    internal class ActionInfo
+    public class ActionInfo
     {
         public Type ControllerType { get; set; }
         public FastInvokeHandler Method { get; set; }
         public Type ReturnType { get; set; }
-        public ParameterInfo[] AaguType { get; set; }
+        public ParameterInfo[] InAags { get; set; }
     }
 }

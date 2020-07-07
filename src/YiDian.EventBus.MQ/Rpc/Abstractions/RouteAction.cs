@@ -10,10 +10,9 @@ namespace YiDian.EventBus.MQ.Rpc.Abstractions
         {
             ControllerType = info.ControllerType;
             CurrentMethod = info.Method;
-            InArgumentType = info.AaguType;
+            InArgumentType = info.InAags;
             OutArgumentType = info.ReturnType;
         }
-        public string RequestUri { get; set; }
         public Type ControllerType { get; }
         internal FastInvokeHandler CurrentMethod { get; }
         public ParameterInfo[] InArgumentType { get; }

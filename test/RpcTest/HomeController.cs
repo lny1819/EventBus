@@ -1,4 +1,5 @@
-﻿//using EventModels.userinfo;
+﻿using EventModels.depthdata;
+using EventModels.es_quote;
 using YiDian.EventBus.MQ.Rpc;
 using YiDian.EventBus.MQ.Rpc.Abstractions;
 
@@ -10,13 +11,21 @@ namespace RpcTest
         {
             return a + b;
         }
-        //public ActionResult<RspUseAction> GetOrderAction(string orderId)
-        //{
-        //    return new RspUseAction()
-        //    {
-        //        Data = new RspUserOrderInfo() { Action = OrderActType.DELETE, Commodity = "HHI", ContractId = "2006", Exchange = "HKEX" },
-        //        ErrorCode = 0
-        //    };
-        //}
+        public ActionResult<Exchange> GetOrderAction(string orderId)
+        {
+            return new Exchange()
+            {
+                ExchangeName = "香港恒生期货交易所",
+                ExchangeNo = "HKEX"
+            };
+        }
+        public ActionResult<Exchange> GetOrderAction2([FromBody]TradeRecord rcd)
+        {
+            return new Exchange()
+            {
+                ExchangeName = "香港恒生期货交易所",
+                ExchangeNo = "HKEX"
+            };
+        }
     }
 }

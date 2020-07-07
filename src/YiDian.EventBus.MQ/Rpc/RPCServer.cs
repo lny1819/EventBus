@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using YiDian.Soa.Sp;
 using YiDian.EventBus.MQ.Rpc.Route;
 using YiDian.EventBus.MQ.Rpc.Abstractions;
+using System.Collections.Generic;
 
 namespace YiDian.EventBus.MQ.Rpc
 {
@@ -90,19 +91,20 @@ namespace YiDian.EventBus.MQ.Rpc
                 ReplayTo(ea, 402, $"请求已超时 请求 {ea.RoutingKey} 耗时 {span.ToString()}ms");
                 return;
             }
-            var action = _routing.Route(header.Url.AbsolutePath, Configs.ApplicationId, out string msg);
+            var action = _routing.Route(header.Url.AbsolutePath);
             if (action == null)
             {
-                ReplayTo(ea, 401, msg);
+                ReplayTo(ea, 401, "未找到匹配请求的控制器或方法");
                 return;
             }
             var reques = new Request()
             {
                 Headers = header.Headers,
                 Action = action,
-                QueryString = header.Url.Query,
+                Url = header.Url,
                 Seralize = CreateSeralize(header.ContentType, header.Encode),
-                ContentLength = header.ContentLength
+                ContentLength = header.ContentLength,
+                Body = header.GetBodys()
             };
             Excute(reques, ea);
             //_factory.StartNew(() => Excute(action, ea, stopwatch)).ContinueWith(x =>
@@ -146,39 +148,41 @@ namespace YiDian.EventBus.MQ.Rpc
         {
             return start.AddSeconds(timestamp).ToLocalTime();
         }
-        class Token
-        {
-            public RouteAction Action { get; set; }
-            public BasicDeliverEventArgs Eargs { get; set; }
-            public object Data { get; set; }
-            public DateTime InTime { get; set; }
-        }
         private void Excute(Request req, BasicDeliverEventArgs ea)
         {
-            //var route_action = req.Action;
-            //object invoke_data = null;
-            //if (route_action.InArgumentType != null) invoke_data = req.Seralize.DeserializeObject(ea.Body, route_action.InArgumentType);
-            //var token = new Token() { InTime = DateTime.Now, Action = route_action, Data = invoke_data, Eargs = ea };
-            //var action = token.Action;
-            //var argu = token.Data;
-            //var controller = GetController(token.Action, out ILifetimeScope scope);
-            //object res;
-            //if (argu != null) res = token.Action.CurrentMethod(controller, new object[] { argu });
-            //else res = action.CurrentMethod(controller, null);
-            //var t = typeof(ActionResult<>);
-            //if (res is ActionResult result)
-            //{
-            //    var obj = result.GetResult();
-            //    ReplayTo(token.Eargs, 0, "", obj, res.GetType());
-            //}
-            //else if (res is Task)
-            //{
-
-            //}
-            //scope?.Dispose();
+            var args = req.Url.Query.Substring(1).Split('&');
+            var dic = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var item in args)
+            {
+                var arr = item.Split('=');
+                dic.Add(arr[0], arr[1]);
+            }
+            object[] m_args = new object[req.Action.InAags.Length];
+            if (req.Action.InAags != null && req.Action.InAags.Length > 0)
+            {
+                for (var i = 0; i < req.Action.InAags.Length; i++)
+                {
+                    var p = req.Action.InAags[i];
+                    var list = p.GetCustomAttributes(typeof(FromBodyAttribute), false);
+                    if (list.Length <= 0)
+                    {
+                        if (dic.TryGetValue(p.Name, out string v)) m_args[i] = v;
+                    }
+                    else m_args[i] = ReadFromBody(req, p.ParameterType);
+                }
+            }
+            var controller = GetController(req.Action, out ILifetimeScope scope);
+            var obj = req.Action.Method(controller, m_args);
+            scope?.Dispose();
         }
 
-        private RpcController GetController(RouteAction action, out ILifetimeScope scope)
+        private object ReadFromBody(Request req, Type type)
+        {
+            var obj = req.Seralize.DeserializeObject(req.Body, type);
+            return obj;
+        }
+
+        private RpcController GetController(ActionInfo action, out ILifetimeScope scope)
         {
             scope = _autofac.BeginLifetimeScope(AUTOFAC_NAME);
             return scope.ResolveOptional(action.ControllerType) as RpcController;

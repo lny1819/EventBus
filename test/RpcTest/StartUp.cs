@@ -27,6 +27,9 @@ namespace RpcTest
                 ApplicationId = "test"
             })
             .UseMqRpcClient(Configuration["sysname"]);
+#if DEBUG
+            soa.AutoCreateAppEvents("es_quote,depthdata,useinfo");
+#endif
         }
         public void ConfigContainer(ContainerBuilder builder)
         {

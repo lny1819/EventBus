@@ -1,7 +1,6 @@
 ﻿using System;
-using YiDian.EventBus.MQ.Rpc;
 
-namespace YiDian.EventBus
+namespace YiDian.EventBus.MQ.Rpc
 {
     public interface IMQRpcClient
     {
@@ -14,5 +13,14 @@ namespace YiDian.EventBus
     public interface IRPCServer
     {
         string ServerId { get; }
+    }
+
+    [System.AttributeUsage(AttributeTargets.Parameter, Inherited = false, AllowMultiple = false)]
+    public sealed class FromBodyAttribute : Attribute
+    {
+        // This is a positional argument
+        public FromBodyAttribute()
+        {
+        }
     }
 }

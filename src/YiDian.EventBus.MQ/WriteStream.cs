@@ -53,7 +53,7 @@ namespace YiDian.EventBus.MQ
             {
                 fixed (byte* bPtr = &MemoryMarshal.GetReference(span))
                 {
-                    Encoding.GetBytes(cPtr, value.Length, bPtr, l);
+                    var a = Encoding.GetBytes(cPtr, value.Length, bPtr, l);
                 }
             }
             return (uint)l + 4;
@@ -378,11 +378,9 @@ namespace YiDian.EventBus.MQ
         {
             return obj.ToBytes(ref this);
         }
-        public byte[] GetBytes()
+        public ReadOnlyMemory<byte> GetBytes()
         {
-            var res = new byte[offset];
-            Array.Copy(orginal, res, offset);
-            return res;
+            return new ReadOnlyMemory<byte>(orginal, 0, offset);
         }
         public static uint GetStringSize(string value, Encoding encoding)
         {

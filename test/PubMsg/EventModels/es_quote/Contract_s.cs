@@ -4,49 +4,38 @@ using System.Collections.Generic;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.KeyAttribute;
-namespace EventModels.userinfo
+namespace EventModels.es_quote
 {
-    public partial class UserInsertOrder: IYiDianSeralize
+    public partial class Contract: IYiDianSeralize
     {
         public uint ToBytes(ref WriteStream stream)
         {
             uint size = 5;
             var span = stream.Advance(4);
-            stream.WriteByte(4);
-             size +=stream.WriteHeader(EventPropertyType.L_8,2);
-             size +=stream.WriteHeader(EventPropertyType.L_32,4);
-             size +=stream.WriteHeader(EventPropertyType.L_64,3);
-             size +=stream.WriteHeader(EventPropertyType.L_Str,6);
-             size +=stream.WriteIndex(14);
-             size +=stream.WriteByte(Locked ? (byte)1 : (byte)0);
-             size +=stream.WriteIndex(15);
-             size +=stream.WriteByte(IsCover ? (byte)1 : (byte)0);
-             size +=stream.WriteIndex(3);
-             size +=stream.WriteInt32((int)Side);
-             size +=stream.WriteIndex(4);
-             size +=stream.WriteInt32((int)TimeType);
-             size +=stream.WriteIndex(5);
-             size +=stream.WriteInt32((int)OrderType);
-             size +=stream.WriteIndex(12);
-             size +=stream.WriteUInt32(CommitSize);
+            stream.WriteByte(3);
+             size +=stream.WriteHeader(EventPropertyType.L_32,1);
+             size +=stream.WriteHeader(EventPropertyType.L_64,2);
+             size +=stream.WriteHeader(EventPropertyType.L_Str,7);
              size +=stream.WriteIndex(1);
-             size +=stream.WriteDouble(StopProfit);
+             size +=stream.WriteInt32((int)CommodityType);
+             size +=stream.WriteIndex(4);
+             size +=stream.WriteDouble(MarginValue);
+             size +=stream.WriteIndex(5);
+             size +=stream.WriteDouble(FreeValue);
+             size +=stream.WriteIndex(0);
+             size +=stream.WriteString(ExchangeNo);
              size +=stream.WriteIndex(2);
-             size +=stream.WriteDouble(StopLoss);
-             size +=stream.WriteIndex(11);
-             size +=stream.WriteDouble(CommitPrice);
+             size +=stream.WriteString(CommodityNo);
+             size +=stream.WriteIndex(3);
+             size +=stream.WriteString(InstrumentID);
              size +=stream.WriteIndex(6);
-             size +=stream.WriteString(Exchange);
+             size +=stream.WriteString(ContractExpDate);
              size +=stream.WriteIndex(7);
-             size +=stream.WriteString(Commodity);
+             size +=stream.WriteString(LastTradeDate);
              size +=stream.WriteIndex(8);
-             size +=stream.WriteString(Contract);
+             size +=stream.WriteString(FirstNoticeDate);
              size +=stream.WriteIndex(9);
-             size +=stream.WriteString(UserInfo);
-             size +=stream.WriteIndex(10);
-             size +=stream.WriteString(Account);
-             size +=stream.WriteIndex(13);
-             size +=stream.WriteString(FromPositionId);
+             size +=stream.WriteString(ContractName);
             BitConverter.TryWriteBytes(span, size);
             return size;
         }
@@ -58,8 +47,6 @@ namespace EventModels.userinfo
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 14){ Locked = stream.ReadByte() == 1;continue;}
-                    if (index == 15){ IsCover = stream.ReadByte() == 1;continue;}
                     stream.Advance(1);
                 }
             }
@@ -84,10 +71,7 @@ namespace EventModels.userinfo
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 3){ Side = (OrderDirection)stream.ReadInt32();continue;}
-                    if (index == 4){ TimeType = (OrderTimeType)stream.ReadInt32();continue;}
-                    if (index == 5){ OrderType = (OrderType)stream.ReadInt32();continue;}
-                    if (index == 12){ CommitSize = stream.ReadUInt32();continue;}
+                    if (index == 1){ CommodityType = (CommodityType)stream.ReadInt32();continue;}
                     stream.Advance(4);
                 }
             }
@@ -96,9 +80,8 @@ namespace EventModels.userinfo
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 1){ StopProfit = stream.ReadDouble();continue;}
-                    if (index == 2){ StopLoss = stream.ReadDouble();continue;}
-                    if (index == 11){ CommitPrice = stream.ReadDouble();continue;}
+                    if (index == 4){ MarginValue = stream.ReadDouble();continue;}
+                    if (index == 5){ FreeValue = stream.ReadDouble();continue;}
                     stream.Advance(8);
                 }
             }
@@ -107,12 +90,13 @@ namespace EventModels.userinfo
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 6){ Exchange = stream.ReadString();continue;}
-                    if (index == 7){ Commodity = stream.ReadString();continue;}
-                    if (index == 8){ Contract = stream.ReadString();continue;}
-                    if (index == 9){ UserInfo = stream.ReadString();continue;}
-                    if (index == 10){ Account = stream.ReadString();continue;}
-                    if (index == 13){ FromPositionId = stream.ReadString();continue;}
+                    if (index == 0){ ExchangeNo = stream.ReadString();continue;}
+                    if (index == 2){ CommodityNo = stream.ReadString();continue;}
+                    if (index == 3){ InstrumentID = stream.ReadString();continue;}
+                    if (index == 6){ ContractExpDate = stream.ReadString();continue;}
+                    if (index == 7){ LastTradeDate = stream.ReadString();continue;}
+                    if (index == 8){ FirstNoticeDate = stream.ReadString();continue;}
+                    if (index == 9){ ContractName = stream.ReadString();continue;}
                      var c = stream.ReadInt32();stream.Advance(c);
                 }
             }
@@ -136,7 +120,7 @@ namespace EventModels.userinfo
         }
         public uint BytesSize(Encoding encoding)
         {
-                var size=70+WriteStream.GetStringSize(Exchange,encoding)+WriteStream.GetStringSize(Commodity,encoding)+WriteStream.GetStringSize(Contract,encoding)+WriteStream.GetStringSize(UserInfo,encoding)+WriteStream.GetStringSize(Account,encoding)+WriteStream.GetStringSize(FromPositionId,encoding)+ 0;
+                var size=41+WriteStream.GetStringSize(ExchangeNo,encoding)+WriteStream.GetStringSize(CommodityNo,encoding)+WriteStream.GetStringSize(InstrumentID,encoding)+WriteStream.GetStringSize(ContractExpDate,encoding)+WriteStream.GetStringSize(LastTradeDate,encoding)+WriteStream.GetStringSize(FirstNoticeDate,encoding)+WriteStream.GetStringSize(ContractName,encoding)+ 0;
                 return size;
         }
     }

@@ -53,7 +53,7 @@ namespace YiDian.EventBus.MQ
 
         public string ConnectionName { get; }
         public abstract string BROKER_NAME { get; }
-        public abstract void Publish<T>(T @event, bool enableTransaction = false) where T : IMQEvent;
+        public abstract int Publish<T>(T @event, bool enableTransaction = false) where T : IMQEvent;
         public abstract string GetEventKeyFromRoutingKey(string routingKey);
         public abstract void Subscribe<T, TH>(string queueName)
             where T : IMQEvent
@@ -119,14 +119,14 @@ namespace YiDian.EventBus.MQ
         {
             Publish(@event, (x) => key, enableTransaction);
         }
-        protected void Publish<T>(T @event, Func<string, string> key_handler, bool enableTransaction = false) where T : IMQEvent
+        protected int Publish<T>(T @event, Func<string, string> key_handler, bool enableTransaction = false) where T : IMQEvent
         {
             var pubkey1 = _pub_sub.GetEventKey(@event.GetType());
             var pubkey2 = key_handler(pubkey1);
             if (string.IsNullOrEmpty(pubkey1) || string.IsNullOrEmpty(pubkey2))
             {
                 _logger.LogError($"can not find the publish key of type:{typeof(T).Name}");
-                return;
+                return 0;
             }
             try
             {
@@ -134,15 +134,16 @@ namespace YiDian.EventBus.MQ
                 {
                     lock (typeof(PublishPool))
                     {
-                        if (publishPool == null)
-                            publishPool = new PublishPool(_conn, __seralize, BROKER_NAME);
+                        if (publishPool == null) publishPool = new PublishPool(_conn, __seralize, BROKER_NAME);
                     }
                 }
-                publishPool.Send(@event, pubkey2, enableTransaction);
+                publishPool.Send(@event, pubkey2, enableTransaction, out int length);
+                return length;
             }
             catch (Exception ex)
             {
                 LogError(ex);
+                return 0;
             }
         }
         #endregion

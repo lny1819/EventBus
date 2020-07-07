@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Collections.Generic;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
@@ -103,9 +104,9 @@ namespace EventModels.userinfo
                 }
             }
         }
-        public uint BytesSize()
+        public uint BytesSize(Encoding encoding)
         {
-                var size=27+WriteStream.GetStringSize(ErrMsg)+Data.BytesSize()+ 0;
+                var size=27+WriteStream.GetStringSize(ErrMsg,encoding)+Data.BytesSize(encoding)+ 0;
                 return size;
         }
     }

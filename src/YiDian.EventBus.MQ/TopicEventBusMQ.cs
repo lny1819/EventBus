@@ -36,10 +36,10 @@ namespace YiDian.EventBus.MQ
             }
             Publish(item.Event, (x) => fix + x, item.Enable);
         }
-        public override void Publish<T>(T @event, bool enableTransaction = false)
+        public override int Publish<T>(T @event, bool enableTransaction = false)
         {
             var fix = GetPubKey(@event);
-            Publish(@event, (x) => fix + x, enableTransaction);
+            return Publish(@event, (x) => fix + x, enableTransaction);
         }
         public void PublishPrefix<T>(T @event, string prefix, bool enableTransaction = false) where T : IMQEvent
         {

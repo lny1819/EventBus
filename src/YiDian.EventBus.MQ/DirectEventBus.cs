@@ -56,9 +56,9 @@ namespace YiDian.EventBus.MQ
             return routingKey;
         }
 
-        public override void Publish<T>(T @event, bool enableTransaction = false)
+        public override int Publish<T>(T @event, bool enableTransaction = false)
         {
-            Publish(@event, (x) => x, enableTransaction);
+            return Publish(@event, (x) => x, enableTransaction);
         }
 
         public override void Subscribe<T, TH>(string queueName)

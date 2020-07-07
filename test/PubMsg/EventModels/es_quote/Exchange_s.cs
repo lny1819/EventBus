@@ -4,38 +4,20 @@ using System.Collections.Generic;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.KeyAttribute;
-namespace EventModels.userinfo
+namespace EventModels.es_quote
 {
-    public partial class RtnFillInfo: IYiDianSeralize
+    public partial class Exchange: IYiDianSeralize
     {
         public uint ToBytes(ref WriteStream stream)
         {
             uint size = 5;
             var span = stream.Advance(4);
-            stream.WriteByte(3);
-             size +=stream.WriteHeader(EventPropertyType.L_32,1);
-             size +=stream.WriteHeader(EventPropertyType.L_64,2);
-             size +=stream.WriteHeader(EventPropertyType.L_Str,7);
-             size +=stream.WriteIndex(3);
-             size +=stream.WriteUInt32(FillSize);
-             size +=stream.WriteIndex(4);
-             size +=stream.WriteDouble(FillPrice);
-             size +=stream.WriteIndex(6);
-             size +=stream.WriteDouble(UpperFeeValue);
+            stream.WriteByte(1);
+             size +=stream.WriteHeader(EventPropertyType.L_Str,2);
              size +=stream.WriteIndex(0);
-             size +=stream.WriteString(LocalOrderNo);
+             size +=stream.WriteString(ExchangeNo);
              size +=stream.WriteIndex(1);
-             size +=stream.WriteString(ServiceOrderNo);
-             size +=stream.WriteIndex(2);
-             size +=stream.WriteString(ServerMatchNo);
-             size +=stream.WriteIndex(5);
-             size +=stream.WriteString(TradeTime);
-             size +=stream.WriteIndex(7);
-             size +=stream.WriteString(Commodity);
-             size +=stream.WriteIndex(8);
-             size +=stream.WriteString(Contract);
-             size +=stream.WriteIndex(9);
-             size +=stream.WriteString(Exchange);
+             size +=stream.WriteString(ExchangeName);
             BitConverter.TryWriteBytes(span, size);
             return size;
         }
@@ -71,7 +53,6 @@ namespace EventModels.userinfo
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 3){ FillSize = stream.ReadUInt32();continue;}
                     stream.Advance(4);
                 }
             }
@@ -80,8 +61,6 @@ namespace EventModels.userinfo
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 4){ FillPrice = stream.ReadDouble();continue;}
-                    if (index == 6){ UpperFeeValue = stream.ReadDouble();continue;}
                     stream.Advance(8);
                 }
             }
@@ -90,13 +69,8 @@ namespace EventModels.userinfo
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 0){ LocalOrderNo = stream.ReadString();continue;}
-                    if (index == 1){ ServiceOrderNo = stream.ReadString();continue;}
-                    if (index == 2){ ServerMatchNo = stream.ReadString();continue;}
-                    if (index == 5){ TradeTime = stream.ReadString();continue;}
-                    if (index == 7){ Commodity = stream.ReadString();continue;}
-                    if (index == 8){ Contract = stream.ReadString();continue;}
-                    if (index == 9){ Exchange = stream.ReadString();continue;}
+                    if (index == 0){ ExchangeNo = stream.ReadString();continue;}
+                    if (index == 1){ ExchangeName = stream.ReadString();continue;}
                      var c = stream.ReadInt32();stream.Advance(c);
                 }
             }
@@ -120,7 +94,7 @@ namespace EventModels.userinfo
         }
         public uint BytesSize(Encoding encoding)
         {
-                var size=41+WriteStream.GetStringSize(LocalOrderNo,encoding)+WriteStream.GetStringSize(ServiceOrderNo,encoding)+WriteStream.GetStringSize(ServerMatchNo,encoding)+WriteStream.GetStringSize(TradeTime,encoding)+WriteStream.GetStringSize(Commodity,encoding)+WriteStream.GetStringSize(Contract,encoding)+WriteStream.GetStringSize(Exchange,encoding)+ 0;
+                var size=9+WriteStream.GetStringSize(ExchangeNo,encoding)+WriteStream.GetStringSize(ExchangeName,encoding)+ 0;
                 return size;
         }
     }

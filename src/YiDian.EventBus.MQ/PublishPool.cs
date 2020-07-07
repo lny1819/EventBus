@@ -30,7 +30,7 @@ namespace YiDian.EventBus.MQ
             if (_pubChannel2 != null) _pubChannel2.Dispose();
         }
 
-        internal void Send<T>(T @event, string pubkey, bool enableTransaction) where T : IMQEvent
+        internal void Send<T>(T @event, string pubkey, bool enableTransaction, out int length) where T : IMQEvent
         {
             //IModel channel = null;
             //var index = Interlocked.Increment(ref _index) % 2;
@@ -38,6 +38,7 @@ namespace YiDian.EventBus.MQ
             //if (index == 0) channel = _pubChannel2;
             //if (channel == null) return;
             var data = __seralize.Serialize(@event);
+            length = data.Length;
             _pubChannel2.BasicPublish(exchange: BROKER_NAME,
                              routingKey: pubkey,
                              basicProperties: null,

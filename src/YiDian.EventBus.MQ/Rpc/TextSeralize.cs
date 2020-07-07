@@ -7,7 +7,7 @@ namespace YiDian.EventBus.MQ.Rpc
 {
     public class TextSeralize : IEventSeralize
     {
-        Encoding encoding;
+        readonly Encoding encoding;
         public TextSeralize(Encoding encoding)
         {
             this.encoding = encoding;
@@ -18,12 +18,12 @@ namespace YiDian.EventBus.MQ.Rpc
             return encoding.GetString(data.Span);
         }
 
-        public byte[] Serialize<T>(T @event)
+        public ReadOnlyMemory<byte> Serialize<T>(T @event)
         {
             return encoding.GetBytes(@event.ToString());
         }
 
-        public byte[] Serialize(object @event, Type type)
+        public ReadOnlyMemory<byte> Serialize(object @event, Type type)
         {
             return encoding.GetBytes(@event.ToString());
         }

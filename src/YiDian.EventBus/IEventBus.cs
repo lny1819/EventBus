@@ -18,7 +18,7 @@ namespace YiDian.EventBus
         /// <typeparam name="T"></typeparam>
         /// <param name="event"></param>
         /// <param name="enableTransaction"></param>
-        void Publish<T>(T @event, bool enableTransaction = false) where T : IMQEvent;
+        int Publish<T>(T @event, bool enableTransaction = false) where T : IMQEvent;
         /// <summary>
         /// 自定义路由键发送消息
         /// </summary>

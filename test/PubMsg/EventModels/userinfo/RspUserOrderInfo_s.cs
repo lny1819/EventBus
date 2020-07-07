@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Collections.Generic;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
@@ -117,9 +118,9 @@ namespace EventModels.userinfo
                 }
             }
         }
-        public uint BytesSize()
+        public uint BytesSize(Encoding encoding)
         {
-                var size=45+WriteStream.GetStringSize(LocalOrderNo)+WriteStream.GetStringSize(Exchange)+WriteStream.GetStringSize(ContractId)+WriteStream.GetStringSize(Commodity)+WriteStream.GetStringSize(ServiceNo)+ 0;
+                var size=45+WriteStream.GetStringSize(LocalOrderNo,encoding)+WriteStream.GetStringSize(Exchange,encoding)+WriteStream.GetStringSize(ContractId,encoding)+WriteStream.GetStringSize(Commodity,encoding)+WriteStream.GetStringSize(ServiceNo,encoding)+ 0;
                 return size;
         }
     }

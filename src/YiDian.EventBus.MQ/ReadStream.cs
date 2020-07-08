@@ -190,21 +190,23 @@ namespace YiDian.EventBus.MQ
             Advance(count);
             return span;
         }
-        public T[] ReadArray<T>() where T : IYiDianSeralize, new()
+        public object ReadArray(Type type)
         {
             var count = ReadInt32();
-            var arrs = new T[count];
+            var arrs = (IList<object>)Activator.CreateInstance(type.MakeArrayType(), new object[] { count });
             for (var i = 0; i < count; i++)
             {
-                arrs[i] = ReadEventObj<T>();
+                arrs[i] = ReadEventObj(type);
             }
             return arrs;
         }
-        public T ReadEventObj<T>() where T : IYiDianSeralize, new()
+        public object ReadEventObj(Type type)
         {
-            var t = new T();
-            t.BytesTo(this);
-            return t;
+            var constructor = type.GetConstructor(Type.EmptyTypes);
+            var obj = constructor.Invoke(null) as IYiDianSeralize;
+            var read = new ReadStream(orginal.Slice(Offset));
+            obj.BytesTo(read);
+            return obj;
         }
         public string ReadString()
         {

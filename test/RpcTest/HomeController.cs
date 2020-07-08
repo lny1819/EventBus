@@ -41,6 +41,14 @@ namespace RpcTest
                 new Contract(){ CommodityNo="HSI", ExchangeNo="HKEX", InstrumentID="2003"}
             };
         }
+        public ActionResult<List<string>> GetX1()
+        {
+            return new List<string>() { "a", "b", "c" };
+        }
+        public ActionResult<List<int>> GetIds()
+        {
+            return new List<int>() { 1, 2, 3 };
+        }
         public ActionResult<Exchange> GetOrderAction2([FromBody]TradeRecord rcd)
         {
             return new Exchange()

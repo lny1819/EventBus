@@ -3,6 +3,7 @@ using EventModels.es_quote;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using YiDian.EventBus;
@@ -45,7 +46,9 @@ namespace RpcTest
             var fac = sp.GetService<IRpcClientFactory>();
             var client = fac.Create("test", 10);
 
-            var r3 = client.Call<CoreInfo>("/home/GetContracts");
+            var r3 = client.Call<Contract[]>("/home/GetContracts");
+            var r2 = client.Call<string[]>("/home/GetX1");
+            var r1 = client.Call<int[]>("/home/GetIds");
             return server;
         }
     }

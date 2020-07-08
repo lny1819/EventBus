@@ -22,7 +22,7 @@ namespace YiDian.EventBus.MQ
                 var obj = constructor.Invoke(null) as IYiDianSeralize;
                 if (obj == null) throw new ArgumentNullException("the type " + type.Name + " can not be convert as " + nameof(IYiDianSeralize));
                 var readstream = new ReadStream(data) { Encoding = encoding };
-                obj.BytesTo(ref readstream);
+                obj.BytesTo(readstream);
                 return obj;
             }
             catch (Exception)
@@ -51,7 +51,7 @@ namespace YiDian.EventBus.MQ
             if (!(obj is IMQEvent)) throw new ArgumentException(nameof(obj), "event must instance of IMQEvent");
             if (!(obj is IYiDianSeralize seralize)) throw new ArgumentException(nameof(obj), "event must instance of IYiDianSeralize");
             var write = new WriteStream(2000) { Encoding = encoding };
-            seralize.ToBytes(ref write);
+            seralize.ToBytes(write);
             if (type.Name.ToLower() == "CommodityInfo".ToLower()) Console.Write(write.Length + " ");
             return write.GetBytes();
         }
@@ -61,7 +61,7 @@ namespace YiDian.EventBus.MQ
             if (!(obj is IMQEvent)) throw new ArgumentException(nameof(obj), "event must instance of IMQEvent");
             if (!(obj is IYiDianSeralize seralize)) throw new ArgumentException(nameof(obj), "event must instance of IYiDianSeralize");
             var write = new WriteStream(bs, offset) { Encoding = encoding };
-            return (int)seralize.ToBytes(ref write);
+            return (int)seralize.ToBytes(write);
         }
     }
 }

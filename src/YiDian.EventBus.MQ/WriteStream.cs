@@ -13,23 +13,23 @@ namespace YiDian.EventBus.MQ
         int start;
         public WriteStream(uint size)
         {
-            start = Legnth = 0;
+            start = Length = 0;
             orginal = new byte[size];
             Encoding = Encoding.UTF8;
         }
-        public int Legnth { get; private set; }
+        public int Length { get; private set; }
         public WriteStream(byte[] bs, int index)
         {
             start = index;
-            Legnth = 0;
+            Length = 0;
             orginal = bs;
             Encoding = Encoding.UTF8;
         }
         public Encoding Encoding { get; set; }
         public Span<byte> Advance(int length)
         {
-            var span = new Span<byte>(orginal, Legnth, length);
-            Legnth += length;
+            var span = new Span<byte>(orginal, Length, length);
+            Length += length;
             return span;
         }
         public uint WriteHeader(EventPropertyType type, byte length)
@@ -378,11 +378,11 @@ namespace YiDian.EventBus.MQ
         }
         public uint WriteEventObj(IYiDianSeralize obj)
         {
-            return obj.ToBytes(ref this);
+            return obj.ToBytes(this);
         }
         public ReadOnlyMemory<byte> GetBytes()
         {
-            return new ReadOnlyMemory<byte>(orginal, start, Legnth);
+            return new ReadOnlyMemory<byte>(orginal, start, Length);
         }
         public static uint GetStringSize(string value, Encoding encoding)
         {

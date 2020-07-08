@@ -39,12 +39,13 @@ namespace YiDian.EventBus.MQ
             //if (channel == null) return;
             var data = __seralize.Serialize(@event);
             length = data.Length;
-            var batch = _pubChannel2.CreateBasicPublishBatch();
-            batch.Add(BROKER_NAME, pubkey, false, null, data.ToArray());
-            //_pubChannel2.BasicPublish(exchange: BROKER_NAME,
-            //                 routingKey: pubkey,
-            //                 basicProperties: null,
-            //                 body: data);
+            //var batch = _pubChannel2.CreateBasicPublishBatch();
+            //batch.Add(BROKER_NAME, pubkey, false, null, data.ToArray());
+            //batch.Publish();
+            _pubChannel2.BasicPublish(exchange: BROKER_NAME,
+                             routingKey: pubkey,
+                             basicProperties: null,
+                             body: data.ToArray());
         }
         //void CreatePublishChannel1()
         //{

@@ -137,7 +137,7 @@ namespace YiDian.EventBus.MQ.Rpc
             write.WriteString("msg:" + msg);
             write.WriteString("content-type:" + (type == ContentType.YDData ? "yddata" : (type == ContentType.Json ? "json" : "text")));
             write.WriteContent(type, obj, objType);
-            _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: write.GetDatas());
+            _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: write.GetDatas().ToArray());
 
             var now = DateTime.Now;
             var ms = (now - intime).TotalMilliseconds;

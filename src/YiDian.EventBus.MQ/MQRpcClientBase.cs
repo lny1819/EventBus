@@ -77,7 +77,7 @@ namespace YiDian.EventBus.MQ
             var basicProperties = _consumerchannel.CreateBasicProperties();
             basicProperties.CorrelationId = callmeta.MethodId.ToString();
             basicProperties.ReplyTo = _clientName;
-            _consumerchannel.BasicPublish(BROKER_NAME, str, basicProperties, readOnlyMemory);
+            _consumerchannel.BasicPublish(BROKER_NAME, str, basicProperties, readOnlyMemory.ToArray());
             return callmeta.Task;
         }
 

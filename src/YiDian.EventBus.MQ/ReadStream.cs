@@ -16,6 +16,10 @@ namespace YiDian.EventBus.MQ
             DataSize = BitConverter.ToInt32(orginal.Slice(0, 4).Span);
             StreamLength = memory.Length;
         }
+        public byte[] GetOrginalDatas()
+        {
+            return orginal.ToArray();
+        }
         public int DataSize { get; }
         public Encoding Encoding { get; set; }
         public int StreamLength { get; }

@@ -6,18 +6,22 @@ using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.KeyAttribute;
 namespace EventModels.es_quote
 {
-    public partial class Exchange: IYiDianSeralize
+    public partial class CoreInfo: IYiDianSeralize
     {
         public uint ToBytes(WriteStream stream)
         {
             uint size = 5;
             var span = stream.Advance(4);
             stream.WriteByte(1);
-             size +=stream.WriteHeader(EventPropertyType.L_Str,2);
+             size +=stream.WriteHeader(EventPropertyType.L_Str,4);
              size +=stream.WriteIndex(0);
-             size +=stream.WriteString(ExchangeNo);
+             size +=stream.WriteString(AccountNo);
              size +=stream.WriteIndex(1);
-             size +=stream.WriteString(ExchangeName);
+             size +=stream.WriteString(Password);
+             size +=stream.WriteIndex(2);
+             size +=stream.WriteString(Address);
+             size +=stream.WriteIndex(3);
+             size +=stream.WriteString(CoreName);
             BitConverter.TryWriteBytes(span, size);
             return size;
         }
@@ -69,8 +73,10 @@ namespace EventModels.es_quote
                 for (var i = 0; i < count; i++)
                 {
                     var index = stream.ReadByte();
-                    if (index == 0){ ExchangeNo = stream.ReadString();continue;}
-                    if (index == 1){ ExchangeName = stream.ReadString();continue;}
+                    if (index == 0){ AccountNo = stream.ReadString();continue;}
+                    if (index == 1){ Password = stream.ReadString();continue;}
+                    if (index == 2){ Address = stream.ReadString();continue;}
+                    if (index == 3){ CoreName = stream.ReadString();continue;}
                      var c = stream.ReadInt32();stream.Advance(c);
                 }
             }
@@ -94,7 +100,7 @@ namespace EventModels.es_quote
         }
         public uint BytesSize(Encoding encoding)
         {
-                var size=9+WriteStream.GetStringSize(ExchangeNo,encoding)+WriteStream.GetStringSize(ExchangeName,encoding)+ 0;
+                var size=11+WriteStream.GetStringSize(AccountNo,encoding)+WriteStream.GetStringSize(Password,encoding)+WriteStream.GetStringSize(Address,encoding)+WriteStream.GetStringSize(CoreName,encoding)+ 0;
                 return size;
         }
     }

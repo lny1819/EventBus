@@ -15,6 +15,7 @@ namespace RpcTest
         }
         public ActionResult<Exchange> GetExchange()
         {
+            return null;
             return new Exchange()
             {
                 ExchangeName = "香港恒生期货交易所",

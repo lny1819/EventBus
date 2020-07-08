@@ -15,6 +15,7 @@ namespace YiDian.EventBus.MQ
 
         public object DeserializeObject(ReadOnlyMemory<byte> data, Type type)
         {
+            if (data.Length == 0) return null;
             var constructor = type.GetConstructor(Type.EmptyTypes);
             var obj = constructor.Invoke(null) as IYiDianSeralize;
             if (obj == null) throw new ArgumentNullException("the type " + type.Name + " can not be convert as " + nameof(IYiDianSeralize));

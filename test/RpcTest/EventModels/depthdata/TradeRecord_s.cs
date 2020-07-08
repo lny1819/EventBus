@@ -8,7 +8,7 @@ namespace EventModels.depthdata
 {
     public partial class TradeRecord: IYiDianSeralize
     {
-        public uint ToBytes(ref WriteStream stream)
+        public uint ToBytes(WriteStream stream)
         {
             uint size = 5;
             var span = stream.Advance(4);
@@ -40,7 +40,7 @@ namespace EventModels.depthdata
             BitConverter.TryWriteBytes(span, size);
             return size;
         }
-        public void BytesTo(ref ReadStream stream)
+        public void BytesTo(ReadStream stream)
         {
             var headers = stream.ReadHeaders();
             if (headers.TryGetValue(EventPropertyType.L_8, out byte count))

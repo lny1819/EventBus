@@ -182,7 +182,7 @@ namespace YiDian.EventBus.MQ.Rpc
             try
             {
                 var obj = req.Action.Method(controller, m_args);
-                if (obj == null) return;
+                if (obj == null) obj = new ActionResult<object>(null);
                 object res;
                 if (req.Action.IsTask)
                 {

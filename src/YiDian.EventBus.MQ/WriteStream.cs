@@ -28,7 +28,7 @@ namespace YiDian.EventBus.MQ
         public Encoding Encoding { get; set; }
         public Span<byte> Advance(int length)
         {
-            var span = new Span<byte>(orginal, Length, length);
+            var span = new Span<byte>(orginal, start + Length, length);
             Length += length;
             return span;
         }

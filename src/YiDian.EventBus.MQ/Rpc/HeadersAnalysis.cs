@@ -19,7 +19,7 @@ namespace YiDian.EventBus.MQ.Rpc
         {
             orginal = datas;
             Headers = new Dictionary<string, string>();
-            Encode = Encoding.ASCII;
+            Encode = Encoding.UTF8;
             Do();
         }
         public DateTime ClientDate { get; private set; }

@@ -15,11 +15,21 @@ namespace RpcTest
         }
         public ActionResult<Exchange> GetExchange()
         {
-            return null;
             return new Exchange()
             {
                 ExchangeName = "香港恒生期货交易所",
                 ExchangeNo = "HKEX"
+            };
+        }
+        /// <summary>
+        /// 获取Core
+        /// </summary>
+        /// <returns></returns>
+        public ActionResult<CoreInfo> GetCore()
+        {
+            return new CoreInfo()
+            {
+                AccountNo = "zs"
             };
         }
         public ActionResult<Exchange> GetOrderAction2([FromBody]TradeRecord rcd)

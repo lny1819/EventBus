@@ -15,9 +15,22 @@ namespace YiDian.EventBus.MQ
             Encoding = Encoding.UTF8;
         }
         public Encoding Encoding { get; set; }
+        public Dictionary<EventPropertyType, byte> ReadHeaders(out int total)
+        {
+            total = ReadInt32();
+            byte count = ReadByte();
+            var headers = new Dictionary<EventPropertyType, byte>(count);
+            for (var i = 0; i < count; i++)
+            {
+                var type = (EventPropertyType)ReadByte();
+                var c = ReadByte();
+                headers.Add(type, c);
+            }
+            return headers;
+        }
         public Dictionary<EventPropertyType, byte> ReadHeaders()
         {
-            var total = ReadInt32();
+            ReadInt32();
             byte count = ReadByte();
             var headers = new Dictionary<EventPropertyType, byte>(count);
             for (var i = 0; i < count; i++)

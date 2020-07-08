@@ -13,25 +13,15 @@ namespace YiDian.EventBus.MQ
             Offset = 0;
             orginal = memory;
             Encoding = Encoding.UTF8;
+            DataSize = BitConverter.ToInt32(orginal.Slice(0, 4).Span);
+            StreamLength = memory.Length;
         }
+        public int DataSize { get; }
         public Encoding Encoding { get; set; }
-        public int Length { get { return orginal.Length; } }
-        public Dictionary<EventPropertyType, byte> ReadHeaders(out int total)
-        {
-            total = ReadInt32();
-            byte count = ReadByte();
-            var headers = new Dictionary<EventPropertyType, byte>(count);
-            for (var i = 0; i < count; i++)
-            {
-                var type = (EventPropertyType)ReadByte();
-                var c = ReadByte();
-                headers.Add(type, c);
-            }
-            return headers;
-        }
+        public int StreamLength { get; }
         public Dictionary<EventPropertyType, byte> ReadHeaders()
         {
-            ReadInt32();
+            Advance(4);
             byte count = ReadByte();
             var headers = new Dictionary<EventPropertyType, byte>(count);
             for (var i = 0; i < count; i++)
@@ -43,6 +33,12 @@ namespace YiDian.EventBus.MQ
             return headers;
         }
         public int ReadInt32()
+        {
+            var i = BitConverter.ToInt32(orginal.Slice(Offset, 4).Span);
+            Advance(4);
+            return i;
+        }
+        public int ReReadInt32()
         {
             var i = BitConverter.ToInt32(orginal.Slice(Offset, 4).Span);
             Advance(4);

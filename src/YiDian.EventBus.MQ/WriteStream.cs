@@ -128,253 +128,206 @@ namespace YiDian.EventBus.MQ
             var f = BitConverter.TryWriteBytes(span, (ushort)value.Millisecond);
             return 11;
         }
-        public uint WriteArrayByte(IEnumerable<byte> value)
+        public uint WriteArrayByte(byte[] value)
         {
-            var count = value == null ? 0 : (uint)value.Count();
+            uint size = 4;
+            var count = value == null ? 0 : value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
-                WriteUInt32(0);
-                return 8;
+                return size;
             }
-            var span = Advance(4);
-            uint size = 0;
-            WriteUInt32(count);
-            var ider = value.GetEnumerator();
-            while (ider.MoveNext())
-            {
-                WriteByte(ider.Current);
-                size += 1;
-            }
-            BitConverter.TryWriteBytes(span, size);
-            return size + 8;
+            WriteInt32(count);
+            Buffer.BlockCopy(value, 0, orginal, Length + start, count);
+            Length += count;
+            return 4 + (uint)count;
         }
         public uint WriteArrayString(IEnumerable<string> value)
         {
-            var count = value == null ? 0 : (uint)value.Count();
+            uint size = 4;
+            var count = value == null ? 0 : value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
-                WriteUInt32(0);
-                return 8;
+                return size;
             }
-            var span = Advance(4);
-            uint size = 0;
-            WriteUInt32(count);
+            WriteInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
                 size += WriteString(ider.Current);
             }
-            BitConverter.TryWriteBytes(span, size);
-            return 8 + size;
+            return size;
         }
         public uint WriteArrayDate(IEnumerable<DateTime> value)
         {
-            var count = value == null ? 0 : (uint)value.Count();
+            uint size = 4;
+            var count = value == null ? 0 : value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
-                WriteUInt32(0);
-                return 8;
+                return size;
             }
-            var span = Advance(4);
-            uint size = 0;
-            WriteUInt32(count);
+            WriteInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
                 size += WriteDate(ider.Current);
             }
-            BitConverter.TryWriteBytes(span, size);
-            return 8 + size;
+            return size;
         }
         public uint WriteArrayBool(IEnumerable<bool> value)
         {
-            var count = value == null ? 0 : (uint)value.Count();
+            uint size = 4;
+            var count = value == null ? 0 : value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
-                WriteUInt32(0);
-                return 8;
+                return size;
             }
-            var span = Advance(4);
-            uint size = count;
-            WriteUInt32(count);
+            WriteInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
-                WriteByte(ider.Current ? (byte)1 : (byte)0);
+                size += WriteByte(ider.Current ? (byte)1 : (byte)0);
             }
-            BitConverter.TryWriteBytes(span, size);
-            return 8 + size;
+            return size;
         }
         public uint WriteArrayInt16(IEnumerable<short> value)
         {
-            var count = value == null ? 0 : (uint)value.Count();
+            uint size = 4;
+            var count = value == null ? 0 : value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
-                WriteUInt32(0);
-                return 8;
+                return size;
             }
-            var span = Advance(4);
-            int size = 0;
-            WriteUInt32(count);
+            WriteInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
-                WriteInt16(ider.Current);
-                size += 2;
+                size += WriteInt16(ider.Current);
             }
-            BitConverter.TryWriteBytes(span, size);
-            return 8 + (uint)size;
+            return size;
         }
         public uint WriteArrayUInt16(IEnumerable<ushort> value)
         {
-            var count = value == null ? 0 : (uint)value.Count();
+            uint size = 4;
+            var count = value == null ? 0 : value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
-                WriteUInt32(0);
-                return 8;
+                return size;
             }
-            var span = Advance(4);
-            int size = 0;
-            WriteUInt32(count);
+            WriteInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
-                WriteUInt16(ider.Current);
-                size += 2;
+                size += WriteUInt16(ider.Current);
             }
-            BitConverter.TryWriteBytes(span, size);
-            return 8 + (uint)size;
+            return size;
         }
         public uint WriteArrayInt32(IEnumerable<int> value)
         {
-            var count = value == null ? 0 : (uint)value.Count();
+            uint size = 4;
+            var count = value == null ? 0 : value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
-                WriteUInt32(0);
-                return 8;
+                return size;
             }
-            var span = Advance(4);
-            int size = 0;
-            WriteUInt32(count);
+            WriteInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
-                WriteInt32(ider.Current);
-                size += 4;
+                size += WriteInt32(ider.Current);
             }
-            BitConverter.TryWriteBytes(span, size);
-            return 8 + (uint)size;
+            return size;
         }
         public uint WriteArrayUInt32(IEnumerable<uint> value)
         {
-            var count = value == null ? 0 : (uint)value.Count();
+            uint size = 4;
+            var count = value == null ? 0 : value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
-                WriteUInt32(0);
-                return 8;
+                return size;
             }
-            var span = Advance(4);
-            int size = 0;
-            WriteUInt32(count);
+            WriteInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
-                WriteUInt32(ider.Current);
-                size += 4;
+                size += WriteUInt32(ider.Current);
             }
-            BitConverter.TryWriteBytes(span, size);
-            return 8 + (uint)size;
+            return size;
         }
         public uint WriteArrayInt64(IEnumerable<long> value)
         {
-            var count = value == null ? 0 : (uint)value.Count();
+            uint size = 4;
+            var count = value == null ? 0 : value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
-                WriteUInt32(0);
-                return 8;
+                return size;
             }
-            var span = Advance(4);
-            int size = 0;
-            WriteUInt32(count);
+            WriteInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
-                WriteInt64(ider.Current);
-                size += 8;
+                size += WriteInt64(ider.Current);
             }
-            BitConverter.TryWriteBytes(span, size);
-            return 8 + (uint)size;
+            return size;
         }
         public uint WriteArrayUInt64(IEnumerable<ulong> value)
         {
-            var count = value == null ? 0 : (uint)value.Count();
+            uint size = 4;
+            var count = value == null ? 0 : value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
-                WriteUInt32(0);
                 return 8;
             }
-            var span = Advance(4);
-            int size = 0;
-            WriteUInt32(count);
+            WriteInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
-                WriteUInt64(ider.Current);
-                size += 8;
+                size += WriteUInt64(ider.Current);
             }
-            BitConverter.TryWriteBytes(span, size);
-            return 8 + (uint)size;
+            return size;
         }
         public uint WriteArrayDouble(IEnumerable<double> value)
         {
-            var count = value == null ? 0 : (uint)value.Count();
+            uint size = 4;
+            var count = value == null ? 0 : value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
-                WriteUInt32(0);
-                return 8;
+                return size;
             }
-            var span = Advance(4);
-            int size = 0;
-            WriteUInt32(count);
+            WriteInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
-                WriteDouble(ider.Current);
-                size += 8;
+                size += WriteDouble(ider.Current);
             }
-            BitConverter.TryWriteBytes(span, size);
-            return 8 + (uint)size;
+            return size;
         }
         public uint WriteEventArray<T>(IEnumerable<T> value) where T : IYiDianSeralize
         {
-            var count = value == null ? 0 : (uint)value.Count();
+            uint size = 4;
+            var count = value == null ? 0 : value.Count();
             if (count == 0)
             {
                 WriteInt32(0);
-                WriteUInt32(0);
-                return 8;
+                return size;
             }
-            var span = Advance(4);
-            uint size = 0;
-            WriteUInt32(count);
+            WriteInt32(count);
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
                 size += WriteEventObj(ider.Current);
             }
-            BitConverter.TryWriteBytes(span, size);
-            return 8 + size;
+            return size;
         }
         public uint WriteEventObj(IYiDianSeralize obj)
         {
@@ -392,32 +345,32 @@ namespace YiDian.EventBus.MQ
         }
         public static uint GetArrayStringSize(IEnumerable<string> arr, Encoding encoding)
         {
+            uint size = 4;
             var count = arr == null ? 0 : (uint)arr.Count();
-            if (count == 0) return 8;
-            uint size = 0;
+            if (count == 0) return size;
             var ider = arr.GetEnumerator();
             while (ider.MoveNext())
             {
                 size += GetStringSize(ider.Current, encoding);
             }
-            return size + 8;
+            return size;
         }
         public static uint GetValueArraySize<T>(byte perszie, IEnumerable<T> arr)
         {
             var count = arr == null ? 0 : (uint)arr.Count();
-            return perszie * count + 8;
+            return perszie * count + 4;
         }
         public static uint GetArrayEventObjSize<T>(IEnumerable<T> arr, Encoding encoding) where T : IYiDianSeralize
         {
+            uint size = 4;
             var count = arr == null ? 0 : (uint)arr.Count();
-            if (count == 0) return 8;
-            uint size = 0;
+            if (count == 0) return size;
             var ider = arr.GetEnumerator();
             while (ider.MoveNext())
             {
                 size += ider.Current.BytesSize(encoding);
             }
-            return size + 8;
+            return size;
         }
     }
 }

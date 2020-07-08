@@ -191,7 +191,7 @@ namespace YiDian.EventBus.MQ.Rpc
                     res = ((ActionResult)req.Action.GetTaskResult(obj)).GetResult();
                 }
                 else res = ((ActionResult)obj).GetResult();
-                var type = req.Action.ActionResultType.GetInterface(nameof(IMQEvent)) != null ? ContentType.YDData : ContentType.Text;
+                var type = (req.Action.ActionResultType.IsValueType || req.Action.ActionResultType == typeof(string)) ? ContentType.Text : ContentType.YDData;
                 ReplayTo(req.InTime, ea, 200, "", type, res, req.Action.ActionResultType);
             }
             catch (Exception ex)

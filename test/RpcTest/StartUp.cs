@@ -45,16 +45,7 @@ namespace RpcTest
             var fac = sp.GetService<IRpcClientFactory>();
             var client = fac.Create("test", 10);
 
-            var r3 = client.Call<CoreInfo>("/home/GetCore");
-            var r2 = client.Call<Exchange>("/home/GetExchange");
-            var r1 = client.Call<string>("/home/getid?a=1&b=2");
-            Thread.Sleep(3000);
-            for (var i = 0; i < 10000; i++)
-            {
-                r1 = client.Call<string>("/home/getid?a=1&b=2");
-                r1 = client.Call<string>("/home/getid?a=1&b=2");
-                Thread.Sleep(1);
-            }
+            var r3 = client.Call<CoreInfo>("/home/GetContracts");
             return server;
         }
     }

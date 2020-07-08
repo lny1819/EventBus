@@ -13,8 +13,8 @@ namespace YiDian.EventBus.MQ
             Offset = 0;
             orginal = memory;
             Encoding = Encoding.UTF8;
-            DataSize = BitConverter.ToInt32(orginal.Slice(0, 4).Span);
             StreamLength = memory.Length;
+            DataSize = ReadInt32();
         }
         public byte[] GetOrginalDatas()
         {
@@ -25,7 +25,6 @@ namespace YiDian.EventBus.MQ
         public int StreamLength { get; }
         public Dictionary<EventPropertyType, byte> ReadHeaders()
         {
-            Advance(4);
             byte count = ReadByte();
             var headers = new Dictionary<EventPropertyType, byte>(count);
             for (var i = 0; i < count; i++)
@@ -86,7 +85,6 @@ namespace YiDian.EventBus.MQ
         }
         public string[] ReadArrayString()
         {
-            Advance(4);
             var count = ReadInt32();
             var arrs = new string[count];
             for (var i = 0; i < count; i++)
@@ -97,7 +95,6 @@ namespace YiDian.EventBus.MQ
         }
         public bool[] ReadArrayBool()
         {
-            Advance(4);
             var count = ReadInt32();
             var arrs = new bool[count];
             for (var i = 0; i < count; i++)
@@ -108,7 +105,6 @@ namespace YiDian.EventBus.MQ
         }
         public DateTime[] ReadArrayDate()
         {
-            Advance(4);
             var count = ReadInt32();
             var arrs = new DateTime[count];
             for (var i = 0; i < count; i++)
@@ -119,7 +115,6 @@ namespace YiDian.EventBus.MQ
         }
         public double[] ReadArrayDouble()
         {
-            Advance(4);
             var count = ReadInt32();
             var arrs = new double[count];
             for (var i = 0; i < count; i++)
@@ -130,7 +125,6 @@ namespace YiDian.EventBus.MQ
         }
         public int[] ReadArrayInt32()
         {
-            Advance(4);
             var count = ReadInt32();
             var arrs = new int[count];
             for (var i = 0; i < count; i++)
@@ -141,8 +135,7 @@ namespace YiDian.EventBus.MQ
         }
         public uint[] ReadArrayUInt32()
         {
-            Advance(4);
-            var count = ReadUInt32();
+            var count = ReadInt32();
             var arrs = new uint[count];
             for (var i = 0; i < count; i++)
             {
@@ -152,7 +145,6 @@ namespace YiDian.EventBus.MQ
         }
         public long[] ReadArrayInt64()
         {
-            Advance(4);
             var count = ReadInt32();
             var arrs = new long[count];
             for (var i = 0; i < count; i++)
@@ -163,8 +155,7 @@ namespace YiDian.EventBus.MQ
         }
         public ulong[] ReadArrayUInt64()
         {
-            Advance(4);
-            var count = ReadUInt32();
+            var count = ReadInt32();
             var arrs = new ulong[count];
             for (var i = 0; i < count; i++)
             {
@@ -174,7 +165,6 @@ namespace YiDian.EventBus.MQ
         }
         public short[] ReadArrayInt16()
         {
-            Advance(4);
             var count = ReadInt32();
             var arrs = new short[count];
             for (var i = 0; i < count; i++)
@@ -185,7 +175,6 @@ namespace YiDian.EventBus.MQ
         }
         public ushort[] ReadArrayUInt16()
         {
-            Advance(4);
             var count = ReadInt32();
             var arrs = new ushort[count];
             for (var i = 0; i < count; i++)
@@ -196,13 +185,13 @@ namespace YiDian.EventBus.MQ
         }
         public ReadOnlySpan<byte> ReadArrayByte()
         {
-            Advance(4);
             var count = ReadInt32();
-            return orginal.Slice(Offset, count).Span;
+            var span = orginal.Slice(Offset, count).Span;
+            Advance(count);
+            return span;
         }
         public T[] ReadArray<T>() where T : IYiDianSeralize, new()
         {
-            Advance(4);
             var count = ReadInt32();
             var arrs = new T[count];
             for (var i = 0; i < count; i++)

@@ -30,6 +30,10 @@ namespace YiDian.EventBus.MQ
 
         public ReadOnlyMemory<byte> Serialize(object obj, Type type)
         {
+            if (type.IsArray)
+            {
+
+            }
             if (!(obj is IMQEvent)) throw new ArgumentException(nameof(obj), "event must instance of IMQEvent");
             if (!(obj is IYiDianSeralize seralize)) throw new ArgumentException(nameof(obj), "event must instance of IYiDianSeralize");
             var write = new WriteStream(2000) { Encoding = encoding };
@@ -39,10 +43,29 @@ namespace YiDian.EventBus.MQ
 
         public int Serialize(object obj, Type type, byte[] bs, int offset)
         {
-            if (!(obj is IMQEvent)) throw new ArgumentException(nameof(obj), "event must instance of IMQEvent");
-            if (!(obj is IYiDianSeralize seralize)) throw new ArgumentException(nameof(obj), "event must instance of IYiDianSeralize");
-            var write = new WriteStream(bs, offset) { Encoding = encoding };
-            return (int)seralize.ToBytes(write);
+            bool isArray = false;
+            var ilist = type.GetInterface(typeof(System.Collections.Generic.IList<>).FullName);
+            if (ilist != null)
+            {
+                isArray = true;
+                type = ilist.GetGenericArguments()[0];
+            }
+            if (type.GetInterface(typeof(IMQEvent).FullName) == null) throw new ArgumentException(nameof(obj), "event must instance of IMQEvent");
+            if (type.GetInterface(typeof(IYiDianSeralize).FullName) == null) throw new ArgumentException(nameof(obj), "event must instance of IYiDianSeralize");
+            var stream = new WriteStream(bs, offset) { Encoding = encoding };
+            if (!isArray)
+            {
+                var seralize = (IYiDianSeralize)obj;
+                return (int)seralize.ToBytes(stream);
+            }
+            if (type.IsValueType)
+            {
+                if (type == typeof(byte)) stream.WriteArrayByte((byte[])obj);
+            }
+            else if (type == typeof(string))
+            {
+
+            }
         }
     }
 }

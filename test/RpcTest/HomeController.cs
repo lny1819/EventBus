@@ -1,5 +1,6 @@
 ﻿using EventModels.depthdata;
 using EventModels.es_quote;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using YiDian.EventBus.MQ.Rpc;
 using YiDian.EventBus.MQ.Rpc.Abstractions;
@@ -30,6 +31,14 @@ namespace RpcTest
             return new CoreInfo()
             {
                 AccountNo = "zs"
+            };
+        }
+        public ActionResult<List<Contract>> GetContracts()
+        {
+            return new List<Contract>()
+            {
+                new Contract(){ CommodityNo="HSI", ExchangeNo="HKEX", InstrumentID="2002"},
+                new Contract(){ CommodityNo="HSI", ExchangeNo="HKEX", InstrumentID="2003"}
             };
         }
         public ActionResult<Exchange> GetOrderAction2([FromBody]TradeRecord rcd)

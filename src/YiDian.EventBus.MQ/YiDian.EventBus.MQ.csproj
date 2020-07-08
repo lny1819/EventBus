@@ -4,7 +4,7 @@
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <RootNamespace>YiDian.EventBus.MQ</RootNamespace>
     <AssemblyName>YiDian.EventBus.MQ</AssemblyName>
-    <Version>3.0.1.4</Version>
+    <Version>3.0.1.5</Version>
     <Company>yanfeng.sun@Live.com</Company>
     <Product>消息总线</Product>
     <Copyright></Copyright>
@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="RabbitMQ.Client" Version="6.1.0" />
+    <PackageReference Include="RabbitMQ.Client" Version="5.2.0" />
     <PackageReference Include="Polly" Version="7.2.1" />
     <PackageReference Include="System.Reflection.Emit.ILGeneration" Version="4.7.0" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />

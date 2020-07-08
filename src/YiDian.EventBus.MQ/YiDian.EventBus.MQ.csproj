@@ -42,6 +42,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\YiDian.EventBus\YiDian.EventBus.csproj" />
+    <ProjectReference Include="..\YiDian.Soa.Sp\YiDian.Soa.Sp.csproj" />
   </ItemGroup>
 
 </Project>

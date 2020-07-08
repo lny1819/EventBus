@@ -33,18 +33,19 @@ namespace ConsoleApp
         }
         public void Start(IServiceProvider sp, string[] args)
         {
-            var i = 105;
-            var bytes = BitConverter.GetBytes(i);
-            Span<byte> span = bytes;
-            span.Reverse();
-            var j = BitConverter.ToInt32(span);
-            Console.WriteLine("IsLittleEndian " + BitConverter.IsLittleEndian.ToString());
-            //var s_quoteinfo = "aQAAAAMCBQQDBQcCAgAAAAoCAAAACwEAAAAMAAAAAA4AAAAABwAAAAAAAAAACAAAAAAAAAAACXsUrkfheoQ/AAQAAABIS0VYAQAAAAADAwAAAENUQwQAAAAABQAAAAAGAAAAAA0AAA==";
-            //var bytes = Convert.FromBase64String(s_quoteinfo);
-            //var read = new ReadStream(bytes);
-            //var commodity = new CommodityInfo();
-            //commodity.BytesTo(read);
-            //var ws = new WriteStream(2000);
+            var s_quoteinfo = "agAAAAMCBQQDBQcCAgAAAAoBAAAACwEAAAAMAAAAAA4AAAAABwAAAAAAAAAACAAAAAAAAAAACZqZmZmZmbk/AAUAAABUT0NPTQEAAAAAAwMAAABKU1YEAAAAAAUAAAAABgAAAAANAAAAAA==";
+            var s_quoteinfo2 = "TgAAAAMCAQQCBQcBAgAAAAQAAAAAAAAAAAUAAAAAAAAAAAADAAAAQ01FAgIAAABKWQMEAAAAMjMwMwYAAAAABwAAAAAIAAAAAAkAAAAAAAAAU00EAAAAAAUAAAAABgAAAAANAAAAAAAAAA==";
+            var bytes = Convert.FromBase64String(s_quoteinfo);
+            var bytes2 = Convert.FromBase64String(s_quoteinfo2);
+            var read = new ReadStream(bytes);
+            var commodity = new CommodityInfo();
+            commodity.BytesTo(read);
+            var ws = new WriteStream(2000);
+            commodity.ToBytes(ws);
+            var a = ws.GetBytes();
+            var b = new ReadStream(a);
+            commodity = new CommodityInfo();
+            commodity.BytesTo(b);
             //var info = new RspUseAction
             //{
             //    Data = new RspUserOrderInfo()

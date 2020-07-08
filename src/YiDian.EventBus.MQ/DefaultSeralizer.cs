@@ -17,7 +17,6 @@ namespace YiDian.EventBus.MQ
         {
             try
             {
-                if (type.Name.ToLower() == "CommodityInfo".ToLower()) Console.Write(data.Length + " ");
                 var constructor = type.GetConstructor(Type.EmptyTypes);
                 var obj = constructor.Invoke(null) as IYiDianSeralize;
                 if (obj == null) throw new ArgumentNullException("the type " + type.Name + " can not be convert as " + nameof(IYiDianSeralize));
@@ -52,7 +51,6 @@ namespace YiDian.EventBus.MQ
             if (!(obj is IYiDianSeralize seralize)) throw new ArgumentException(nameof(obj), "event must instance of IYiDianSeralize");
             var write = new WriteStream(2000) { Encoding = encoding };
             seralize.ToBytes(write);
-            if (type.Name.ToLower() == "CommodityInfo".ToLower()) Console.Write(write.Length + " ");
             return write.GetBytes();
         }
 

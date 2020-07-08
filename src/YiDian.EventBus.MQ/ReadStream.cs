@@ -7,10 +7,10 @@ namespace YiDian.EventBus.MQ
     public class ReadStream
     {
         readonly ReadOnlyMemory<byte> orginal;
-        int offset;
+        int Offset { get; set; }
         public ReadStream(ReadOnlyMemory<byte> memory)
         {
-            offset = 0;
+            Offset = 0;
             orginal = memory;
             Encoding = Encoding.UTF8;
         }
@@ -30,44 +30,44 @@ namespace YiDian.EventBus.MQ
         }
         public int ReadInt32()
         {
-            var i = BitConverter.ToInt32(orginal.Slice(offset, 4).Span);
-            offset += 4;
+            var i = BitConverter.ToInt32(orginal.Slice(Offset, 4).Span);
+            Advance(4);
             return i;
         }
         public uint ReadUInt32()
         {
-            var i = BitConverter.ToUInt32(orginal.Slice(offset, 4).Span);
-            offset += 4;
+            var i = BitConverter.ToUInt32(orginal.Slice(Offset, 4).Span);
+            Advance(4);
             return i;
         }
         public short ReadInt16()
         {
-            var i = BitConverter.ToInt16(orginal.Slice(offset, 2).Span);
-            offset += 2;
+            var i = BitConverter.ToInt16(orginal.Slice(Offset, 2).Span);
+            Advance(2);
             return i;
         }
         public ushort ReadUInt16()
         {
-            var i = BitConverter.ToUInt16(orginal.Slice(offset, 2).Span);
-            offset += 2;
+            var i = BitConverter.ToUInt16(orginal.Slice(Offset, 2).Span);
+            Advance(2);
             return i;
         }
         public long ReadInt64()
         {
-            var i = BitConverter.ToInt64(orginal.Slice(offset, 8).Span);
-            offset += 8;
+            var i = BitConverter.ToInt64(orginal.Slice(Offset, 8).Span);
+            Advance(8);
             return i;
         }
         public ulong ReadUInt64()
         {
-            var i = BitConverter.ToUInt64(orginal.Slice(offset, 8).Span);
-            offset += 8;
+            var i = BitConverter.ToUInt64(orginal.Slice(Offset, 8).Span);
+            Advance(8);
             return i;
         }
         public double ReadDouble()
         {
-            var i = BitConverter.ToDouble(orginal.Slice(offset, 8).Span);
-            offset += 8;
+            var i = BitConverter.ToDouble(orginal.Slice(Offset, 8).Span);
+            Advance(8);
             return i;
         }
         public string[] ReadArrayString()
@@ -184,7 +184,7 @@ namespace YiDian.EventBus.MQ
         {
             Advance(4);
             var count = ReadInt32();
-            return orginal.Slice(offset, count).Span;
+            return orginal.Slice(Offset, count).Span;
         }
         public T[] ReadArray<T>() where T : IYiDianSeralize, new()
         {
@@ -207,8 +207,8 @@ namespace YiDian.EventBus.MQ
         {
             var count = ReadInt32();
             if (count == 0) return string.Empty;
-            var value = Encoding.GetString(orginal.Slice(offset, count).Span);
-            offset += count;
+            var value = Encoding.GetString(orginal.Slice(Offset, count).Span);
+            Advance(count);
             return value;
         }
         public DateTime ReadDate()
@@ -224,13 +224,13 @@ namespace YiDian.EventBus.MQ
         }
         public byte ReadByte()
         {
-            var b = orginal.Slice(offset, 1).Span[0];
-            offset += 1;
+            var b = orginal.Slice(Offset, 1).Span[0];
+            Advance(1);
             return b;
         }
         public void Advance(int length)
         {
-            offset += length;
+            Offset += length;
         }
     }
 }

@@ -33,14 +33,8 @@ namespace ConsoleApp
         }
         public void Start(IServiceProvider sp, string[] args)
         {
-            var ws = new WriteStream(2000) { Encoding = Encoding.UTF8 };
-            //var commodity2 = new CommodityInfo() { CommodityNo = "KSO", ExchangeNo = "HKEX", CommodityType = CommodityType.FUTURES };
-            //var x = commodity2.ToBytes(ref ws);
-            //var read2 = new ReadStream(ws.GetBytes());
-            //var s_2 = Convert.ToBase64String(ws.GetBytes().ToArray());
-            //var commodity3 = new CommodityInfo();
-            //commodity3.BytesTo(ref read2);
-            var s_quoteinfo = "aQAAAAMCBQQDBQcCAgAAAAoCAAAACwEAAAAMAAAAAA4AAAAABwAAAAAAAAAACAAAAAAAAAAACXsUrkfheoQ/AAQAAABIS0VYAQAAAAADAwAAAEhOUAQAAAAABQAAAAAGAAAAAA0AAAA=";
+
+            var s_quoteinfo = "aQAAAAMCBQQDBQcCAgAAAAoCAAAACwEAAAAMAAAAAA4AAAAABwAAAAAAAAAACAAAAAAAAAAACXsUrkfheoQ/AAQAAABIS0VYAQAAAAADAwAAAE1TQgQAAAAABQAAAAAGAAAAAA0AAAA=";
             var bytes = Convert.FromBase64String(s_quoteinfo);
             var read = new ReadStream(bytes);
             var commodity = new CommodityInfo();

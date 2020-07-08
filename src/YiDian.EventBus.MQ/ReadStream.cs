@@ -4,7 +4,7 @@ using System.Text;
 
 namespace YiDian.EventBus.MQ
 {
-    public struct ReadStream
+    public class ReadStream
     {
         readonly ReadOnlyMemory<byte> orginal;
         int offset;
@@ -17,7 +17,7 @@ namespace YiDian.EventBus.MQ
         public Encoding Encoding { get; set; }
         public Dictionary<EventPropertyType, byte> ReadHeaders()
         {
-            Advance(4);
+            var total = ReadInt32();
             byte count = ReadByte();
             var headers = new Dictionary<EventPropertyType, byte>(count);
             for (var i = 0; i < count; i++)
@@ -200,7 +200,7 @@ namespace YiDian.EventBus.MQ
         public T ReadEventObj<T>() where T : IYiDianSeralize, new()
         {
             var t = new T();
-            t.BytesTo(ref this);
+            t.BytesTo(this);
             return t;
         }
         public string ReadString()

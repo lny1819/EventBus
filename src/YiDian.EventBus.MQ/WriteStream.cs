@@ -7,29 +7,29 @@ using System.Text;
 
 namespace YiDian.EventBus.MQ
 {
-    public struct WriteStream
+    public class WriteStream
     {
         readonly byte[] orginal;
-        int offset;
         int start;
         public WriteStream(uint size)
         {
-            start = offset = 0;
+            start = Legnth = 0;
             orginal = new byte[size];
             Encoding = Encoding.UTF8;
         }
+        public int Legnth { get; private set; }
         public WriteStream(byte[] bs, int index)
         {
             start = index;
-            offset = 0;
+            Legnth = 0;
             orginal = bs;
             Encoding = Encoding.UTF8;
         }
         public Encoding Encoding { get; set; }
         public Span<byte> Advance(int length)
         {
-            var span = new Span<byte>(orginal, offset, length);
-            offset += length;
+            var span = new Span<byte>(orginal, Legnth, length);
+            Legnth += length;
             return span;
         }
         public uint WriteHeader(EventPropertyType type, byte length)
@@ -382,7 +382,7 @@ namespace YiDian.EventBus.MQ
         }
         public ReadOnlyMemory<byte> GetBytes()
         {
-            return new ReadOnlyMemory<byte>(orginal, start, offset + 1);
+            return new ReadOnlyMemory<byte>(orginal, start, Legnth);
         }
         public static uint GetStringSize(string value, Encoding encoding)
         {

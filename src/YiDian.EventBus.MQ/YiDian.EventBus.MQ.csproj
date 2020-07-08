@@ -4,7 +4,7 @@
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <RootNamespace>YiDian.EventBus.MQ</RootNamespace>
     <AssemblyName>YiDian.EventBus.MQ</AssemblyName>
-    <Version>3.0.1.1</Version>
+    <Version>3.0.1.2</Version>
     <Company>yanfeng.sun@Live.com</Company>
     <Product>消息总线</Product>
     <Copyright></Copyright>
@@ -42,7 +42,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\YiDian.EventBus\YiDian.EventBus.csproj" />
-    <ProjectReference Include="..\YiDian.Soa.Sp\YiDian.Soa.Sp.csproj" />
   </ItemGroup>
 
 </Project>

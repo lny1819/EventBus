@@ -32,7 +32,7 @@ namespace YiDian.EventBus.MQ.Rpc.Route
                     {
                         if (m.ReturnType.IsGenericType)
                         {
-                            if (m.ReturnType.GetGenericTypeDefinition() == typeof(ActionResult<>)) Add(m, ctl_name, t, false);
+                            if (m.ReturnType.GetGenericTypeDefinition().Name == typeof(ActionResult<>).Name) Add(m, ctl_name, t, false);
                             else if (m.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
                             {
                                 if (m.ReturnType.GenericTypeArguments[0].Name == typeof(ActionResult<>).Name) Add(m, ctl_name, t, true);

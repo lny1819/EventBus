@@ -5,7 +5,6 @@ namespace YiDian.EventBus.MQ
 {
     public class DefaultSeralizer : IEventSeralize
     {
-        static bool flag = false;
         private Encoding encoding;
 
         public DefaultSeralizer(Encoding encoding)

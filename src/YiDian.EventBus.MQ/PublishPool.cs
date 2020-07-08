@@ -45,7 +45,7 @@ namespace YiDian.EventBus.MQ
             _pubChannel2.BasicPublish(exchange: BROKER_NAME,
                              routingKey: pubkey,
                              basicProperties: null,
-                             body: data.ToArray());
+                             body: data);
         }
         //void CreatePublishChannel1()
         //{

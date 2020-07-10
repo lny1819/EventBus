@@ -17,6 +17,7 @@ namespace YiDian.Soa.Sp
         readonly SoaServiceContainerBuilder _builder;
         readonly IConfiguration config;
         readonly string[] original_args;
+        readonly ConsoleLog console_log;
         bool take_build_container = false;
         int exitCode = 0;
         public DefaultServiceHost(SoaServiceContainerBuilder builder, string[] args)
@@ -26,7 +27,36 @@ namespace YiDian.Soa.Sp
             waitExit = new AutoResetEvent(false);
             builder.Services.AddSingleton<ISoaServiceHost, DefaultServiceHost>((s) => this);
             config = builder.Services.BuildServiceProvider().GetService<IConfiguration>();
+            console_log = LoadConfigLogConfig();
             ConfigServices();
+        }
+        class ConsoleLog
+        {
+            public ConsoleLog()
+            {
+                Levels = new System.Collections.Generic.Dictionary<string, LogLevel>();
+            }
+            public bool IncludeScopes { get; set; }
+            public LogLevel Default { get; set; }
+            public System.Collections.Generic.Dictionary<string, LogLevel> Levels { get; }
+        }
+        private ConsoleLog LoadConfigLogConfig()
+        {
+            var log = new ConsoleLog();
+            log.IncludeScopes = bool.Parse(config["Logging:IncludeScopes"]);
+            var key = "Logging:Console:LogLevel";
+            var eum = config.GetSection(key).AsEnumerable().GetEnumerator();
+            while (eum.MoveNext())
+            {
+                var c = eum.Current;
+                if (!string.IsNullOrEmpty(c.Value))
+                {
+                    var name = c.Key.Substring(key.Length + 1);
+                    if (name.ToLower() == "default") log.Default = (LogLevel)Enum.Parse(typeof(LogLevel), c.Value);
+                    else log.Levels.Add(name, (LogLevel)Enum.Parse(typeof(LogLevel), c.Value));
+                }
+            }
+            return log;
         }
 
         private void ConfigServices()
@@ -128,8 +158,19 @@ namespace YiDian.Soa.Sp
         {
             _builder.Services.AddLogging(e =>
             {
-                e.AddConsole();
+                e.AddFilter(LoggLelFillter);
+                e.AddConsole(x => x.IncludeScopes = console_log.IncludeScopes);
             });
+        }
+
+        private bool LoggLelFillter(string provider, string logger, LogLevel lvl)
+        {
+            if (provider == typeof(Microsoft.Extensions.Logging.Console.ConsoleLoggerProvider).FullName)
+            {
+                if (console_log.Levels.TryGetValue(logger, out LogLevel set_lvl))
+                    return lvl >= set_lvl;
+            }
+            return lvl >= console_log.Default;
         }
     }
 }

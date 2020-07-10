@@ -19,7 +19,7 @@ namespace EventModels.es_quote
         [SeralizeIndex(5)]
         public string CommodityEngName { get; set; }
         [SeralizeIndex(6)]
-        public string TradeCurrency { get; set; }
+        public CurrencyType TradeCurrency { get; set; }
         [SeralizeIndex(7)]
         public double ContractSize { get; set; }
         [SeralizeIndex(8)]
@@ -36,5 +36,7 @@ namespace EventModels.es_quote
         public string AddOneTime { get; set; }
         [SeralizeIndex(14)]
         public Int32 CommodityTimeZone { get; set; }
+        [SeralizeIndex(15)]
+        public string AllowTradeTime { get; set; }
     }
 }

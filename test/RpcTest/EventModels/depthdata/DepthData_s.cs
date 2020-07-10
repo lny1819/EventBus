@@ -15,7 +15,7 @@ namespace EventModels.depthdata
             stream.WriteByte(4);
              size +=stream.WriteHeader(EventPropertyType.L_Date,3);
              size +=stream.WriteHeader(EventPropertyType.L_32,2);
-             size +=stream.WriteHeader(EventPropertyType.L_64,53);
+             size +=stream.WriteHeader(EventPropertyType.L_64,56);
              size +=stream.WriteHeader(EventPropertyType.L_Str,6);
              size +=stream.WriteIndex(44);
              size +=stream.WriteDate(LocalTime);
@@ -133,6 +133,12 @@ namespace EventModels.depthdata
              size +=stream.WriteUInt64(TotalBidQty);
              size +=stream.WriteIndex(59);
              size +=stream.WriteUInt64(TotalAskQty);
+             size +=stream.WriteIndex(64);
+             size +=stream.WriteUInt64(InsideQty);
+             size +=stream.WriteIndex(65);
+             size +=stream.WriteUInt64(OutsideQty);
+             size +=stream.WriteIndex(66);
+             size +=stream.WriteDouble(ChangeValue);
              size +=stream.WriteIndex(0);
              size +=stream.WriteString(CurrencyNo);
              size +=stream.WriteIndex(23);
@@ -246,6 +252,9 @@ namespace EventModels.depthdata
                     if (index == 57){ Swing = stream.ReadDouble();continue;}
                     if (index == 58){ TotalBidQty = stream.ReadUInt64();continue;}
                     if (index == 59){ TotalAskQty = stream.ReadUInt64();continue;}
+                    if (index == 64){ InsideQty = stream.ReadUInt64();continue;}
+                    if (index == 65){ OutsideQty = stream.ReadUInt64();continue;}
+                    if (index == 66){ ChangeValue = stream.ReadDouble();continue;}
                     stream.Advance(8);
                 }
             }
@@ -283,7 +292,7 @@ namespace EventModels.depthdata
         }
         public uint BytesSize(Encoding encoding)
         {
-                var size=542+WriteStream.GetStringSize(CurrencyNo,encoding)+WriteStream.GetStringSize(CommodityNo,encoding)+WriteStream.GetStringSize(ExchangeID,encoding)+WriteStream.GetStringSize(InstrumentID,encoding)+WriteStream.GetStringSize(Source,encoding)+WriteStream.GetStringSize(TradingTime,encoding)+ 0;
+                var size=569+WriteStream.GetStringSize(CurrencyNo,encoding)+WriteStream.GetStringSize(CommodityNo,encoding)+WriteStream.GetStringSize(ExchangeID,encoding)+WriteStream.GetStringSize(InstrumentID,encoding)+WriteStream.GetStringSize(Source,encoding)+WriteStream.GetStringSize(TradingTime,encoding)+ 0;
                 return size;
         }
     }

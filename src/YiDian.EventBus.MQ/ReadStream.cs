@@ -206,6 +206,7 @@ namespace YiDian.EventBus.MQ
             var obj = constructor.Invoke(null) as IYiDianSeralize;
             var read = new ReadStream(orginal.Slice(Offset));
             obj.BytesTo(read);
+            Offset += read.DataSize;
             return obj;
         }
         public string ReadString()

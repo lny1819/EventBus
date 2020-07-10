@@ -13,11 +13,13 @@ namespace EventModels.es_quote
             uint size = 5;
             var span = stream.Advance(4);
             stream.WriteByte(3);
-             size +=stream.WriteHeader(EventPropertyType.L_32,5);
+             size +=stream.WriteHeader(EventPropertyType.L_32,6);
              size +=stream.WriteHeader(EventPropertyType.L_64,3);
              size +=stream.WriteHeader(EventPropertyType.L_Str,7);
              size +=stream.WriteIndex(2);
              size +=stream.WriteInt32((int)CommodityType);
+             size +=stream.WriteIndex(6);
+             size +=stream.WriteInt32((int)TradeCurrency);
              size +=stream.WriteIndex(10);
              size +=stream.WriteInt32(MarketDot);
              size +=stream.WriteIndex(11);
@@ -42,10 +44,10 @@ namespace EventModels.es_quote
              size +=stream.WriteString(CommodityName);
              size +=stream.WriteIndex(5);
              size +=stream.WriteString(CommodityEngName);
-             size +=stream.WriteIndex(6);
-             size +=stream.WriteString(TradeCurrency);
              size +=stream.WriteIndex(13);
              size +=stream.WriteString(AddOneTime);
+             size +=stream.WriteIndex(15);
+             size +=stream.WriteString(AllowTradeTime);
             BitConverter.TryWriteBytes(span, size);
             return size;
         }
@@ -82,6 +84,7 @@ namespace EventModels.es_quote
                 {
                     var index = stream.ReadByte();
                     if (index == 2){ CommodityType = (CommodityType)stream.ReadInt32();continue;}
+                    if (index == 6){ TradeCurrency = (CurrencyType)stream.ReadInt32();continue;}
                     if (index == 10){ MarketDot = stream.ReadInt32();continue;}
                     if (index == 11){ CommodityDenominator = stream.ReadInt32();continue;}
                     if (index == 12){ DeliveryDays = stream.ReadInt32();continue;}
@@ -110,8 +113,8 @@ namespace EventModels.es_quote
                     if (index == 3){ CommodityNo = stream.ReadString();continue;}
                     if (index == 4){ CommodityName = stream.ReadString();continue;}
                     if (index == 5){ CommodityEngName = stream.ReadString();continue;}
-                    if (index == 6){ TradeCurrency = stream.ReadString();continue;}
                     if (index == 13){ AddOneTime = stream.ReadString();continue;}
+                    if (index == 15){ AllowTradeTime = stream.ReadString();continue;}
                      var c = stream.ReadInt32();stream.Advance(c);
                 }
             }
@@ -135,7 +138,7 @@ namespace EventModels.es_quote
         }
         public uint BytesSize(Encoding encoding)
         {
-                var size=70+WriteStream.GetStringSize(ExchangeNo,encoding)+WriteStream.GetStringSize(ExchangeName,encoding)+WriteStream.GetStringSize(CommodityNo,encoding)+WriteStream.GetStringSize(CommodityName,encoding)+WriteStream.GetStringSize(CommodityEngName,encoding)+WriteStream.GetStringSize(TradeCurrency,encoding)+WriteStream.GetStringSize(AddOneTime,encoding)+ 0;
+                var size=75+WriteStream.GetStringSize(ExchangeNo,encoding)+WriteStream.GetStringSize(ExchangeName,encoding)+WriteStream.GetStringSize(CommodityNo,encoding)+WriteStream.GetStringSize(CommodityName,encoding)+WriteStream.GetStringSize(CommodityEngName,encoding)+WriteStream.GetStringSize(AddOneTime,encoding)+WriteStream.GetStringSize(AllowTradeTime,encoding)+ 0;
                 return size;
         }
     }

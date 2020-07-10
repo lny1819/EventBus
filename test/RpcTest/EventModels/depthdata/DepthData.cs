@@ -137,5 +137,11 @@ namespace EventModels.depthdata
         public DateTime TradingDay { get; set; }
         [SeralizeIndex(63)]
         public string TradingTime { get; set; }
+        [SeralizeIndex(64)]
+        public UInt64 InsideQty { get; set; }
+        [SeralizeIndex(65)]
+        public UInt64 OutsideQty { get; set; }
+        [SeralizeIndex(66)]
+        public double ChangeValue { get; set; }
     }
 }

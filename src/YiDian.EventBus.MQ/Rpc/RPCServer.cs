@@ -89,13 +89,13 @@ namespace YiDian.EventBus.MQ.Rpc
             var span = Math.Abs((DateTime.Now - clienttime).TotalMilliseconds);
             if (Configs.Delay != 0 && span > Configs.Delay * 1000)
             {
-                ReplayTo(clienttime, ea, 402, $"请求已超时 请求 {ea.RoutingKey} 耗时 {span.ToString()}ms", ContentType.Text);
+                ReplayTo(header.Url, DateTime.Now, ea, 402, $"请求已超时 请求 {ea.RoutingKey} 耗时 {span.ToString()}ms", ContentType.Text);
                 return;
             }
             var action = _routing.Route(header.Url.AbsolutePath);
             if (action == null)
             {
-                ReplayTo(clienttime, ea, 401, "未找到匹配请求的控制器或方法", ContentType.Text);
+                ReplayTo(header.Url, DateTime.Now, ea, 401, "未找到匹配请求的控制器或方法", ContentType.Text);
                 return;
             }
             var reques = new Request()
@@ -124,7 +124,7 @@ namespace YiDian.EventBus.MQ.Rpc
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ReplayTo(DateTime intime, BasicDeliverEventArgs ea, int state, string msg, ContentType type, object obj = null, Type objType = null)
+        private void ReplayTo(Uri url, DateTime intime, BasicDeliverEventArgs ea, int state, string msg, ContentType type, object obj = null, Type objType = null)
         {
             var replyTo = ea.BasicProperties.ReplyTo;
             var replyTold = ea.BasicProperties.CorrelationId;
@@ -138,7 +138,8 @@ namespace YiDian.EventBus.MQ.Rpc
             write.WriteString("content-type:" + (type == ContentType.YDData ? "yddata" : (type == ContentType.Json ? "json" : "text")));
             write.WriteContent(type, obj, objType);
             _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: write.GetDatas().ToArray());
-
+            var s_url = url.ToString();
+            _logger.LogInformation($"request uri:{s_url},response data:{obj.ToJson()}");
             var now = DateTime.Now;
             var ms = (now - intime).TotalMilliseconds;
             _qps.Set("c", (int)ms);
@@ -192,11 +193,11 @@ namespace YiDian.EventBus.MQ.Rpc
                 }
                 else res = ((ActionResult)obj).GetResult();
                 var type = (req.Action.ActionResultType.IsValueType || req.Action.ActionResultType == typeof(string)) ? ContentType.Text : ContentType.YDData;
-                ReplayTo(req.InTime, ea, 200, "", type, res, req.Action.ActionResultType);
+                ReplayTo(req.Url, req.InTime, ea, 200, "", type, res, req.Action.ActionResultType);
             }
             catch (Exception ex)
             {
-                ReplayTo(req.InTime, ea, 500, ex.Message, ContentType.Text);
+                ReplayTo(req.Url, req.InTime, ea, 500, ex.Message, ContentType.Text);
                 _logger.LogError(ex.ToString());
             }
             scope?.Dispose();

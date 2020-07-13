@@ -103,24 +103,11 @@ namespace YiDian.EventBus.MQ.Rpc
                 Headers = header.Headers,
                 Action = action,
                 Url = header.Url,
-                Seralize = CreateSeralize(header.ContentType, header.Encode),
+                Seralize = RPCWrite.CreateSeralize(header.ContentType, header.Encode),
                 ContentLength = header.ContentLength,
                 Body = header.GetBodys()
             };
             Excute(reques, ea);
-        }
-
-        private IEventSeralize CreateSeralize(ContentType contentType, System.Text.Encoding encoding)
-        {
-            switch (contentType)
-            {
-                case ContentType.Text:
-                    return new TextSeralize(encoding);
-                case ContentType.Json:
-                    return new JsonSerializer(encoding);
-                default:
-                    return new DefaultSeralizer(encoding);
-            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -130,21 +117,30 @@ namespace YiDian.EventBus.MQ.Rpc
             var replyTold = ea.BasicProperties.CorrelationId;
             var replyProps = _pubChannel.CreateBasicProperties();
             replyProps.CorrelationId = replyTold;
-            var datas = new byte[2000];
-            var write = new RPCWrite(datas, Encoding.UTF8);
-            write.WriteString("encoding:utf-8");
-            write.WriteString("state:" + state.ToString());
-            write.WriteString("msg:" + msg);
-            write.WriteString("content-type:" + (type == ContentType.YDData ? "yddata" : (type == ContentType.Json ? "json" : "text")));
-            write.WriteContent(type, obj, objType);
-            _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: write.GetDatas().ToArray());
-            var s_url = url.ToString();
-            _logger.LogInformation($"request uri:{s_url},response data:{obj.ToJson()}");
-            var now = DateTime.Now;
-            var ms = (now - intime).TotalMilliseconds;
-            _qps.Set("c", (int)ms);
+            if (type != ContentType.Json || (type == ContentType.Json && obj != null))
+            {
+                var datas = new byte[55 + GetObjSize(type, obj, objType)];
+                var write = new RPCWrite(datas, Encoding.UTF8);
+                write.WriteString("encoding:utf-8");
+                write.WriteString("state:" + state.ToString());
+                write.WriteString("msg:" + msg);
+                write.WriteString("content-type:" + (type == ContentType.YDData ? "yddata" : (type == ContentType.Json ? "json" : "text")));
+                write.WriteContent(type, obj, objType);
+                _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: write.GetDatas().ToArray());
+                var s_url = url.ToString();
+                _logger.LogInformation($"request uri:{s_url},response data:{obj.ToJson()}");
+                var now = DateTime.Now;
+                var ms = (now - intime).TotalMilliseconds;
+                _qps.Set("c", (int)ms);
+            }
+            else throw new NotImplementedException();
         }
-
+        public uint GetObjSize(ContentType type, object data, Type dataType)
+        {
+            if (data == null) return 0;
+            var ser = RPCWrite.CreateSeralize(type, Encoding.UTF8);
+            return ser.GetSize(data, dataType);
+        }
         readonly static DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public DateTime UnixTimestampToDate(long timestamp)

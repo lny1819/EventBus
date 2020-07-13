@@ -49,13 +49,17 @@ namespace YiDian.EventBus.MQ.Rpc
             var length = 0;
             if (data != null)
             {
-                var ser = CreateSeralize(type);
+                var ser = CreateSeralize(type, encoding);
                 length = ser.Serialize(data, datatype, orginal, offset);
                 offset += length;
             }
             BitConverter.TryWriteBytes(span, length);
         }
-        private IEventSeralize CreateSeralize(ContentType contentType)
+        public ReadOnlyMemory<byte> GetDatas()
+        {
+            return new ReadOnlyMemory<byte>(orginal, 0, offset);
+        }
+        internal static IEventSeralize CreateSeralize(ContentType contentType, Encoding encoding)
         {
             switch (contentType)
             {
@@ -66,10 +70,6 @@ namespace YiDian.EventBus.MQ.Rpc
                 default:
                     return new DefaultSeralizer(encoding);
             }
-        }
-        public ReadOnlyMemory<byte> GetDatas()
-        {
-            return new ReadOnlyMemory<byte>(orginal, 0, offset);
         }
     }
 }

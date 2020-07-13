@@ -325,7 +325,8 @@ namespace YiDian.EventBus.MQ
             var ider = value.GetEnumerator();
             while (ider.MoveNext())
             {
-                size += WriteEventObj(ider.Current);
+                var size1 = WriteEventObj(ider.Current);
+                size += size1;
             }
             return size;
         }

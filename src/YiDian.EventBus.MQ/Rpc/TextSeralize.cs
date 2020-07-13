@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -16,6 +15,11 @@ namespace YiDian.EventBus.MQ.Rpc
         public object DeserializeObject(ReadOnlyMemory<byte> data, Type type)
         {
             return encoding.GetString(data.Span);
+        }
+
+        public uint GetSize(object obj, Type type)
+        {
+            return (uint)encoding.GetByteCount(obj.ToString());
         }
 
         public ReadOnlyMemory<byte> Serialize<T>(T @event)

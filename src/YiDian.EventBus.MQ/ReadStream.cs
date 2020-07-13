@@ -14,17 +14,20 @@ namespace YiDian.EventBus.MQ
             orginal = memory;
             Encoding = Encoding.UTF8;
             StreamLength = memory.Length;
-            DataSize = ReadInt32();
         }
         public byte[] GetOrginalDatas()
         {
             return orginal.ToArray();
         }
-        public int DataSize { get; }
+        public int DataSize
+        {
+            get { return BitConverter.ToInt32(orginal.Slice(0, 4).Span); }
+        }
         public Encoding Encoding { get; set; }
         public int StreamLength { get; }
         public Dictionary<EventPropertyType, byte> ReadHeaders()
         {
+            Advance(4);
             byte count = ReadByte();
             var headers = new Dictionary<EventPropertyType, byte>(count);
             for (var i = 0; i < count; i++)

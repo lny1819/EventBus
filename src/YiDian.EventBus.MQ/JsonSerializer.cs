@@ -47,6 +47,11 @@ namespace YiDian.EventBus.MQ
             return str.JsonTo(type, opt);
         }
 
+        public uint GetSize(object obj, Type type)
+        {
+            return 0;
+        }
+
         /// <summary>
         /// 序列化对象为字节数组
         /// </summary>

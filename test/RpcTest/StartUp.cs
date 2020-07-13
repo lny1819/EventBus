@@ -49,6 +49,7 @@ namespace RpcTest
             var r3 = client.Call<Contract[]>("/home/GetContracts");
             var r2 = client.Call<string[]>("/home/GetX1");
             var r1 = client.Call<int[]>("/home/GetIds");
+            var r4 = client.Call<CoreInfo>("/home/GetCore");
             return server;
         }
     }

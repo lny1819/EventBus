@@ -9,5 +9,6 @@ namespace YiDian.EventBus
         ReadOnlyMemory<byte> Serialize(object @event, Type type);
         int Serialize(object @event, Type type, byte[] bs, int offset);
         object DeserializeObject(ReadOnlyMemory<byte> data, Type type);
+        uint GetSize(object obj, Type type);
     }
 }

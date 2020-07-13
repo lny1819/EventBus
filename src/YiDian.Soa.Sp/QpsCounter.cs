@@ -98,14 +98,18 @@ namespace YiDian.Soa.Sp
                     long bit = 0;
                     for (int x = 0; x < length; x++)
                     {
-                        var avg = record[x].Average();
+                        var rec = record[x];
+                        var avg = rec.Average();
+                        var max = rec.Max();
+                        var min = rec.Min();
+                        if (avg == 0 && max == 0 && min == 0) continue;
                         sb.Append(key_name[x]);
                         sb.Append(":qps=");
                         sb.Append(avg.ToString());
                         sb.Append(",max=");
-                        sb.Append(record[x].Max().ToString());
+                        sb.Append(max.ToString());
                         sb.Append(",min=");
-                        sb.Append(record[x].Min().ToString());
+                        sb.Append(min.ToString());
                         record[x].Clear();
                         switch (x)
                         {

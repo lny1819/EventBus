@@ -110,30 +110,37 @@ namespace YiDian.EventBus.MQ.Rpc
             Excute(reques, ea);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ReplayTo(Uri url, DateTime intime, BasicDeliverEventArgs ea, int state, string msg, ContentType type, object obj = null, Type objType = null)
         {
-            var replyTo = ea.BasicProperties.ReplyTo;
-            var replyTold = ea.BasicProperties.CorrelationId;
-            var replyProps = _pubChannel.CreateBasicProperties();
-            replyProps.CorrelationId = replyTold;
-            if (type != ContentType.Json || (type == ContentType.Json && obj != null))
+            try
             {
-                var datas = new byte[55 + GetObjSize(type, obj, objType)];
-                var write = new RPCWrite(datas, Encoding.UTF8);
-                write.WriteString("encoding:utf-8");
-                write.WriteString("state:" + state.ToString());
-                write.WriteString("msg:" + msg);
-                write.WriteString("content-type:" + (type == ContentType.YDData ? "yddata" : (type == ContentType.Json ? "json" : "text")));
-                write.WriteContent(type, obj, objType);
-                _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: write.GetDatas().ToArray());
+                var replyTo = ea.BasicProperties.ReplyTo;
+                var replyTold = ea.BasicProperties.CorrelationId;
+                var replyProps = _pubChannel.CreateBasicProperties();
+                replyProps.CorrelationId = replyTold;
                 var s_url = url.ToString();
-                _logger.LogInformation($"request uri:{s_url},response data:{obj.ToJson()}");
-                var now = DateTime.Now;
-                var ms = (now - intime).TotalMilliseconds;
-                _qps.Set("c", (int)ms);
+                _logger.LogInformation($"response uri:{s_url}, data:{obj.ToJson()} state={state.ToString()} type={type.ToString()}");
+                if (type != ContentType.Json || (type == ContentType.Json && obj != null))
+                {
+                    var msg_size = Encoding.UTF8.GetByteCount(msg);
+                    var datas = new byte[55 + msg_size + GetObjSize(type, obj, objType)];
+                    var write = new RPCWrite(datas, Encoding.UTF8);
+                    write.WriteString("encoding:utf-8");
+                    write.WriteString("state:" + state.ToString());
+                    write.WriteString("msg:" + msg);
+                    write.WriteString("content-type:" + (type == ContentType.YDData ? "yddata" : (type == ContentType.Json ? "json" : "text")));
+                    write.WriteContent(type, obj, objType);
+                    _pubChannel.BasicPublish("", routingKey: replyTo, basicProperties: replyProps, body: write.GetDatas().ToArray());
+                    var now = DateTime.Now;
+                    var ms = (now - intime).TotalMilliseconds;
+                    _qps.Set("c", (int)ms);
+                }
+                else throw new NotImplementedException();
             }
-            else throw new NotImplementedException();
+            catch (Exception ex)
+            {
+                _logger.LogError("Rpc ReplayTo Error:" + ex.ToString());
+            }
         }
         public uint GetObjSize(ContentType type, object data, Type dataType)
         {
@@ -194,7 +201,7 @@ namespace YiDian.EventBus.MQ.Rpc
             catch (Exception ex)
             {
                 ReplayTo(req.Url, req.InTime, ea, 500, ex.Message, ContentType.Text);
-                _logger.LogError(ex.ToString());
+                _logger.LogError(req.Url.ToString() + " 执行异常：" + ex.ToString());
             }
             scope?.Dispose();
         }

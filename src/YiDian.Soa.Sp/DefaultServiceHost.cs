@@ -19,7 +19,7 @@ namespace YiDian.Soa.Sp
         readonly string[] original_args;
         readonly ConsoleLog console_log;
         bool take_build_container = false;
-        int exitCode = 0;
+        int exitCode = int.MaxValue;
         public DefaultServiceHost(SoaServiceContainerBuilder builder, string[] args)
         {
             original_args = args;
@@ -128,8 +128,11 @@ namespace YiDian.Soa.Sp
                     return 0;
                 }
                 Start();
-                waitExit.Reset();
-                waitExit.WaitOne();
+                if (exitCode == int.MaxValue)
+                {
+                    waitExit.Reset();
+                    waitExit.WaitOne();
+                }
             }
             catch
             {
@@ -139,14 +142,8 @@ namespace YiDian.Soa.Sp
         }
         public void Exit(int code)
         {
-            var logger = ServicesProvider.GetService<ILogger<ISoaServiceHost>>();
             exitCode = code;
             waitExit.Set();
-        }
-        static readonly DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        long ToUnixTimestamp(DateTime dateTime)
-        {
-            return Convert.ToInt64((dateTime.ToUniversalTime() - start).TotalSeconds);
         }
         private void Start()
         {

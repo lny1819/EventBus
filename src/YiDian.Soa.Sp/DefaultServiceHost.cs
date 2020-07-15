@@ -112,8 +112,8 @@ namespace YiDian.Soa.Sp
         {
             if (!take_build_container) ConfigContainerBuilder(null);
             else ServicesProvider = provider ?? throw new Exception("should set provider");
-            var appname = getName(ServicesProvider.GetService<IConfiguration>());
-            if (appname == null) throw new ArgumentNullException("Run->GetAppName");
+            var appname = getName(config);
+            if (appname == null) throw new ArgumentNullException(nameof(appname), "配置文件中 sysname 不能为空");
             var logger = ServicesProvider.GetService<ILogger<ISoaServiceHost>>();
             logger.LogWarning($"soa service start with sysname {appname} datetime {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}");
             try

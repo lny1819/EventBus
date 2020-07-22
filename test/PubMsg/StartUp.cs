@@ -1,6 +1,5 @@
 ﻿using Autofac;
 using EventModels.es_quote;
-using EventModels.userinfo;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -24,7 +23,7 @@ namespace ConsoleApp
                  .UseDirectEventBus()
                  .UseTopicEventBus();
 #if DEBUG
-            soa.AutoCreateAppEvents("es_trade,es_quote");
+            soa.AutoCreateAppEvents("es_quote");
 #endif
         }
         public void ConfigContainer(ContainerBuilder builder)

@@ -1,6 +1,5 @@
 ﻿using System;
-using System.IO;
-using System.Threading;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
 namespace YiDian.EventBus.MQ
@@ -10,78 +9,78 @@ namespace YiDian.EventBus.MQ
         readonly IRabbitMQPersistentConnection _persistentConnection;
         readonly IEventSeralize __seralize;
         readonly string BROKER_NAME;
-        //IModel _pubChannel1;
-        IModel _pubChannel2;
-        //int _index;
+        IModel _pubC;
+        ILogger _logger;
+        readonly bool _allwaysEnableTrans;
+        public event EventHandler<ConfirmArg> OnConfirm;
 
-
-        public PublishPool(IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, string broker)
+        public PublishPool(ILogger logger, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, string broker, bool allwaysEnableTrans)
         {
             BROKER_NAME = broker;
             __seralize = seralize;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger), "not set logger");
             _persistentConnection = persistentConnection;
-            //CreatePublishChannel1();
-            CreatePublishChannel2();
+            _allwaysEnableTrans = allwaysEnableTrans;
+            CreatePublishChannel();
         }
-
         public void Dispose()
         {
-            //if (_pubChannel1 != null) _pubChannel1.Dispose();
-            if (_pubChannel2 != null) _pubChannel2.Dispose();
+            if (_pubC != null) _pubC.Dispose();
         }
 
-        internal void Send<T>(T @event, string pubkey, bool enableTransaction, out int length) where T : IMQEvent
+        internal bool Send<T>(T @event, string pubkey, bool enableTransaction, out int length, out ulong seq_no, int trans_time_out = 10) where T : IMQEvent
         {
-            //IModel channel = null;
-            //var index = Interlocked.Increment(ref _index) % 2;
-            //if (index == 1) channel = _pubChannel1;
-            //if (index == 0) channel = _pubChannel2;
-            //if (channel == null) return;
+            seq_no = 0;
             var data = __seralize.Serialize(@event);
             length = data.Length;
-            //var batch = _pubChannel2.CreateBasicPublishBatch();
-            //batch.Add(BROKER_NAME, pubkey, false, null, data.ToArray());
-            //batch.Publish();
-            _pubChannel2.BasicPublish(exchange: BROKER_NAME,
-                             routingKey: pubkey,
-                             basicProperties: null,
-                             body: data.ToArray());
+            if (!_allwaysEnableTrans && enableTransaction) _pubC.ConfirmSelect();
+            if (_allwaysEnableTrans || enableTransaction) seq_no = _pubC.NextPublishSeqNo;
+            _pubC.BasicPublish(exchange: BROKER_NAME,
+                         routingKey: pubkey,
+                         basicProperties: null,
+                         body: data.ToArray());
+            if (!_allwaysEnableTrans && enableTransaction)
+            {
+                if (!_pubC.WaitForConfirms(new TimeSpan(0, 0, trans_time_out)))
+                {
+                    _logger.LogError("message sending timeout,send key is:" + pubkey);
+                    return false;
+                }
+            }
+            return true;
         }
-        //void CreatePublishChannel1()
-        //{
-        //    if (_pubChannel1 == null || _pubChannel1.IsClosed)
-        //    {
-        //        if (!_persistentConnection.IsConnected)
-        //        {
-        //            _persistentConnection.TryConnect();
-        //        }
-        //        //_pubChannel.ConfirmSelect();
-        //        _pubChannel1 = _persistentConnection.CreateModel();
-        //        _pubChannel1.CallbackException += (sender, ea) =>
-        //        {
-        //            _pubChannel1.Dispose();
-        //            _pubChannel1 = null;
-        //            CreatePublishChannel1();
-        //        };
-        //    }
-        //}
-        void CreatePublishChannel2()
+        void CreatePublishChannel()
         {
-            if (_pubChannel2 == null || _pubChannel2.IsClosed)
+            if (_pubC == null || _pubC.IsClosed)
             {
                 if (!_persistentConnection.IsConnected)
                 {
                     _persistentConnection.TryConnect();
                 }
-                //_pubChannel.ConfirmSelect();
-                _pubChannel2 = _persistentConnection.CreateModel();
-                _pubChannel2.CallbackException += (sender, ea) =>
+                _pubC = _persistentConnection.CreateModel();
+                if (_allwaysEnableTrans)
                 {
-                    _pubChannel2.Dispose();
-                    _pubChannel2 = null;
-                    CreatePublishChannel2();
+                    _pubC.ConfirmSelect();
+                    _pubC.BasicAcks += PubC_BasicAcks;
+                    _pubC.BasicNacks += PubC_BasicNacks;
+                }
+                _pubC.CallbackException += (sender, ea) =>
+                {
+                    _pubC.Dispose();
+                    _pubC = null;
+                    CreatePublishChannel();
                 };
             }
+        }
+
+        private void PubC_BasicNacks(object sender, RabbitMQ.Client.Events.BasicNackEventArgs e)
+        {
+            OnConfirm(sender, new ConfirmArg() { IsOk = false, Multiple = e.Multiple, Tag = e.DeliveryTag });
+        }
+
+        private void PubC_BasicAcks(object sender, RabbitMQ.Client.Events.BasicAckEventArgs e)
+        {
+            OnConfirm(sender, new ConfirmArg() { IsOk = true, Multiple = e.Multiple, Tag = e.DeliveryTag });
         }
     }
 }

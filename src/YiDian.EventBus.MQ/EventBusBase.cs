@@ -1,12 +1,9 @@
-﻿using Autofac;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;
-using System.IO;
-using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using YiDian.Soa.Sp;
 
@@ -42,6 +39,25 @@ namespace YiDian.EventBus.MQ
             };
             _retryCount = retryCount;
         }
+        /// <summary>
+        /// 总是启用发送确认模式
+        /// </summary>
+        public void EnablePubTrans(EventHandler<ConfirmArg> action)
+        {
+            if (publishPool == null)
+            {
+                lock (typeof(PublishPool))
+                {
+                    if (publishPool == null)
+                    {
+                        publishPool = new PublishPool(_logger, _conn, __seralize, BROKER_NAME, true);
+                        publishPool.OnConfirm += action;
+                    }
+                    else _logger.LogError("you has been send messages, this method should be called before send any messages");
+                }
+            }
+            else _logger.LogError("you has been send messages, this method should be called before send any messages");
+        }
 
         protected IEventBusSubManager GetSubscriber(string queueName)
         {
@@ -53,7 +69,7 @@ namespace YiDian.EventBus.MQ
 
         public string ConnectionName { get; }
         public abstract string BROKER_NAME { get; }
-        public abstract int Publish<T>(T @event, bool enableTransaction = false) where T : IMQEvent;
+        public abstract bool Publish<T>(T @event, out ulong tag, bool enableTransaction = false) where T : IMQEvent;
         public abstract string GetEventKeyFromRoutingKey(string routingKey);
         public abstract void Subscribe<T, TH>(string queueName)
             where T : IMQEvent
@@ -115,18 +131,30 @@ namespace YiDian.EventBus.MQ
 
         #region Publish
 
-        public void PublishWithKey<T>(T @event, string key, bool enableTransaction = false) where T : IMQEvent
+        public bool Publish<T>(T @event) where T : IMQEvent
         {
-            Publish(@event, (x) => key, enableTransaction);
+            return Publish(@event, out _);
         }
-        protected int Publish<T>(T @event, Func<string, string> key_handler, bool enableTransaction = false) where T : IMQEvent
+
+        public bool PublishWithKey<T>(T @event, string key) where T : IMQEvent
         {
+            return PublishWithKey(@event, key, out _);
+        }
+
+        public bool PublishWithKey<T>(T @event, string key, out ulong tag, bool enableTransaction = false) where T : IMQEvent
+        {
+            return Publish(@event, (x) => key, out _, out tag, enableTransaction);
+        }
+        protected bool Publish<T>(T @event, Func<string, string> key_handler, out int data_bytes_length, out ulong tag, bool enableTransaction = false) where T : IMQEvent
+        {
+            data_bytes_length = 0;
+            tag = 0;
             var pubkey1 = _pub_sub.GetEventKey(@event.GetType());
             var pubkey2 = key_handler(pubkey1);
             if (string.IsNullOrEmpty(pubkey1) || string.IsNullOrEmpty(pubkey2))
             {
                 _logger.LogError($"can not find the publish key of type:{typeof(T).Name}");
-                return 0;
+                return false;
             }
             try
             {
@@ -134,16 +162,15 @@ namespace YiDian.EventBus.MQ
                 {
                     lock (typeof(PublishPool))
                     {
-                        if (publishPool == null) publishPool = new PublishPool(_conn, __seralize, BROKER_NAME);
+                        if (publishPool == null) publishPool = new PublishPool(_logger, _conn, __seralize, BROKER_NAME, false);
                     }
                 }
-                publishPool.Send(@event, pubkey2, enableTransaction, out int length);
-                return length;
+                return publishPool.Send(@event, pubkey2, enableTransaction, out data_bytes_length, out tag);
             }
             catch (Exception ex)
             {
                 LogError(ex);
-                return 0;
+                return false;
             }
         }
         #endregion
@@ -170,13 +197,6 @@ namespace YiDian.EventBus.MQ
             if (OnUncatchException != null)
                 OnUncatchException(this, ex);
             else _logger.LogError(ex.ToString());
-        }
-        private void _persistentConnection_OnConnectRecovery(object sender, EventArgs e)
-        {
-            //foreach (var consumerinfo in consumerInfos)
-            //{
-            //    CreateConsumerChannel(consumerinfo);
-            //}
         }
         protected virtual void CreateConsumerChannel(ConsumerConfig<TEventBus, TSub> config, bool autoStart)
         {
@@ -310,6 +330,5 @@ namespace YiDian.EventBus.MQ
             publishPool?.Dispose();
             _conn.Dispose();
         }
-
     }
 }

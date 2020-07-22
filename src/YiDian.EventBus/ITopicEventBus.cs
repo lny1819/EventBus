@@ -19,7 +19,7 @@ namespace YiDian.EventBus
         /// <param name="durable">是否持久化</param>
         /// <param name="autoAck">是否自动响应</param>
         void RegisterConsumer(string queuename, Action<TopicSubscriber> action, ushort fetchcount = 200, int length = 200000, bool autodelete = false, bool durable = true, bool autoAck = false, bool autoStart = true);
-        void PublishPrefix<T>(T @event, string fix, bool enableTransaction = false) where T : IMQEvent;
+        bool PublishPrefix<T>(T @event, string fix, out ulong tag, bool enableTransaction = false) where T : IMQEvent;
         /// <summary>
         /// 订阅消息
         /// </summary>

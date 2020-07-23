@@ -1,7 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
-using RabbitMQ.Client;
+﻿using RabbitMQ.Client;
 using System;
 using System.Collections.Generic;
+using System.Net.Sockets;
 
 namespace YiDian.EventBus.MQ.DefaultConnection
 {
@@ -11,6 +11,8 @@ namespace YiDian.EventBus.MQ.DefaultConnection
 
         private readonly int _retryCount;
         private readonly IEventBusSubManagerFactory default_sub_fact;
+
+        public event Action<IRabbitMQPersistentConnection, string> ConnectFail;
 
         public DefaultMqConnectSource(int retryCount, IEventBusSubManagerFactory subfactory)
         {
@@ -24,8 +26,17 @@ namespace YiDian.EventBus.MQ.DefaultConnection
             var conn = CreateConnect(mqConnstr, out string source_name);
             if (factorys.TryGetValue(source_name, out _)) throw new Exception($"repeat create mq connection by the name {source_name}");
             var mqconn = new DefaultRabbitMQPersistentConnection(conn, source_name, _retryCount, subFactory);
+            mqconn.ConnectFail += Mqconn_ConnectFail;
             if (!factorys.TryAdd(source_name, mqconn)) mqconn.Dispose();
         }
+
+        private void Mqconn_ConnectFail(object sender, string e)
+        {
+            var conn = (IRabbitMQPersistentConnection)sender;
+            ConnectFail?.Invoke(conn, e);
+            if (ConnectFail == null) throw new Exception("the rabbitmq connection named " + conn.Name + " failes");
+        }
+
         public IRabbitMQPersistentConnection Get(string name)
         {
             if (string.IsNullOrEmpty(name)) name = "default";
@@ -67,8 +78,8 @@ namespace YiDian.EventBus.MQ.DefaultConnection
                 AutomaticRecoveryEnabled = true,
                 NetworkRecoveryInterval = TimeSpan.FromSeconds(3),
                 DispatchConsumersAsync = isasync,
-                RequestedConnectionTimeout = 30000,
-                RequestedHeartbeat = 17,
+                RequestedConnectionTimeout = 10000,
+                RequestedHeartbeat = 7,
                 HostName = server,
                 Password = pwd,
                 UserName = user,

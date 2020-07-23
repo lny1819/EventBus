@@ -18,8 +18,8 @@ namespace YiDian.EventBus.MQ
         /// <param name="seralize"></param>
         /// <param name="retryCount"></param>
         /// <param name="cacheCount"></param>
-        public DirectEventBus(ILogger<IDirectEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, int retryCount = 5, int cacheCount = 100)
-            : base(logger, autofac, seralize, persistentConnection, retryCount, cacheCount)
+        public DirectEventBus(ILogger<IDirectEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, int cacheCount = 100)
+            : base(logger, autofac, seralize, persistentConnection, cacheCount)
         {
         }
         /// <summary>
@@ -32,8 +32,8 @@ namespace YiDian.EventBus.MQ
         /// <param name="seralize"></param>
         /// <param name="retryCount"></param>
         /// <param name="cacheCount"></param>
-        public DirectEventBus(string brokerName, ILogger<IDirectEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, int retryCount = 5, int cacheCount = 100)
-            : base(logger, autofac, seralize, persistentConnection, retryCount, cacheCount)
+        public DirectEventBus(string brokerName, ILogger<IDirectEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, int cacheCount = 100)
+            : base(logger, autofac, seralize, persistentConnection, cacheCount)
         {
             if (string.IsNullOrEmpty(brokerName)) throw new ArgumentNullException(nameof(brokerName), "broker name can not be null");
             this.brokerName = brokerName;

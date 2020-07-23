@@ -13,7 +13,6 @@ namespace YiDian.EventBus.MQ
     {
         private readonly IRabbitMQPersistentConnection _conn;
         private readonly EventHanlerCacheMgr hanlerCacheMgr;
-        readonly int _retryCount;
         readonly ILogger<TEventBus> _logger;
         readonly ThreadDispatcher<QueueItem<TEventBus, TSub>> channels;
         PublishPool publishPool = null;
@@ -24,9 +23,10 @@ namespace YiDian.EventBus.MQ
         protected readonly List<ConsumerConfig<TEventBus, TSub>> consumerInfos;
         protected readonly IEventSeralize __seralize;
 
-        internal EventBusBase(ILogger<TEventBus> logger, IServiceProvider autofac, IEventSeralize seralize, IRabbitMQPersistentConnection persistentConnection, int retryCount = 5, int cacheCount = 100)
+        internal EventBusBase(ILogger<TEventBus> logger, IServiceProvider autofac, IEventSeralize seralize, IRabbitMQPersistentConnection persistentConnection, int cacheCount = 100)
         {
             _conn = persistentConnection ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
+            _conn.ConnectFail += _conn_ConnectFail;
             ConnectionName = _conn.Name;
             _logger = logger ?? throw new ArgumentNullException(nameof(ILogger<TEventBus>));
             __seralize = seralize ?? throw new ArgumentNullException(nameof(IEventSeralize));
@@ -37,8 +37,13 @@ namespace YiDian.EventBus.MQ
             {
                 UnCatchedException = LogError
             };
-            _retryCount = retryCount;
         }
+
+        private void _conn_ConnectFail(object sender, string e)
+        {
+
+        }
+
         /// <summary>
         /// 总是启用发送确认模式
         /// </summary>

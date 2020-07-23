@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
+using Polly;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Exceptions;
 
 namespace YiDian.EventBus.MQ
 {
@@ -35,10 +38,20 @@ namespace YiDian.EventBus.MQ
             length = data.Length;
             if (!_allwaysEnableTrans && enableTransaction) _pubC.ConfirmSelect();
             if (_allwaysEnableTrans || enableTransaction) seq_no = _pubC.NextPublishSeqNo;
-            _pubC.BasicPublish(exchange: BROKER_NAME,
-                         routingKey: pubkey,
-                         basicProperties: null,
-                         body: data.ToArray());
+            var policy = Policy.Handle<SocketException>()
+                .Or<BrokerUnreachableException>()
+                .WaitAndRetry(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
+                {
+                    _logger.LogWarning("" + ex.Message);
+                }
+            );
+            policy.Execute(() =>
+            {
+                _pubC.BasicPublish(exchange: BROKER_NAME,
+                             routingKey: pubkey,
+                             basicProperties: null,
+                             body: data.ToArray());
+            });
             if (!_allwaysEnableTrans && enableTransaction)
             {
                 if (!_pubC.WaitForConfirms(new TimeSpan(0, 0, trans_time_out)))

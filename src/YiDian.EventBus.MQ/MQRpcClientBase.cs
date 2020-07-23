@@ -1,9 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
+using Polly;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using RabbitMQ.Client.Exceptions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using YiDian.Soa.Sp;
@@ -17,12 +20,14 @@ namespace YiDian.EventBus.MQ
         readonly string _clientName;
         readonly IQpsCounter _qps;
         readonly AutoResetEvent signal;
+        ILogger _logger;
         private readonly ConcurrentDictionary<long, CallMeta> methodPoll;
         IModel _consumerchannel;
         public MQRpcClientBase(IRabbitMQPersistentConnection rabbitMQPersistentConnection, string clientName, ILogger logger, IQpsCounter counter)
         {
             signal = new AutoResetEvent(false);
             _clientName = clientName ?? throw new ArgumentNullException(nameof(clientName));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _qps = counter ?? throw new ArgumentNullException(nameof(IQpsCounter));
             _persistentConnection = rabbitMQPersistentConnection ?? throw new ArgumentNullException(nameof(rabbitMQPersistentConnection));
             methodPoll = new ConcurrentDictionary<long, CallMeta>();
@@ -55,7 +60,7 @@ namespace YiDian.EventBus.MQ
                 };
                 Dictionary<string, object> dictionary = dictionary1;
                 IModel model = _persistentConnection.CreateModel();
-                model.QueueDeclare(_clientName, false, true, true, (IDictionary<string, object>)dictionary);
+                model.QueueDeclare(_clientName, false, true, true, dictionary);
                 model.BasicQos(0, 200, false);
                 model.CallbackException += (delegate (object sender, CallbackExceptionEventArgs ea)
                 {
@@ -77,7 +82,17 @@ namespace YiDian.EventBus.MQ
             var basicProperties = _consumerchannel.CreateBasicProperties();
             basicProperties.CorrelationId = callmeta.MethodId.ToString();
             basicProperties.ReplyTo = _clientName;
-            _consumerchannel.BasicPublish(BROKER_NAME, str, basicProperties, readOnlyMemory.ToArray());
+            var policy = Policy.Handle<SocketException>()
+              .Or<BrokerUnreachableException>()
+              .WaitAndRetry(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
+              {
+                  _logger.LogWarning("" + ex.Message);
+              }
+          );
+            policy.Execute(() =>
+            {
+                _consumerchannel.BasicPublish(BROKER_NAME, str, basicProperties, readOnlyMemory.ToArray());
+            });
             return callmeta.Task;
         }
 

@@ -6,6 +6,7 @@ namespace YiDian.EventBus.MQ
     public interface IRabbitMQPersistentConnection
         : IDisposable
     {
+        event EventHandler<string> ConnectFail;
         string Name { get; }
         bool IsConnected { get; }
         IEventBusSubManagerFactory SubsFactory { get; }

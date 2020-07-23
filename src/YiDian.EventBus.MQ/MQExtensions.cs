@@ -23,7 +23,7 @@ namespace YiDian.Soa.Sp.Extensions
         /// <param name="action"></param>
         /// <param name="eventsManager"></param>
         /// <returns></returns>
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action = null, IAppEventsManager eventsManager = null)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action = null, IAppEventsManager eventsManager = null, int retryConnect = 5)
         {
             lock (builder)
             {
@@ -37,7 +37,7 @@ namespace YiDian.Soa.Sp.Extensions
             builder.Services.AddSingleton(sp =>
             {
                 var subfact = sp.GetService<IEventBusSubManagerFactory>();
-                var connSource = new DefaultMqConnectSource(5, subfact);
+                var connSource = new DefaultMqConnectSource(retryConnect, subfact);
                 action?.Invoke(connSource);
                 return connSource;
             });
@@ -56,6 +56,7 @@ namespace YiDian.Soa.Sp.Extensions
             });
             return builder;
         }
+
         /// <summary>
         /// 使用RabbitMq
         /// </summary>

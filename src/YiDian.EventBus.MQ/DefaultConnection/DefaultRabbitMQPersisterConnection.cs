@@ -19,6 +19,8 @@ namespace YiDian.EventBus.MQ.DefaultConnection
         bool _disposed;
         readonly object sync_root = new object();
 
+        public event EventHandler<string> ConnectFail;
+
         public DefaultRabbitMQPersistentConnection(IConnectionFactory connectionFactory, string name, int retryCount, IEventBusSubManagerFactory fact)
         {
             Name = name;
@@ -73,7 +75,7 @@ namespace YiDian.EventBus.MQ.DefaultConnection
                     .Or<BrokerUnreachableException>()
                     .WaitAndRetry(_retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
                     {
-                        _logger.LogWarning(ex.Message);
+                        _logger.LogWarning("TryConnect Failed ," + ex.Message);
                     }
                 );
 
@@ -87,15 +89,13 @@ namespace YiDian.EventBus.MQ.DefaultConnection
                     _connection.ConnectionShutdown += OnConnectionShutdown;
                     _connection.CallbackException += OnCallbackException;
                     _connection.ConnectionBlocked += OnConnectionBlocked;
-
                     _logger.LogInformation($"RabbitMQ persistent connection acquired a connection {_connection.LocalPort.ToString()} and is subscribed to failure events");
-
                     return true;
                 }
                 else
                 {
                     _logger.LogWarning("FATAL ERROR: RabbitMQ connections could not be created and opened");
-
+                    ConnectFail?.Invoke(this, "After several attempts RabbitMQ connections could not be created and opened");
                     return false;
                 }
             }
@@ -103,7 +103,8 @@ namespace YiDian.EventBus.MQ.DefaultConnection
         private void OnConnectionBlocked(object sender, ConnectionBlockedEventArgs e)
         {
             if (_disposed) return;
-            _logger.LogWarning("A RabbitMQ connection is shutdown. Trying to re-connect...");
+            _logger.LogWarning("A RabbitMQ connection is shutdown.OnConnectionBlocked Trying to re-connect...");
+            TryConnect();
 
         }
 
@@ -111,7 +112,7 @@ namespace YiDian.EventBus.MQ.DefaultConnection
         {
             if (_disposed) return;
 
-            _logger.LogWarning("A RabbitMQ connection throw exception. Trying to re-connect...");
+            _logger.LogWarning("A RabbitMQ connection throw exception.OnCallbackException Trying to re-connect...");
 
             TryConnect();
         }
@@ -119,7 +120,8 @@ namespace YiDian.EventBus.MQ.DefaultConnection
         void OnConnectionShutdown(object sender, ShutdownEventArgs reason)
         {
             if (_disposed) return;
-            _logger.LogWarning("A RabbitMQ connection is on shutdown. Trying to re-connect...");
+            _logger.LogWarning("A RabbitMQ connection is on shutdown. OnConnectionShutdown Trying to re-connect...");
+            TryConnect();
         }
     }
 }

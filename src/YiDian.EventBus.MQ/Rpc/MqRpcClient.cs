@@ -38,7 +38,14 @@ namespace YiDian.EventBus.MQ.Rpc
         public ResponseBase<TOut> Call<Tin, TOut>(string uri, Tin data, ContentType type)
         {
             var task = CallAsync<Tin, TOut>(uri, data, type);
-            return task.Result;
+            task.Wait();
+            if (task.IsCompletedSuccessfully)
+                return task.Result;
+            return new ResponseBase<TOut>()
+            {
+                ServerState = -1,
+                ServerMsg = task.IsFaulted ? task.Exception.Message : "未知错误"
+            };
         }
         public Task<ResponseBase<TOut>> CallAsync<TOut>(string uri)
         {

@@ -11,12 +11,12 @@ namespace YiDian.EventBus.MQ
     public class TopicEventBusMQ : EventBusBase<ITopicEventBus, TopicSubscriber>, ITopicEventBus
     {
         string brokerName = "amq.topic";
-        public TopicEventBusMQ(ILogger<ITopicEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, int retryCount = 5, int cacheCount = 100)
-            : base(logger, autofac, seralize, persistentConnection, retryCount, cacheCount)
+        public TopicEventBusMQ(ILogger<ITopicEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, int cacheCount = 100)
+            : base(logger, autofac, seralize, persistentConnection, cacheCount)
         {
         }
-        public TopicEventBusMQ(string brokerName, ILogger<ITopicEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, int retryCount = 5, int cacheCount = 100)
-            : base(logger, autofac, seralize, persistentConnection, retryCount, cacheCount)
+        public TopicEventBusMQ(string brokerName, ILogger<ITopicEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, int cacheCount = 100)
+            : base(logger, autofac, seralize, persistentConnection, cacheCount)
         {
             if (string.IsNullOrEmpty(brokerName)) throw new ArgumentNullException(nameof(brokerName), "broker name can not be null");
             this.brokerName = brokerName;

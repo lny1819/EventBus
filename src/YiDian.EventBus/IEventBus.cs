@@ -47,7 +47,6 @@ namespace YiDian.EventBus
         /// <param name="event"></param>
         /// <param name="key"></param>
         bool PublishWithKey<T>(T @event, string key) where T : IMQEvent;
-
         void Subscribe<T, TH>(string queueName)
              where T : IMQEvent
              where TH : IEventHandler<T>;

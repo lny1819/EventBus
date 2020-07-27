@@ -1,7 +1,6 @@
 ﻿using RabbitMQ.Client;
 using System;
 using System.Collections.Generic;
-using System.Net.Sockets;
 
 namespace YiDian.EventBus.MQ.DefaultConnection
 {
@@ -26,8 +25,12 @@ namespace YiDian.EventBus.MQ.DefaultConnection
             var conn = CreateConnect(mqConnstr, out string source_name);
             if (factorys.TryGetValue(source_name, out _)) throw new Exception($"repeat create mq connection by the name {source_name}");
             var mqconn = new DefaultRabbitMQPersistentConnection(conn, source_name, _retryCount, subFactory);
+            if (!factorys.TryAdd(source_name, mqconn))
+            {
+                mqconn.Dispose();
+                return;
+            }
             mqconn.ConnectFail += Mqconn_ConnectFail;
-            if (!factorys.TryAdd(source_name, mqconn)) mqconn.Dispose();
         }
 
         private void Mqconn_ConnectFail(object sender, string e)

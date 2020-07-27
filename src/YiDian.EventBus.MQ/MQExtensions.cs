@@ -20,10 +20,10 @@ namespace YiDian.Soa.Sp.Extensions
         /// eventsmgr=inmemory
         /// </summary>
         /// <param name="builder"></param>
-        /// <param name="action"></param>
+        /// <param name="action">创建MQ连接，可通过此方法创建多个连接；不同的连接通过name来区分</param>
         /// <param name="eventsManager"></param>
         /// <returns></returns>
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action = null, IAppEventsManager eventsManager = null, int retryConnect = 5)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action, IAppEventsManager eventsManager = null, int retryConnect = 5)
         {
             lock (builder)
             {
@@ -38,7 +38,7 @@ namespace YiDian.Soa.Sp.Extensions
             {
                 var subfact = sp.GetService<IEventBusSubManagerFactory>();
                 var connSource = new DefaultMqConnectSource(retryConnect, subfact);
-                action?.Invoke(connSource);
+                action.Invoke(connSource);
                 return connSource;
             });
             builder.Services.AddSingleton<IEventBusSubManagerFactory, InMemorySubFactory>(sp =>
@@ -49,9 +49,10 @@ namespace YiDian.Soa.Sp.Extensions
             builder.Services.AddSingleton(sp =>
             {
                 var source = sp.GetService<DefaultMqConnectSource>();
-                var dbs = sp.GetService<ILogger<IDirectEventBus>>();
-                var tbs = sp.GetService<ILogger<ITopicEventBus>>();
-                var busfact = new EventBusFactory(source, sp, dbs, tbs);
+                var l1 = sp.GetService<ILogger<IDirectEventBus>>();
+                var l2 = sp.GetService<ILogger<ITopicEventBus>>();
+                var l3 = sp.GetService<ILogger<IFanoutEventBus>>();
+                var busfact = new EventBusFactory(source, sp, l1, l2, l3);
                 return busfact;
             });
             return builder;
@@ -66,7 +67,8 @@ namespace YiDian.Soa.Sp.Extensions
         /// <returns></returns>
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, string mqConnstr, string enven_mgr_api = "")
         {
-            return UseRabbitMq(builder, x => x.Create(mqConnstr), string.IsNullOrEmpty(enven_mgr_api) ? null : new HttpEventsManager(enven_mgr_api));
+            if (string.IsNullOrEmpty(enven_mgr_api)) return UseRabbitMq(builder, x => x.Create(mqConnstr), new DefaultEventsManager());
+            return UseRabbitMq(builder, x => x.Create(mqConnstr), enven_mgr_api);
         }
         /// <summary>
         /// 使用字符串地址创建RabbitMq
@@ -80,16 +82,18 @@ namespace YiDian.Soa.Sp.Extensions
             return UseRabbitMq(builder, x => x.Create(mqConnstr), enven_mgr_api);
         }
         /// <summary>
-        /// 使用指定方法创建RabbitMq
+        /// 多MQ链接和指定enven_mgr_api地址创建RabbitMq
         /// </summary>
         /// <param name="builder">构造器</</param>
         /// <param name="action"></param>
-        /// <param name="enven_mgr_api"></param>
+        /// <param name="enven_mgr_api">只支持WEBAPI地址</param>
         /// <returns></returns>
-        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action, string enven_mgr_api)
+        public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action, string event_mgr_api)
         {
-            var mgr = string.IsNullOrEmpty(enven_mgr_api) ? throw new ArgumentNullException(nameof(IAppEventsManager), "the address of IAppEventsManager can not be empty") : new HttpEventsManager(enven_mgr_api);
-            return UseRabbitMq(builder, action, mgr);
+            var addr = string.IsNullOrEmpty(event_mgr_api) ? throw new ArgumentNullException(nameof(IAppEventsManager), "the address of IAppEventsManager can not be empty") : event_mgr_api;
+            if (!Uri.TryCreate(event_mgr_api, UriKind.Absolute, out _)) throw new ArgumentException("the api address entered is not vaild", nameof(event_mgr_api));
+            var api = new HttpEventsManager(addr);
+            return UseRabbitMq(builder, action, api);
         }
         /// <summary>
         /// 创建系统所依赖的消息总线中的消息类型

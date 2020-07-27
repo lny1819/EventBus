@@ -3,6 +3,19 @@ using System.Linq.Expressions;
 
 namespace YiDian.EventBus
 {
+    public class FanoutSubscriber : Subscriber<IFanoutEventBus>
+    {
+        public FanoutSubscriber(IFanoutEventBus eventBus, string name) : base(eventBus, name)
+        {
+
+        }
+        public void Subscribe<T, TH>()
+                            where T : IMQEvent
+                            where TH : IEventHandler<T>
+        {
+            __eventBus.Subscribe<T, TH>(__name);
+        }
+    }
     public class TopicSubscriber : Subscriber<ITopicEventBus>
     {
         public TopicSubscriber(ITopicEventBus eventBus, string name) : base(eventBus, name)

@@ -26,7 +26,7 @@ namespace YiDian.EventBus.MQ
         internal EventBusBase(ILogger<TEventBus> logger, IServiceProvider autofac, IEventSeralize seralize, IRabbitMQPersistentConnection persistentConnection, int cacheCount = 100)
         {
             _conn = persistentConnection ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
-            _conn.ConnectFail += _conn_ConnectFail;
+            _conn.ConnectFail += Conn_ConnectFail;
             ConnectionName = _conn.Name;
             _logger = logger ?? throw new ArgumentNullException(nameof(ILogger<TEventBus>));
             __seralize = seralize ?? throw new ArgumentNullException(nameof(IEventSeralize));
@@ -39,9 +39,9 @@ namespace YiDian.EventBus.MQ
             };
         }
 
-        private void _conn_ConnectFail(object sender, string e)
+        private void Conn_ConnectFail(object sender, string e)
         {
-
+            throw new Exception(e);
         }
 
         /// <summary>

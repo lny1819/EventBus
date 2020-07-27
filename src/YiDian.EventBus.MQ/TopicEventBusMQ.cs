@@ -10,7 +10,7 @@ namespace YiDian.EventBus.MQ
 
     public class TopicEventBusMQ : EventBusBase<ITopicEventBus, TopicSubscriber>, ITopicEventBus
     {
-        string brokerName = "amq.topic";
+        readonly string brokerName = "amq.topic";
         public TopicEventBusMQ(ILogger<ITopicEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, int cacheCount = 100)
             : base(logger, autofac, seralize, persistentConnection, cacheCount)
         {
@@ -18,8 +18,7 @@ namespace YiDian.EventBus.MQ
         public TopicEventBusMQ(string brokerName, ILogger<ITopicEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, int cacheCount = 100)
             : base(logger, autofac, seralize, persistentConnection, cacheCount)
         {
-            if (string.IsNullOrEmpty(brokerName)) throw new ArgumentNullException(nameof(brokerName), "broker name can not be null");
-            this.brokerName = brokerName;
+            this.brokerName = brokerName ?? throw new ArgumentNullException(nameof(brokerName), "broker name can not be null");
             persistentConnection.TryConnect();
             var channel = persistentConnection.CreateModel();
             channel.ExchangeDeclare(brokerName, "topic", true, false, null);
@@ -62,7 +61,7 @@ namespace YiDian.EventBus.MQ
             {
                 var value = p.Property.Invoke(@event);
                 if (value.GetType().IsValueType) value = ((int)value).ToString();
-                else sb.Append(value.ToString());
+                sb.Append(value.ToString());
                 sb.Append('.');
             }
             var key = sb.ToString();

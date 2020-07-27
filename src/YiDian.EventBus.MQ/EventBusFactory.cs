@@ -42,10 +42,12 @@ namespace YiDian.EventBus.MQ
 
         private Dictionary<BusKey, IDirectEventBus> DirectBusDic { get; }
         private Dictionary<BusKey, ITopicEventBus> TopicBusDic { get; }
+        private Dictionary<BusKey, IFanoutEventBus> FanoutBusDic { get; }
 
         readonly IServiceProvider _sp;
         readonly ILogger<IDirectEventBus> _logger;
         readonly ILogger<ITopicEventBus> _logger2;
+        readonly ILogger<IFanoutEventBus> _logger3;
         /// <summary>
         /// 创建一个工厂实例
         /// </summary>
@@ -53,10 +55,12 @@ namespace YiDian.EventBus.MQ
         /// <param name="scope">对象生命周期管理器</param>
         /// <param name="logger">IDirectEventBus日志</param>
         /// <param name="logger2">ITopicEventBus日志</param>
-        public EventBusFactory(DefaultMqConnectSource source, IServiceProvider scope, ILogger<IDirectEventBus> logger, ILogger<ITopicEventBus> logger2)
+        /// <param name="logger3">IFanoutEventBus日志</param>
+        public EventBusFactory(DefaultMqConnectSource source, IServiceProvider scope, ILogger<IDirectEventBus> logger, ILogger<ITopicEventBus> logger2, ILogger<IFanoutEventBus> logger3)
         {
             DirectBusDic = new Dictionary<BusKey, IDirectEventBus>(BusKey.Compare);
             TopicBusDic = new Dictionary<BusKey, ITopicEventBus>(BusKey.Compare);
+            FanoutBusDic = new Dictionary<BusKey, IFanoutEventBus>(BusKey.Compare);
             var defaultDirect = scope.GetService<IDirectEventBus>();
             var defaultTopic = scope.GetService<ITopicEventBus>();
             if (defaultDirect != null) DirectBusDic.Add(new BusKey() { brokerName = defaultDirect.BROKER_NAME, connName = defaultDirect.ConnectionName }, defaultDirect);
@@ -65,14 +69,15 @@ namespace YiDian.EventBus.MQ
             _source = source;
             _logger = logger;
             _logger2 = logger2;
+            _logger3 = logger3;
         }
         /// <summary>
         /// 创建指定序列化，连接地址，交换机名称的IDirectEventBus类型EventBus
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="serializer"></param>
-        /// <param name="connSource"></param>
-        /// <param name="brokerName"></param>
+        /// <param name="connSource">连接名称，由连接字符串中的name指定</param>
+        /// <param name="brokerName">交换机名称</param>
         /// <param name="length"></param>
         /// <returns></returns>
         public IDirectEventBus GetDirect<T>(T serializer = null, string connSource = "", string brokerName = "", int length = 100) where T : class, IEventSeralize, new()
@@ -95,8 +100,8 @@ namespace YiDian.EventBus.MQ
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="serializer"></param>
-        /// <param name="connSource"></param>
-        /// <param name="brokerName"></param>
+        /// <param name="connSource">连接名称，由连接字符串中的name指定</param>
+        /// <param name="brokerName">交换机名称</param>
         /// <param name="length"></param>
         /// <returns></returns>
         public ITopicEventBus GetTopic<T>(T serializer = null, string connSource = "", string brokerName = "", int length = 100) where T : class, IEventSeralize, new()
@@ -112,6 +117,30 @@ namespace YiDian.EventBus.MQ
             else
                 eventbus = new TopicEventBusMQ(brokerName, _logger2, _sp, conn, serializer, cacheCount: length);
             TopicBusDic.TryAdd(key, eventbus);
+            return eventbus;
+        }
+        /// <summary>
+        ///  创建指定序列化，连接地址，交换机名称的IFanoutEventBus类型EventBus
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="serializer"></param>
+        /// <param name="connSource">连接名称，由连接字符串中的name指定</param>
+        /// <param name="brokerName">交换机名称</param>
+        /// <param name="length"></param>
+        /// <returns></returns>
+        public IFanoutEventBus GetFanout<T>(T serializer = null, string connSource = "", string brokerName = "", int length = 100) where T : class, IEventSeralize, new()
+        {
+            var key = new BusKey(connSource, brokerName);
+            if (FanoutBusDic.TryGetValue(key, out IFanoutEventBus bus)) return bus;
+            var conn = _source.Get(connSource) ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
+            var connname = conn.Name;
+            IFanoutEventBus eventbus;
+            serializer ??= new T();
+            if (string.IsNullOrEmpty(brokerName))
+                eventbus = new FanoutEventBus(_logger3, _sp, serializer, conn, cacheCount: length);
+            else
+                eventbus = new FanoutEventBus(brokerName, _logger3, _sp, conn, serializer, cacheCount: length);
+            FanoutBusDic.TryAdd(key, eventbus);
             return eventbus;
         }
     }

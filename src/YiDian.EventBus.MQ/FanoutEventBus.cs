@@ -17,7 +17,7 @@ namespace YiDian.EventBus.MQ
             this.brokerName = brokerName ?? throw new ArgumentNullException(nameof(brokerName), "broker name can not be null");
             persistentConnection.TryConnect();
             var channel = persistentConnection.CreateModel();
-            channel.ExchangeDeclare(brokerName, "fanout", true, false, null);
+            channel.ExchangeDeclare(brokerName, "fanout", false, true, null);
             channel.Dispose();
         }
         public override string BROKER_NAME => brokerName;

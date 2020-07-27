@@ -185,18 +185,23 @@ namespace YiDian.EventBus.MQ
                 if (item.Name == queueName)
                 {
                     var mgr = item.GetSubMgr();
+                    var eventKey = mgr.GetEventKey<T>();
+                    subkey += "." + eventKey;
                     mgr.AddSubscription<T, TH>(subkey, BROKER_NAME);
                     break;
                 }
             }
         }
-        public void Unsubscribe(string queueName, string subkey)
+        public void Unsubscribe<T>(string queueName, string subkey)
+              where T : IMQEvent
         {
             foreach (var item in consumerInfos)
             {
                 if (item.Name == queueName)
                 {
                     var mgr = item.GetSubMgr();
+                    var eventKey = mgr.GetEventKey<T>();
+                    subkey += "." + eventKey;
                     mgr.RemoveSubscription(subkey, BROKER_NAME);
                     break;
                 }
@@ -211,12 +216,27 @@ namespace YiDian.EventBus.MQ
                 if (item.Name == queueName)
                 {
                     var mgr = item.GetSubMgr();
+                    var eventKey = mgr.GetEventKey<T>();
+                    subkey += "." + eventKey;
                     mgr.AddBytesSubscription<T, TH>(subkey, BROKER_NAME);
                     break;
                 }
             }
         }
-
+        public void UnsubscribeBytes<T, TH>(string queueName)
+            where T : IMQEvent
+            where TH : IBytesHandler
+        {
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    mgr.RemoveBytesSubscription<T, TH>();
+                    break;
+                }
+            }
+        }
         public override void Subscribe<T, TH>(string queueName)
         {
             foreach (var item in consumerInfos)

@@ -35,9 +35,13 @@ namespace YiDian.EventBus
         void Subscribe<T, TH>(string queueName, string subkey)
              where T : IMQEvent
              where TH : IEventHandler<T>;
-        void Unsubscribe(string queueName, string subkey);
+        void Unsubscribe<T>(string queueName, string subkey)
+             where T : IMQEvent;
         void SubscribeBytes<T, TH>(string queueName, string subkey)
             where T : IMQEvent
+            where TH : IBytesHandler;
+        void UnsubscribeBytes<T, TH>(string queueName)
+             where T : IMQEvent
             where TH : IBytesHandler;
     }
 }

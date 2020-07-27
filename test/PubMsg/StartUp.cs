@@ -1,8 +1,11 @@
 ﻿using Autofac;
+using EventModels.depthdata;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Reflection;
 using System.Text;
+using System.Threading;
 using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.Soa.Sp;
@@ -30,6 +33,8 @@ namespace ConsoleApp
         }
         public void ConfigContainer(ContainerBuilder builder)
         {
+            var curAssembly = Assembly.GetEntryAssembly();
+            builder.RegisterAssemblyTypes(curAssembly).Where(e => e.Name.EndsWith("Handler")).PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies).SingleInstance();
         }
         public void Start(IServiceProvider sp, string[] args)
         {
@@ -39,7 +44,31 @@ namespace ConsoleApp
             var bus3 = fact.GetFanout(new DefaultYDSeralizer(Encoding.UTF8), brokerName: "hkex.hsi");
             bus1.RegisterConsumer("rec_topic_test", x =>
             {
-            }, autodelete: true, autoAck: true);
+                x.Subscribe<DepthData, Test1Handler>("HKEX.#");
+            }, autodelete: true);
+            bus2.RegisterConsumer("rec_fanout_test", x =>
+            {
+                x.Subscribe<DepthData, Test2Handler>();
+            });
+            bus3.RegisterConsumer("rec_fanout_test", x =>
+            {
+                x.Subscribe<DepthData, Test3Handler>();
+            });
+            var dp = new DepthData()
+            {
+                ExchangeID = "HKEX",
+                CommodityNo = "HSI",
+                InstrumentID = "2007",
+                LastPrice = 12817,
+                Volume = 5
+            };
+            for (; ; )
+            {
+                bus1.Publish(dp);
+                bus2.Publish(dp);
+                bus3.Publish(dp, out _, true);
+                Thread.Sleep(3000);
+            }
         }
     }
 }

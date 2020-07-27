@@ -61,10 +61,10 @@ namespace YiDian.EventBus.MQ
             DirectBusDic = new Dictionary<BusKey, IDirectEventBus>(BusKey.Compare);
             TopicBusDic = new Dictionary<BusKey, ITopicEventBus>(BusKey.Compare);
             FanoutBusDic = new Dictionary<BusKey, IFanoutEventBus>(BusKey.Compare);
-            var defaultDirect = scope.GetService<IDirectEventBus>();
-            var defaultTopic = scope.GetService<ITopicEventBus>();
-            if (defaultDirect != null) DirectBusDic.Add(new BusKey() { brokerName = defaultDirect.BROKER_NAME, connName = defaultDirect.ConnectionName }, defaultDirect);
-            if (defaultTopic != null) TopicBusDic.Add(new BusKey() { brokerName = defaultTopic.BROKER_NAME, connName = defaultTopic.ConnectionName }, defaultTopic);
+            //var defaultDirect = scope.GetService<IDirectEventBus>();
+            //var defaultTopic = scope.GetService<ITopicEventBus>();
+            //if (defaultDirect != null) DirectBusDic.Add(new BusKey() { brokerName = defaultDirect.BROKER_NAME, connName = defaultDirect.ConnectionName }, defaultDirect);
+            //if (defaultTopic != null) TopicBusDic.Add(new BusKey() { brokerName = defaultTopic.BROKER_NAME, connName = defaultTopic.ConnectionName }, defaultTopic);
             _sp = scope;
             _source = source;
             _logger = logger;

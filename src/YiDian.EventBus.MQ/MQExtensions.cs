@@ -145,18 +145,12 @@ namespace YiDian.Soa.Sp.Extensions
         /// <returns></returns>
         public static SoaServiceContainerBuilder UseDirectEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0, IEventSeralize seralizer = null, string broker_name = "")
         {
-            builder.Services.AddSingleton<IDirectEventBus, DirectEventBus>(sp =>
+            builder.Services.AddSingleton(sp =>
             {
-                seralizer = seralizer ?? new DefaultSeralizer(Encoding.UTF8);
-                var source = sp.GetService<DefaultMqConnectSource>();
-                var conn = source.Get("") ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
-                var logger = sp.GetService<ILogger<IDirectEventBus>>();
-                DirectEventBus eventBus;
-                if (string.IsNullOrEmpty(broker_name))
-                    eventBus = new DirectEventBus(logger, sp, conn, seralizer, cacheLength);
-                else
-                    eventBus = new DirectEventBus(broker_name, logger, sp, conn, seralizer, cacheCount: cacheLength);
-                return eventBus;
+                var fact = sp.GetService<EventBusFactory>();
+                seralizer ??= new DefaultYDSeralizer(Encoding.UTF8);
+                var bus = fact.GetDirect(seralizer, "", broker_name, cacheLength);
+                return bus;
             });
             return builder;
         }
@@ -170,19 +164,32 @@ namespace YiDian.Soa.Sp.Extensions
         /// <returns></returns>
         public static SoaServiceContainerBuilder UseTopicEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0, IEventSeralize seralizer = null, string broker_name = "")
         {
-            builder.Services.AddSingleton<ITopicEventBus, TopicEventBusMQ>(sp =>
-             {
-                 seralizer = seralizer ?? new DefaultSeralizer(Encoding.UTF8);
-                 var source = sp.GetService<DefaultMqConnectSource>();
-                 var conn = source.Get("") ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
-                 var logger = sp.GetService<ILogger<ITopicEventBus>>();
-                 TopicEventBusMQ eventBus;
-                 if (string.IsNullOrEmpty(broker_name))
-                     eventBus = new TopicEventBusMQ(logger, sp, conn, seralizer, cacheLength);
-                 else
-                     eventBus = new TopicEventBusMQ(broker_name, logger, sp, conn, seralizer, cacheCount: cacheLength);
-                 return eventBus;
-             });
+            builder.Services.AddSingleton(sp =>
+            {
+                var fact = sp.GetService<EventBusFactory>();
+                seralizer ??= new DefaultYDSeralizer(Encoding.UTF8);
+                var bus = fact.GetTopic(seralizer, "", broker_name, cacheLength);
+                return bus;
+            });
+            return builder;
+        }
+        /// <summary>
+        /// 创建默认的<see cref="IFanoutEventBus"/>实现
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <param name="cacheLength"></param>
+        /// <param name="seralizer"></param>
+        /// <param name="broker_name">交换机名称</param>
+        /// <returns></returns>
+        public static SoaServiceContainerBuilder UseFanoutEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0, IEventSeralize seralizer = null, string broker_name = "")
+        {
+            builder.Services.AddSingleton(sp =>
+            {
+                var fact = sp.GetService<EventBusFactory>();
+                seralizer ??= new DefaultYDSeralizer(Encoding.UTF8);
+                var bus = fact.GetFanout(seralizer, "", broker_name, cacheLength);
+                return bus;
+            });
             return builder;
         }
     }

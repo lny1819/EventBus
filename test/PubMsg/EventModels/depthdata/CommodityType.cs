@@ -1,5 +1,5 @@
 using System;
-namespace EventModels.es_quote
+namespace EventModels.depthdata
 {
     public enum CommodityType
     {

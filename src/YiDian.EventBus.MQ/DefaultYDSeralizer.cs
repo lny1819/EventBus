@@ -5,11 +5,17 @@ using System.Text;
 
 namespace YiDian.EventBus.MQ
 {
-    public class DefaultSeralizer : IEventSeralize
+    /// <summary>
+    /// 复合对象使用<see cref="IYiDianSeralize"/>的默认序列化
+    /// </summary>
+    public class DefaultYDSeralizer : IEventSeralize
     {
         private readonly Encoding encoding;
-
-        public DefaultSeralizer(Encoding encoding)
+        /// <summary>
+        /// 创建一个 复合对象继承<see cref="IYiDianSeralize"/>接口的默认序列化实例
+        /// </summary>
+        /// <param name="encoding"></param>
+        public DefaultYDSeralizer(Encoding encoding)
         {
             this.encoding = encoding;
         }

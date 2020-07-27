@@ -80,14 +80,13 @@ namespace YiDian.EventBus.MQ
         /// <param name="brokerName">交换机名称</param>
         /// <param name="length"></param>
         /// <returns></returns>
-        public IDirectEventBus GetDirect<T>(T serializer = null, string connSource = "", string brokerName = "", int length = 100) where T : class, IEventSeralize, new()
+        public IDirectEventBus GetDirect(IEventSeralize serializer, string connSource = "", string brokerName = "", int length = 100)
         {
             var key = new BusKey(connSource, brokerName);
             if (DirectBusDic.TryGetValue(key, out IDirectEventBus bus)) return bus;
             var conn = _source.Get(connSource) ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
             var connname = conn.Name;
             DirectEventBus eventbus;
-            serializer ??= new T();
             if (string.IsNullOrEmpty(brokerName))
                 eventbus = new DirectEventBus(_logger, _sp, conn, serializer, cacheCount: length);
             else
@@ -104,14 +103,13 @@ namespace YiDian.EventBus.MQ
         /// <param name="brokerName">交换机名称</param>
         /// <param name="length"></param>
         /// <returns></returns>
-        public ITopicEventBus GetTopic<T>(T serializer = null, string connSource = "", string brokerName = "", int length = 100) where T : class, IEventSeralize, new()
+        public ITopicEventBus GetTopic(IEventSeralize serializer, string connSource = "", string brokerName = "", int length = 100)
         {
             var key = new BusKey(connSource, brokerName);
             if (TopicBusDic.TryGetValue(key, out ITopicEventBus bus)) return bus;
             var conn = _source.Get(connSource) ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
             var connname = conn.Name;
             TopicEventBusMQ eventbus;
-            serializer ??= new T();
             if (string.IsNullOrEmpty(brokerName))
                 eventbus = new TopicEventBusMQ(_logger2, _sp, conn, serializer, cacheCount: length);
             else
@@ -128,14 +126,13 @@ namespace YiDian.EventBus.MQ
         /// <param name="brokerName">交换机名称</param>
         /// <param name="length"></param>
         /// <returns></returns>
-        public IFanoutEventBus GetFanout<T>(T serializer = null, string connSource = "", string brokerName = "", int length = 100) where T : class, IEventSeralize, new()
+        public IFanoutEventBus GetFanout(IEventSeralize serializer, string connSource = "", string brokerName = "", int length = 100)
         {
             var key = new BusKey(connSource, brokerName);
             if (FanoutBusDic.TryGetValue(key, out IFanoutEventBus bus)) return bus;
             var conn = _source.Get(connSource) ?? throw new ArgumentNullException(nameof(IRabbitMQPersistentConnection));
             var connname = conn.Name;
             IFanoutEventBus eventbus;
-            serializer ??= new T();
             if (string.IsNullOrEmpty(brokerName))
                 eventbus = new FanoutEventBus(_logger3, _sp, serializer, conn, cacheCount: length);
             else

@@ -1,9 +1,10 @@
 ﻿using Autofac;
-using EventModels.es_quote;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Text;
 using YiDian.EventBus;
+using YiDian.EventBus.MQ;
 using YiDian.Soa.Sp;
 using YiDian.Soa.Sp.Extensions;
 
@@ -21,9 +22,10 @@ namespace ConsoleApp
             soa.UseRabbitMq(Configuration["mqconnstr"], Configuration["eventImsApi"])
                  .UseMqRpcClient(Configuration["sysname"])
                  .UseDirectEventBus()
+                 .UseFanoutEventBus()
                  .UseTopicEventBus();
 #if DEBUG
-            soa.AutoCreateAppEvents("es_quote");
+            soa.AutoCreateAppEvents("depthdata");
 #endif
         }
         public void ConfigContainer(ContainerBuilder builder)
@@ -31,30 +33,13 @@ namespace ConsoleApp
         }
         public void Start(IServiceProvider sp, string[] args)
         {
-            var bus = sp.GetService<ITopicEventBus>();
-            //var s_quoteinfo = "agAAAAMCBQQDBQcCAgAAAAoBAAAACwEAAAAMAAAAAA4AAAAABwAAAAAAAAAACAAAAAAAAAAACZqZmZmZmbk/AAUAAABUT0NPTQEAAAAAAwMAAABKU1YEAAAAAAUAAAAABgAAAAANAAAAAA==";
-            //var s_quoteinfo2 = "TgAAAAMCAQQCBQcBAgAAAAQAAAAAAAAAAAUAAAAAAAAAAAADAAAAQ01FAgIAAABKWQMEAAAAMjMwMwYAAAAABwAAAAAIAAAAAAkAAAAAAAAAU00EAAAAAAUAAAAABgAAAAANAAAAAAAAAA==";
-            //var bytes = Convert.FromBase64String(s_quoteinfo);
-            //var bytes2 = Convert.FromBase64String(s_quoteinfo2);
-            //var read = new ReadStream(bytes);
-            //var commodity = new CommodityInfo();
-            //commodity.BytesTo(read);
-            //var ws = new WriteStream(2000);
-            //commodity.ToBytes(ws);
-            //var a = ws.GetBytes();
-            //var b = new ReadStream(a);
-            //commodity = new CommodityInfo();
-            //commodity.BytesTo(b);
-            var info = new CommodityInfo
+            var fact = sp.GetService<EventBusFactory>();
+            var bus1 = sp.GetService<ITopicEventBus>();
+            var bus2 = sp.GetService<IFanoutEventBus>();
+            var bus3 = fact.GetFanout(new DefaultYDSeralizer(Encoding.UTF8), brokerName: "hkex.hsi");
+            bus1.RegisterConsumer("rec_topic_test", x =>
             {
-                CommodityNo = "GC",
-                ExchangeNo = "COMEX"
-            };
-            //info.ToBytes(ref ws);
-            //var bs = ws.GetBytes();
-            //var rs = new ReadStream(bs);
-            //var info2 = rs.ReadEventObj<RspUseAction>();
-            bus.Publish(info, out ulong tag, true);
+            }, autodelete: true, autoAck: true);
         }
     }
 }

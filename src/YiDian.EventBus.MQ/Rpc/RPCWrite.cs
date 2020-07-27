@@ -68,7 +68,7 @@ namespace YiDian.EventBus.MQ.Rpc
                 case ContentType.Json:
                     return new JsonSerializer(encoding);
                 default:
-                    return new DefaultSeralizer(encoding);
+                    return new DefaultYDSeralizer(encoding);
             }
         }
     }

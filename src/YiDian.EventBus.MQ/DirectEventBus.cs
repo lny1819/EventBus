@@ -16,7 +16,6 @@ namespace YiDian.EventBus.MQ
         /// <param name="autofac"></param>
         /// <param name="persistentConnection"></param>
         /// <param name="seralize"></param>
-        /// <param name="retryCount"></param>
         /// <param name="cacheCount"></param>
         public DirectEventBus(ILogger<IDirectEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, int cacheCount = 100)
             : base(logger, autofac, seralize, persistentConnection, cacheCount)
@@ -30,7 +29,6 @@ namespace YiDian.EventBus.MQ
         /// <param name="autofac"></param>
         /// <param name="persistentConnection"></param>
         /// <param name="seralize"></param>
-        /// <param name="retryCount"></param>
         /// <param name="cacheCount"></param>
         public DirectEventBus(string brokerName, ILogger<IDirectEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, int cacheCount = 100)
             : base(logger, autofac, seralize, persistentConnection, cacheCount)

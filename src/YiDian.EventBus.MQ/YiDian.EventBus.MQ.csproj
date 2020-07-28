@@ -4,7 +4,7 @@
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <RootNamespace>YiDian.EventBus.MQ</RootNamespace>
     <AssemblyName>YiDian.EventBus.MQ</AssemblyName>
-    <Version>3.0.2.3</Version>
+    <Version>3.0.2.4</Version>
     <Company>yanfeng.sun@Live.com</Company>
     <Product>消息总线</Product>
     <Copyright></Copyright>
@@ -16,11 +16,13 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DocumentationFile>D:\QuantProject\EventBus\src\YiDian.EventBus.MQ\YiDian.EventBus.MQ.xml</DocumentationFile>
+    <DocumentationFile>E:\QuantProject\EventBus\src\YiDian.EventBus.MQ\YiDian.EventBus.MQ.xml</DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DocumentationFile>E:\QuantProject\EventBus\src\YiDian.EventBus.MQ\YiDian.EventBus.MQ.xml</DocumentationFile>
+    <Optimize>false</Optimize>
   </PropertyGroup>
 
   <ItemGroup>

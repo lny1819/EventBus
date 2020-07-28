@@ -38,9 +38,9 @@ namespace ConsoleApp
         }
         public void Start(IServiceProvider sp, string[] args)
         {
-            var fact = sp.GetService<EventBusFactory>();
             var bus1 = sp.GetService<ITopicEventBus>();
             var bus2 = sp.GetService<IFanoutEventBus>();
+            var fact = sp.GetService<EventBusFactory>();
             var bus3 = fact.GetFanout(new DefaultYDSeralizer(Encoding.UTF8), brokerName: "hkex.hsi");
             bus1.RegisterConsumer("rec_topic_test", x =>
             {
@@ -50,10 +50,10 @@ namespace ConsoleApp
             {
                 x.Subscribe<DepthData, Test2Handler>();
             });
-            bus3.RegisterConsumer("rec_fanout_test", x =>
+            bus3.RegisterConsumer("rec_fanout_test_2", x =>
             {
                 x.Subscribe<DepthData, Test3Handler>();
-            });
+            }, autodel: false, durable: false, autoAck: false);
             var dp = new DepthData()
             {
                 ExchangeID = "HKEX",
@@ -62,13 +62,13 @@ namespace ConsoleApp
                 LastPrice = 12817,
                 Volume = 5
             };
-            for (; ; )
-            {
-                bus1.Publish(dp);
-                bus2.Publish(dp);
-                bus3.Publish(dp, out _, true);
-                Thread.Sleep(3000);
-            }
+            //for (; ; )
+            //{
+            //    bus1.Publish(dp);
+            //    bus2.Publish(dp);
+            //    bus3.Publish(dp, out _, true);
+            //    Thread.Sleep(3000);
+            //}
         }
     }
 }

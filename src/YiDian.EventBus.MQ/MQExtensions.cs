@@ -140,7 +140,7 @@ namespace YiDian.Soa.Sp.Extensions
         /// </summary>
         /// <param name="builder">构造器</param>
         /// <param name="cacheLength">缓存大小</param>
-        /// <param name="seralizer">序列化类型</param>
+        /// <param name="seralizer">默认使用<see cref="DefaultYDSeralizer"/> UTF8编码</param>
         /// <param name="broker_name">交换机名称</param>
         /// <returns></returns>
         public static SoaServiceContainerBuilder UseDirectEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0, IEventSeralize seralizer = null, string broker_name = "")
@@ -159,7 +159,7 @@ namespace YiDian.Soa.Sp.Extensions
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="cacheLength"></param>
-        /// <param name="seralizer"></param>
+        /// <param name="seralizer">默认使用<see cref="DefaultYDSeralizer"/> UTF8编码</param>
         /// <param name="broker_name">交换机名称</param>
         /// <returns></returns>
         public static SoaServiceContainerBuilder UseTopicEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0, IEventSeralize seralizer = null, string broker_name = "")
@@ -178,7 +178,7 @@ namespace YiDian.Soa.Sp.Extensions
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="cacheLength"></param>
-        /// <param name="seralizer"></param>
+        /// <param name="seralizer">默认使用<see cref="DefaultYDSeralizer"/> UTF8编码</param>
         /// <param name="broker_name">交换机名称</param>
         /// <returns></returns>
         public static SoaServiceContainerBuilder UseFanoutEventBus(this SoaServiceContainerBuilder builder, int cacheLength = 0, IEventSeralize seralizer = null, string broker_name = "")

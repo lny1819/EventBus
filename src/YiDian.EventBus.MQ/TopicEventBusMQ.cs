@@ -33,23 +33,16 @@ namespace YiDian.EventBus.MQ
             {
                 fix = item.Prefix + "." + fix;
             }
-            Publish(item.Event, (x) => fix + x, out _, out _, item.Enable);
+            Publish(item.Event, fix, out _, out _, item.Enable);
         }
         public override bool Publish<T>(T @event, out ulong tag, bool enableTransaction = false)
         {
             var fix = GetPubKey(@event);
-            return Publish(@event, (x) => fix + x, out _, out tag, enableTransaction);
+            return Publish(@event, fix, out _, out tag, enableTransaction);
         }
         public bool PublishPrefix<T>(T @event, string prefix, out ulong tag, bool enableTransaction = false) where T : IMQEvent
         {
-            return Publish(@event, (x) => prefix + x, out _, out tag, enableTransaction);
-        }
-        public override string GetEventKeyFromRoutingKey(string routingKey)
-        {
-            var index = routingKey.LastIndexOf('.');
-            if (index == -1)
-                return routingKey;
-            return routingKey.Substring(index + 1);
+            return Publish(@event, prefix, out _, out tag, enableTransaction);
         }
         string GetPubKey<T>(T @event) where T : IMQEvent
         {

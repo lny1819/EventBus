@@ -44,19 +44,10 @@ namespace YiDian.EventBus.MQ
         /// Exchange名称
         /// </summary>
         public override string BROKER_NAME => brokerName;
-        /// <summary>
-        /// 获取路由键
-        /// </summary>
-        /// <param name="routingKey"></param>
-        /// <returns></returns>
-        public override string GetEventKeyFromRoutingKey(string routingKey)
-        {
-            return routingKey;
-        }
 
         public override bool Publish<T>(T @event, out ulong tag, bool enableTransaction = false)
         {
-            return Publish(@event, (x) => x, out _, out tag, enableTransaction);
+            return Publish(@event, "", out _, out tag, enableTransaction);
         }
 
         public override void Subscribe<T, TH>(string queueName)

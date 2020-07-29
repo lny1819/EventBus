@@ -22,11 +22,6 @@ namespace YiDian.EventBus.MQ
         }
         public override string BROKER_NAME => brokerName;
 
-        public override string GetEventKeyFromRoutingKey(string routingKey)
-        {
-            return routingKey;
-        }
-
         public override bool Publish<T>(T @event, out ulong tag, bool enableTransaction = false)
         {
             return Publish(@event, (x) => x, out _, out tag, false);

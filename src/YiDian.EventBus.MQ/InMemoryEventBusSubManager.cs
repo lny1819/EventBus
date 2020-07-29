@@ -58,23 +58,29 @@ namespace YiDian.EventBus.MQ
                 {
                     var eventkey = GetEventKey<T>();
                     var flag = eventkey == subkey;
-                    var enventkey = GetEventKey<T>();
-                    var info = SubscriptionInfo.Dynamic(subkey, enventkey, flag, typeof(TH), null, brokerName);
+                    var info = SubscriptionInfo.Dynamic(subkey, eventkey, flag, typeof(TH), null, brokerName);
                     _subInfos.Add(info);
                 }
             }
             SubMessage(subkey, brokerName);
         }
+        /// <summary>
+        /// 通过制定Key和Exchange 订阅消息
+        /// </summary>
+        /// <typeparam name="T">消息类型</typeparam>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="subkey">消息路由键</param>
+        /// <param name="brokerName">交换机名称</param>
         public void AddSubscription<T, TH>(string subkey, string brokerName)
           where T : IMQEvent
           where TH : IEventHandler<T>
         {
             lock (_subInfos)
             {
+                var eventkey = GetEventKey<T>();
                 var count = _subInfos.Where(x => !x.IsDynamic && x.SubKey == subkey && x.HandlerType == typeof(TH)).Count();
                 if (count == 0)
                 {
-                    var eventkey = GetEventKey<T>();
                     var flag = eventkey == subkey;
                     var method = typeof(TH).GetMethod("Handle", new Type[] { typeof(T) });
                     var handler = FastInvoke.GetMethodInvoker(method);

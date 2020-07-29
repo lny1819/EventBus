@@ -9,17 +9,17 @@ namespace YiDian.EventBus
     public interface ITopicEventBus : IEventBus
     {
         /// <summary>
-        /// 启动一个消费队列
+        /// 注册消息队列机器队列消费消息方法
         /// </summary>
-        /// <param name="queuename">队列名称</param>
-        /// <param name="action">注册订阅回调</param>
-        /// <param name="fetchcount">消费队列单次从队列中最大读取消息数量</param>
-        /// <param name="length">队列长度默认20000</param>
-        /// <param name="autodelete">在无消费者时是否自动删除队列</param>
-        /// <param name="durable">是否持久化</param>
-        /// <param name="autoAck">是否自动响应</param>
-        void RegisterConsumer(string queuename, Action<TopicSubscriber> action, ushort fetchcount = 200, int length = 200000, bool autodelete = false, bool durable = true, bool autoAck = false, bool autoStart = true);
-        bool PublishPrefix<T>(T @event, string fix, out ulong tag, bool enableTransaction = false) where T : IMQEvent;
+        /// <param name="queuename">消费队列名称</param>
+        /// <param name="action">订阅队列消费消息类型</param>
+        /// <param name="fetchCount">每次最多获取消息数量</param>
+        /// <param name="queueLength">队列最大数据存储长度</param>
+        /// <param name="autodel">是否自动删除队列</param>
+        /// <param name="durable">队列数据是否持久化</param>
+        /// <param name="autoAck">队列数据是否自动确认</param>
+        /// <param name="autoStart">是否在注册完成后开启消息消费</param>
+        void RegisterConsumer(string queuename, Action<TopicSubscriber> action, ushort fetchCount = 200, int queueLength = 200000, bool autodel = false, bool durable = true, bool autoAck = false, bool autoStart = true);
         /// <summary>
         /// 订阅消息
         /// </summary>

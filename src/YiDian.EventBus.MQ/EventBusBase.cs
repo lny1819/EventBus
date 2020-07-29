@@ -75,7 +75,12 @@ namespace YiDian.EventBus.MQ
         public string ConnectionName { get; }
         public abstract string BROKER_NAME { get; }
         public abstract bool Publish<T>(T @event, out ulong tag, bool enableTransaction = false) where T : IMQEvent;
-        public abstract string GetEventKeyFromRoutingKey(string routingKey);
+        public virtual string GetEventKeyFromRoutingKey(string routingKey)
+        {
+            var index = routingKey.LastIndexOf('.');
+            if (index == -1) return routingKey;
+            return routingKey.Substring(index + 1);
+        }
         public abstract void Subscribe<T, TH>(string queueName)
             where T : IMQEvent
             where TH : IEventHandler<T>;
@@ -148,15 +153,15 @@ namespace YiDian.EventBus.MQ
 
         public bool PublishWithKey<T>(T @event, string key, out ulong tag, bool enableTransaction = false) where T : IMQEvent
         {
-            return Publish(@event, (x) => key, out _, out tag, enableTransaction);
+            return Publish(@event, key, out _, out tag, enableTransaction);
         }
-        protected bool Publish<T>(T @event, Func<string, string> key_handler, out int data_bytes_length, out ulong tag, bool enableTransaction = false) where T : IMQEvent
+        protected bool Publish<T>(T @event, string key_prefix, out int data_bytes_length, out ulong tag, bool enableTransaction = false) where T : IMQEvent
         {
             data_bytes_length = 0;
             tag = 0;
-            var pubkey1 = _pub_sub.GetEventKey(@event.GetType());
-            var pubkey2 = key_handler(pubkey1);
-            if (string.IsNullOrEmpty(pubkey1) || string.IsNullOrEmpty(pubkey2))
+            var key = _pub_sub.GetEventKey(@event.GetType());
+            key = string.IsNullOrEmpty(key_prefix) ? key : (key_prefix + "." + key);
+            if (string.IsNullOrEmpty(key))
             {
                 _logger.LogError($"can not find the publish key of type:{typeof(T).Name}");
                 return false;
@@ -170,7 +175,7 @@ namespace YiDian.EventBus.MQ
                         if (publishPool == null) publishPool = new PublishPool(_logger, _conn, __seralize, BROKER_NAME, false);
                     }
                 }
-                return publishPool.Send(@event, pubkey2, enableTransaction, out data_bytes_length, out tag);
+                return publishPool.Send(@event, key, enableTransaction, out data_bytes_length, out tag);
             }
             catch (Exception ex)
             {

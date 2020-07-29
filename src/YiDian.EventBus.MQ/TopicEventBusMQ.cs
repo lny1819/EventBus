@@ -227,6 +227,33 @@ namespace YiDian.EventBus.MQ
                 }
             }
         }
+
+        public override void SubscribeBytes<T, TH>(string queueName)
+        {
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    var eventKey = mgr.GetEventKey<T>();
+                    var subkey = GetSubKey<T>() + eventKey;
+                    mgr.AddBytesSubscription<T, TH>(subkey, BROKER_NAME);
+                    break;
+                }
+            }
+        }
+        public override void UnsubscribeBytes<T, TH>(string queueName)
+        {
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    mgr.RemoveBytesSubscription<T, TH>();
+                    break;
+                }
+            }
+        }
     }
     struct SendItem
     {

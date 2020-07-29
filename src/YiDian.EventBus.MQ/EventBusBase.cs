@@ -87,41 +87,17 @@ namespace YiDian.EventBus.MQ
         public abstract void Unsubscribe<T, TH>(string queueName)
             where T : IMQEvent
             where TH : IEventHandler<T>;
+        public abstract void SubscribeBytes<T, TH>(string queueName)
+         where T : IMQEvent
+         where TH : IBytesHandler;
+        public abstract void UnsubscribeBytes<T, TH>(string queueName)
+            where T : IMQEvent
+            where TH : IBytesHandler;
         public void EnableHandlerCache(int cacheLength)
         {
             hanlerCacheMgr.CacheLength = cacheLength;
         }
         #region Mq Sub And UnSub
-
-        public void SubscribeBytes<T, TH>(string queueName)
-            where T : IMQEvent
-            where TH : IBytesHandler
-        {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    var eventKey = mgr.GetEventKey<T>();
-                    mgr.AddBytesSubscription<T, TH>(eventKey, BROKER_NAME);
-                    break;
-                }
-            }
-        }
-        public void UnsubscribeBytes<T, TH>(string queueName)
-            where T : IMQEvent
-            where TH : IBytesHandler
-        {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    mgr.RemoveBytesSubscription<T, TH>();
-                    break;
-                }
-            }
-        }
         void Submgr_OnEventAdd(object sender, (string, string) events)
         {
             var brokerName = events.Item2;

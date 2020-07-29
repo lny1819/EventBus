@@ -8,7 +8,7 @@ using YiDian.EventBus.MQ.KeyAttribute;
 namespace YiDian.EventBus.MQ
 {
 
-    public class TopicEventBusMQ : EventBusBase<ITopicEventBus, TopicSubscriber>, ITopicEventBus
+    internal class TopicEventBusMQ : EventBusBase<ITopicEventBus, TopicSubscriber>, ITopicEventBus
     {
         readonly string brokerName = "amq.topic";
         public TopicEventBusMQ(ILogger<ITopicEventBus> logger, IServiceProvider autofac, IRabbitMQPersistentConnection persistentConnection, IEventSeralize seralize, int cacheCount = 100)
@@ -196,36 +196,6 @@ namespace YiDian.EventBus.MQ
                     var eventKey = mgr.GetEventKey<T>();
                     subkey += "." + eventKey;
                     mgr.RemoveSubscription(subkey, BROKER_NAME);
-                    break;
-                }
-            }
-        }
-        public void SubscribeBytes<T, TH>(string queueName, string subkey)
-            where T : IMQEvent
-            where TH : IBytesHandler
-        {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    var eventKey = mgr.GetEventKey<T>();
-                    subkey += "." + eventKey;
-                    mgr.AddBytesSubscription<T, TH>(subkey, BROKER_NAME);
-                    break;
-                }
-            }
-        }
-        public void UnsubscribeBytes<T, TH>(string queueName)
-            where T : IMQEvent
-            where TH : IBytesHandler
-        {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    mgr.RemoveBytesSubscription<T, TH>();
                     break;
                 }
             }

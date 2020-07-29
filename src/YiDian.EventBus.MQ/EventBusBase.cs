@@ -9,7 +9,7 @@ using YiDian.Soa.Sp;
 
 namespace YiDian.EventBus.MQ
 {
-    public abstract class EventBusBase<TEventBus, TSub> : IEventBus, IDisposable where TEventBus : IEventBus where TSub : Subscriber<TEventBus>
+    internal abstract class EventBusBase<TEventBus, TSub> : IEventBus, IDisposable where TEventBus : IEventBus where TSub : Subscriber<TEventBus>
     {
         private readonly IRabbitMQPersistentConnection _conn;
         private readonly EventHanlerCacheMgr hanlerCacheMgr;
@@ -92,6 +92,36 @@ namespace YiDian.EventBus.MQ
             hanlerCacheMgr.CacheLength = cacheLength;
         }
         #region Mq Sub And UnSub
+
+        public void SubscribeBytes<T, TH>(string queueName)
+            where T : IMQEvent
+            where TH : IBytesHandler
+        {
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    var eventKey = mgr.GetEventKey<T>();
+                    mgr.AddBytesSubscription<T, TH>(eventKey, BROKER_NAME);
+                    break;
+                }
+            }
+        }
+        public void UnsubscribeBytes<T, TH>(string queueName)
+            where T : IMQEvent
+            where TH : IBytesHandler
+        {
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    mgr.RemoveBytesSubscription<T, TH>();
+                    break;
+                }
+            }
+        }
         void Submgr_OnEventAdd(object sender, (string, string) events)
         {
             var brokerName = events.Item2;
@@ -145,13 +175,7 @@ namespace YiDian.EventBus.MQ
         {
             return Publish(@event, out _);
         }
-
-        public bool PublishWithKey<T>(T @event, string key) where T : IMQEvent
-        {
-            return PublishWithKey(@event, key, out _);
-        }
-
-        public bool PublishWithKey<T>(T @event, string key, out ulong tag, bool enableTransaction = false) where T : IMQEvent
+        public bool Publish<T>(T @event, string key, out ulong tag, bool enableTransaction = false) where T : IMQEvent
         {
             return Publish(@event, key, out _, out tag, enableTransaction);
         }

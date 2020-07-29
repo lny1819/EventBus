@@ -67,7 +67,7 @@ namespace YiDian.EventBus
         /// <param name="event">消息</param>
         /// <param name="key">路由键前缀</param>
         /// <param name="enableTransaction">启用发送确认</param>
-        bool PublishWithKey<T>(T @event, string key, out ulong tag, bool enableTransaction = false) where T : IMQEvent;
+        bool Publish<T>(T @event, string key, out ulong tag, bool enableTransaction = false) where T : IMQEvent;
         /// <summary>
         /// 在指定队列上消费消息
         /// </summary>

@@ -6,7 +6,7 @@ namespace YiDian.EventBus.MQ
     /// <summary>
     /// Direct 类型 消息总线实现
     /// </summary>
-    public class DirectEventBus : EventBusBase<IDirectEventBus, DirectSubscriber>, IDirectEventBus
+    internal class DirectEventBus : EventBusBase<IDirectEventBus, DirectSubscriber>, IDirectEventBus
     {
         readonly string brokerName = "amq.direct";
         /// <summary>

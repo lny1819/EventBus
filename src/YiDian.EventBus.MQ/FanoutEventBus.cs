@@ -24,7 +24,7 @@ namespace YiDian.EventBus.MQ
 
         public override bool Publish<T>(T @event, out ulong tag, bool enableTransaction = false)
         {
-            return Publish(@event, (x) => x, out _, out tag, false);
+            return Publish(@event, "", out _, out tag, false);
         }
 
         public void RegisterConsumer(string queueName, Action<FanoutSubscriber> action, ushort fetchCount = 200, int queueLength = 100000, bool autodel = true, bool durable = false, bool autoAck = true, bool autoStart = true)

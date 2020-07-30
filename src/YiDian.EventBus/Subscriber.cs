@@ -28,6 +28,10 @@ namespace YiDian.EventBus
         {
             __eventBus.Subscribe<T, TH>(__name);
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="TH"></typeparam>
         public void SubscribeBytes<TH>()
             where TH : IBytesHandler
         {

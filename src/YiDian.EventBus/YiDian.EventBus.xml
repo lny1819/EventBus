@@ -483,7 +483,7 @@
             <param name="event"></param>
             <returns></returns>
         </member>
-        <member name="M:YiDian.EventBus.IEventBus.Publish(System.ReadOnlyMemory{System.Byte},System.String,System.UInt64@,System.Boolean)">
+        <member name="M:YiDian.EventBus.IEventBus.PublishBytes(System.ReadOnlyMemory{System.Byte},System.String,System.UInt64@,System.Boolean)">
             <summary>
             发送字节流消息
             此类型消息只能通过<see cref="T:YiDian.EventBus.IBytesHandler"/>来接收处理
@@ -607,12 +607,13 @@
             <param name="type">消息类型</param>
             <returns></returns>
         </member>
-        <member name="M:YiDian.EventBus.IEventBusSubManager.GetDymaicHandlersBySubKey(System.String,System.String)">
+        <member name="M:YiDian.EventBus.IEventBusSubManager.GetDymaicHandlersBySubKey(System.String,System.String,System.Boolean)">
             <summary>
             获取指定消息key的所有动态消费类型
             </summary>
             <param name="key">订阅KEY</param>
             <param name="brokerName">交换机名称</param>
+            <param name="match">是否模糊匹配Key</param>
             <returns></returns>
         </member>
         <member name="T:YiDian.EventBus.IEventBusSubManagerFactory">

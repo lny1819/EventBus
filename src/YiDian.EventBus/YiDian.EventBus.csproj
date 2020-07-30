@@ -18,4 +18,8 @@
     <DocumentationFile>E:\QuantProject\EventBus\src\YiDian.EventBus\YiDian.EventBus.xml</DocumentationFile>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>E:\QuantProject\EventBus\src\YiDian.EventBus\YiDian.EventBus.xml</DocumentationFile>
+  </PropertyGroup>
+
 </Project>

@@ -6,7 +6,7 @@
     <members>
         <member name="T:YiDian.EventBus.IAppEventsManager">
             <summary>
-            消息管理器，注册消息，生成或消息编码
+            消息名称管理器，注册消息，生成或消息编码
             </summary>
         </member>
         <member name="P:YiDian.EventBus.IAppEventsManager.AllowNoRegisterEvent">
@@ -404,7 +404,7 @@
         </member>
         <member name="T:YiDian.EventBus.IBytesHandler">
             <summary>
-            动态消息处理接口
+            定义动态消息回调函数接口
             </summary>
         </member>
         <member name="M:YiDian.EventBus.IBytesHandler.Handle(System.String,System.ReadOnlyMemory{System.Byte})">
@@ -538,8 +538,159 @@
         </member>
         <member name="E:YiDian.EventBus.IEventBusSubManager.OnEventRemoved">
             <summary>
-            
+            最后一个消费方法被移除时触发
             </summary>
+        </member>
+        <member name="E:YiDian.EventBus.IEventBusSubManager.OnEventAdd">
+            <summary>
+            第一个消费方法被添加时触发
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.IEventBusSubManager.QueueName">
+            <summary>
+            消费队列名称
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBusSubManager.AddBytesSubscription``1(System.String,System.String)">
+            <summary>
+            订阅动态消息
+            </summary>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="subkey">订阅KEY</param>
+            <param name="brokerName">订阅交换机名称</param>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBusSubManager.RemoveBytesSubscription``1(System.String,System.String)">
+            <summary>
+            移除订阅的动态消息
+            </summary>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="subkey">订阅KEY</param>
+            <param name="brokerName">订阅交换机名称</param>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBusSubManager.AddSubscription``2(System.String,System.String)">
+            <summary>
+            订阅消息
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="subkey">订阅KEY</param>
+            <param name="brokerName">订阅交换机名称</param>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBusSubManager.RemoveSubscription``2(System.String,System.String)">
+            <summary>
+            移除订阅的消息
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="subkey">订阅KEY</param>
+            <param name="brokerName">订阅交换机名称</param>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBusSubManager.GetHandlersForEvent(System.String,System.String)">
+            <summary>
+            获取指定消息key的所有消费类型
+            </summary>
+            <param name="eventKey">订阅KEY</param>
+            <param name="brokerName">交换机名称</param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBusSubManager.GetEventKey``1">
+            <summary>
+            获取消息key
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBusSubManager.GetEventKey(System.Type)">
+            <summary>
+            获取消息key
+            </summary>
+            <param name="type">消息类型</param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBusSubManager.GetDymaicHandlersBySubKey(System.String,System.String)">
+            <summary>
+            获取指定消息key的所有动态消费类型
+            </summary>
+            <param name="key">订阅KEY</param>
+            <param name="brokerName">交换机名称</param>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.IEventBusSubManagerFactory">
+            <summary>
+            订阅管理器工厂接口
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBusSubManagerFactory.GetOrCreateByQueue(System.String)">
+            <summary>
+            通过指定的消费队列名称创建一个消息订阅管理器实例
+            </summary>
+            <param name="queueName">消费队列名称</param>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.IEventHandler`1">
+            <summary>
+            定义消息回调函数接口
+            </summary>
+            <typeparam name="TIntegrationEvent"></typeparam>
+        </member>
+        <member name="M:YiDian.EventBus.IEventHandler`1.Handle(`0)">
+            <summary>
+            消息回调处理方法
+            </summary>
+            <param name="event"></param>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.IEventHandler">
+            <summary>
+            消息回调接口
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.IEventSeralize">
+            <summary>
+            消息序列化接口定义
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.IEventSeralize.Serialize``1(``0)">
+            <summary>
+            将消息对象序列化
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <param name="event">消息</param>
+            <returns>字节数组</returns>
+        </member>
+        <member name="M:YiDian.EventBus.IEventSeralize.Serialize(System.Object,System.Type)">
+            <summary>
+            将消息对象序列化
+            </summary>
+            <param name="event">消息</param>
+            <param name="type">消息类型</param>
+            <returns>字节数组</returns>
+        </member>
+        <member name="M:YiDian.EventBus.IEventSeralize.Serialize(System.Object,System.Type,System.Byte[],System.Int32)">
+            <summary>
+            将消息对象序列化到指定的字节数据中
+            </summary>
+            <param name="event">消息</param>
+            <param name="type">消息类型</param>
+            <param name="bs">目标数组</param>
+            <param name="offset">目标数组起始位置</param>
+            <returns>数据字节长度</returns>
+        </member>
+        <member name="M:YiDian.EventBus.IEventSeralize.DeserializeObject(System.ReadOnlyMemory{System.Byte},System.Type)">
+            <summary>
+            反序列化
+            </summary>
+            <param name="data">字节数组</param>
+            <param name="type">消息类型</param>
+            <returns>消息</returns>
+        </member>
+        <member name="M:YiDian.EventBus.IEventSeralize.GetSize(System.Object,System.Type)">
+            <summary>
+            获取消息对象序列化以后的字节长度
+            </summary>
+            <param name="obj">消息</param>
+            <param name="type">消息类型</param>
+            <returns>字节长度</returns>
         </member>
         <member name="T:YiDian.EventBus.IFanoutEventBus">
             <summary>
@@ -671,6 +822,146 @@
             <param name="queueName">队列名称</param>
             <param name="subkey">路由键前缀</param>
         </member>
+        <member name="T:YiDian.EventBus.KeyIndex">
+            <summary>
+            消息路由键特性
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.KeyIndex.#ctor(System.Int32)">
+            <summary>
+            消息路由键
+            </summary>
+            <param name="index">顺序编号</param>
+        </member>
+        <member name="P:YiDian.EventBus.KeyIndex.Index">
+            <summary>
+            编号
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.FanoutSubscriber">
+            <summary>
+            订阅方法 详细说明见具体的EventBus接口
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.FanoutSubscriber.#ctor(YiDian.EventBus.IFanoutEventBus,System.String)">
+            <summary>
+            
+            </summary>
+            <param name="eventBus"></param>
+            <param name="name"></param>
+        </member>
+        <member name="M:YiDian.EventBus.FanoutSubscriber.Subscribe``2">
+            <summary>
+            
+            </summary>
+            <typeparam name="T"></typeparam>
+            <typeparam name="TH"></typeparam>
+        </member>
+        <member name="T:YiDian.EventBus.TopicSubscriber">
+            <summary>
+             订阅方法 详细说明见具体的EventBus接口
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.TopicSubscriber.#ctor(YiDian.EventBus.ITopicEventBus,System.String)">
+            <summary>
+            
+            </summary>
+            <param name="eventBus"></param>
+            <param name="name"></param>
+        </member>
+        <member name="M:YiDian.EventBus.TopicSubscriber.Subscribe``2(System.Linq.Expressions.Expression{System.Func{``0,System.Boolean}})">
+            <summary>
+            
+            </summary>
+            <typeparam name="T"></typeparam>
+            <typeparam name="TH"></typeparam>
+            <param name="where"></param>
+        </member>
+        <member name="M:YiDian.EventBus.TopicSubscriber.Subscribe``2">
+            <summary>
+            
+            </summary>
+            <typeparam name="T"></typeparam>
+            <typeparam name="TH"></typeparam>
+        </member>
+        <member name="M:YiDian.EventBus.TopicSubscriber.Subscribe``2(System.String)">
+            <summary>
+            
+            </summary>
+            <typeparam name="T"></typeparam>
+            <typeparam name="TH"></typeparam>
+            <param name="subkey"></param>
+        </member>
+        <member name="M:YiDian.EventBus.TopicSubscriber.SubscribeBytes``1(System.String)">
+            <summary>
+            
+            </summary>
+            <typeparam name="TH"></typeparam>
+            <param name="subkey"></param>
+        </member>
+        <member name="M:YiDian.EventBus.TopicSubscriber.SubscribeBytes``1">
+            <summary>
+            
+            </summary>
+            <typeparam name="TH"></typeparam>
+        </member>
+        <member name="T:YiDian.EventBus.DirectSubscriber">
+            <summary>
+             订阅方法 详细说明见具体的EventBus接口
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.DirectSubscriber.#ctor(YiDian.EventBus.IDirectEventBus,System.String)">
+            <summary>
+            
+            </summary>
+            <param name="eventBus"></param>
+            <param name="name"></param>
+        </member>
+        <member name="M:YiDian.EventBus.DirectSubscriber.Subscribe``2">
+            <summary>
+            
+            </summary>
+            <typeparam name="T"></typeparam>
+            <typeparam name="TH"></typeparam>
+        </member>
+        <member name="M:YiDian.EventBus.DirectSubscriber.Subscribe``2(System.String)">
+            <summary>
+            
+            </summary>
+            <typeparam name="T"></typeparam>
+            <typeparam name="TH"></typeparam>
+            <param name="key"></param>
+        </member>
+        <member name="M:YiDian.EventBus.DirectSubscriber.SubscribeBytes``1(System.String)">
+            <summary>
+            
+            </summary>
+            <typeparam name="TH"></typeparam>
+            <param name="key"></param>
+        </member>
+        <member name="T:YiDian.EventBus.Subscriber`1">
+            <summary>
+            EventBus订阅类
+            </summary>
+            <typeparam name="TEventBus">消息总线类型</typeparam>
+        </member>
+        <member name="F:YiDian.EventBus.Subscriber`1.__eventBus">
+            <summary>
+            消息总线
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.Subscriber`1.__name">
+            <summary>
+            队列名称
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.Subscriber`1.#ctor(`0,System.String)">
+            <summary>
+            创建一个EventBus订阅类实例
+            </summary>
+            <param name="eventBus">消息总线</param>
+            <param name="name">队列名称</param>
+        </member>
         <member name="T:YiDian.EventBus.SubscriptionInfo">
             <summary>
             消息订阅信息
@@ -732,6 +1023,122 @@
             <param name="eventType"></param>
             <param name="handler"></param>
             <param name="borkerName"></param>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.Version">
+            <summary>
+            消息管理器 APP版本
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.Version.A">
+            <summary>
+            A
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.Version.B">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.Version.Parse(System.String)">
+            <summary>
+            
+            </summary>
+            <param name="version"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.Version.Parse(System.UInt16)">
+            <summary>
+            
+            </summary>
+            <param name="version"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.Version.TryParse(System.String,YiDian.EventBus.Version@)">
+            <summary>
+            
+            </summary>
+            <param name="version"></param>
+            <param name="v"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.Version.ToString">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.Version.ToBytes">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.Version.GetValue">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.Version.Equals(System.Object)">
+            <summary>
+            
+            </summary>
+            <param name="obj"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.Version.GetHashCode">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.Version.op_Equality(YiDian.EventBus.Version,YiDian.EventBus.Version)">
+            <summary>
+            
+            </summary>
+            <param name="a"></param>
+            <param name="b"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.Version.op_Inequality(YiDian.EventBus.Version,YiDian.EventBus.Version)">
+            <summary>
+            
+            </summary>
+            <param name="a"></param>
+            <param name="b"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.Version.op_GreaterThan(YiDian.EventBus.Version,YiDian.EventBus.Version)">
+            <summary>
+            
+            </summary>
+            <param name="a"></param>
+            <param name="b"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.Version.op_LessThan(YiDian.EventBus.Version,YiDian.EventBus.Version)">
+            <summary>
+            
+            </summary>
+            <param name="a"></param>
+            <param name="b"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.Version.op_LessThanOrEqual(YiDian.EventBus.Version,YiDian.EventBus.Version)">
+            <summary>
+            
+            </summary>
+            <param name="a"></param>
+            <param name="b"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.Version.op_GreaterThanOrEqual(YiDian.EventBus.Version,YiDian.EventBus.Version)">
+            <summary>
+            
+            </summary>
+            <param name="a"></param>
+            <param name="b"></param>
             <returns></returns>
         </member>
     </members>

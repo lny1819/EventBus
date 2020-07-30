@@ -64,6 +64,48 @@
             </summary>
             <param name="encoding"></param>
         </member>
+        <member name="M:YiDian.EventBus.MQ.DefaultYDSeralizer.DeserializeObject(System.ReadOnlyMemory{System.Byte},System.Type)">
+            <summary>
+            反序列化
+            </summary>
+            <param name="data">字节数组</param>
+            <param name="type">消息类型</param>
+            <returns>消息</returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.DefaultYDSeralizer.Serialize``1(``0)">
+            <summary>
+            将消息对象序列化
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <param name="event">消息</param>
+            <returns>字节数组</returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.DefaultYDSeralizer.Serialize(System.Object,System.Type)">
+            <summary>
+            将消息对象序列化
+            </summary>
+            <param name="obj">消息</param>
+            <param name="type">消息类型</param>
+            <returns>字节数组</returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.DefaultYDSeralizer.Serialize(System.Object,System.Type,System.Byte[],System.Int32)">
+            <summary>
+            将消息对象序列化到指定的字节数据中
+            </summary>
+            <param name="obj">消息</param>
+            <param name="type">消息类型</param>
+            <param name="bs">目标数组</param>
+            <param name="offset">目标数组起始位置</param>
+            <returns>数据字节长度</returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.DefaultYDSeralizer.GetSize(System.Object,System.Type)">
+            <summary>
+            获取消息对象序列化以后的字节长度
+            </summary>
+            <param name="obj">消息</param>
+            <param name="type">消息类型</param>
+            <returns>字节长度</returns>
+        </member>
         <member name="T:YiDian.EventBus.MQ.DirectEventBus">
             <summary>
             Direct 类型 消息总线实现
@@ -173,6 +215,52 @@
             </summary>
             <param name="web_api_address"></param>
             <param name="allow_no_reg"></param>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.HttpEventsManager.RegisterEvent``1(System.String,System.String,System.Boolean)">
+            <summary>
+            注册消息类型
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <param name="appName">APP名称</param>
+            <param name="version">APP版本</param>
+            <param name="enableDefaultSeralize">是否是默认序列化</param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.HttpEventsManager.VaildityTest(System.String,System.String)">
+            <summary>
+            指示指定版本和名称的APP是否存在
+            </summary>
+            <param name="appname">APP名称</param>
+            <param name="version">APP版本</param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.HttpEventsManager.GetVersion(System.String)">
+            <summary>
+            获取APP最新版本号
+            </summary>
+            <param name="appname">APP名称</param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.HttpEventsManager.ListEvents(System.String)">
+            <summary>
+            获取APP最新的所有消息详情
+            </summary>
+            <param name="appname"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.HttpEventsManager.GetEventId(System.String)">
+            <summary>
+            获取指定类型名称的消息编号
+            </summary>
+            <param name="typename"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.HttpEventsManager.GetEventIds(System.String)">
+            <summary>
+            获取APP最新的所有消息编码
+            </summary>
+            <param name="appname">APP名称</param>
+            <returns></returns>
         </member>
         <member name="M:YiDian.EventBus.MQ.InMemoryEventBusSubManager.AddSubscription``2(System.String,System.String)">
             <summary>
@@ -296,6 +384,84 @@
             <param name="propertyName"></param>
             <returns></returns>
         </member>
+        <member name="T:YiDian.EventBus.MQ.Rpc.IMQRpcClient">
+            <summary>
+            MQRPC客户端
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.Rpc.IMQRpcClient.ServerId">
+            <summary>
+            RPC服务器编码
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.Rpc.IMQRpcClient.IsConnected">
+            <summary>
+            是否连接成功
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.Rpc.IMQRpcClient.Call``2(System.String,``0,YiDian.EventBus.MQ.Rpc.ContentType)">
+            <summary>
+            发起一次请求
+            </summary>
+            <typeparam name="Tin">请求入参类型</typeparam>
+            <typeparam name="TOut">请求出参类型</typeparam>
+            <param name="uri">请求地址</param>
+            <param name="data">入参数据</param>
+            <param name="type">入参数据格式</param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.Rpc.IMQRpcClient.CallAsync``2(System.String,``0,YiDian.EventBus.MQ.Rpc.ContentType)">
+            <summary>
+            发起一次异步请求
+            </summary>
+            <typeparam name="Tin">请求入参类型</typeparam>
+            <typeparam name="TOut">请求出参类型</typeparam>
+            <param name="uri">请求地址</param>
+            <param name="data">入参数据</param>
+            <param name="type">入参数据格式</param>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.Rpc.IMQRpcClient.Call``1(System.String)">
+            <summary>
+            发起一次请求
+            </summary>
+            <typeparam name="TOut">请求出参类型</typeparam>
+            <param name="uri">请求地址</param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.Rpc.IMQRpcClient.CallAsync``1(System.String)">
+            <summary>
+            发起一次异步请求
+            </summary>
+            <typeparam name="TOut">请求出参类型</typeparam>
+            <param name="uri">请求地址</param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.Rpc.IMQRpcClient.Cancel(System.Int64)">
+            <summary>
+            取消请求
+            </summary>
+            <param name="mid">请求编号</param>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.Rpc.IRPCServer">
+            <summary>
+            MQRpc服务端
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.Rpc.IRPCServer.ServerId">
+            <summary>
+            服务端编码
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.Rpc.FromBodyAttribute">
+            <summary>
+            指示参数来源
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.Rpc.FromBodyAttribute.#ctor">
+            <summary>
+            指示参数来源
+            </summary>
+        </member>
         <member name="F:YiDian.EventBus.MQ.Rpc.Route.RoutingTables.actionsDic">
             <summary>
             Action名称字典 Action名称=methodInfo
@@ -311,6 +477,337 @@
         <member name="P:YiDian.EventBus.MQ.Rpc.RpcServerConfig.Fetchout">
             <summary>
             批量从队列获取消息数量
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.Rpc.TextSeralize">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.Rpc.TextSeralize.#ctor(System.Text.Encoding)">
+            <summary>
+            
+            </summary>
+            <param name="encoding"></param>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.Rpc.TextSeralize.DeserializeObject(System.ReadOnlyMemory{System.Byte},System.Type)">
+            <summary>
+            
+            </summary>
+            <param name="data"></param>
+            <param name="type"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.Rpc.TextSeralize.GetSize(System.Object,System.Type)">
+            <summary>
+            
+            </summary>
+            <param name="obj"></param>
+            <param name="type"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.Rpc.TextSeralize.Serialize``1(``0)">
+            <summary>
+            
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="event"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.Rpc.TextSeralize.Serialize(System.Object,System.Type)">
+            <summary>
+            
+            </summary>
+            <param name="event"></param>
+            <param name="type"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.Rpc.TextSeralize.Serialize(System.Object,System.Type,System.Byte[],System.Int32)">
+            <summary>
+            
+            </summary>
+            <param name="event"></param>
+            <param name="type"></param>
+            <param name="bs"></param>
+            <param name="offset"></param>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.WriteStream">
+            <summary>
+            消息序列化写入流
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.#ctor(System.UInt32)">
+            <summary>
+            
+            </summary>
+            <param name="size"></param>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.WriteStream.Length">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.#ctor(System.Byte[],System.Int32)">
+            <summary>
+            
+            </summary>
+            <param name="bs"></param>
+            <param name="index"></param>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.WriteStream.Encoding">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.Advance(System.Int32)">
+            <summary>
+            
+            </summary>
+            <param name="length"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteHeader(YiDian.EventBus.MQ.EventPropertyType,System.Byte)">
+            <summary>
+            
+            </summary>
+            <param name="type"></param>
+            <param name="length"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteString(System.String)">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteIndex(System.Byte)">
+            <summary>
+            
+            </summary>
+            <param name="index"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteByte(System.Byte)">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteInt16(System.Int16)">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteUInt16(System.UInt16)">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteInt32(System.Int32)">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteUInt32(System.UInt32)">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteInt64(System.Int64)">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteUInt64(System.UInt64)">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteDouble(System.Double)">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteDate(System.DateTime)">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteArrayByte(System.Byte[])">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteArrayString(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteArrayDate(System.Collections.Generic.IEnumerable{System.DateTime})">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteArrayBool(System.Collections.Generic.IEnumerable{System.Boolean})">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteArrayInt16(System.Collections.Generic.IEnumerable{System.Int16})">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteArrayUInt16(System.Collections.Generic.IEnumerable{System.UInt16})">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteArrayInt32(System.Collections.Generic.IEnumerable{System.Int32})">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteArrayUInt32(System.Collections.Generic.IEnumerable{System.UInt32})">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteArrayInt64(System.Collections.Generic.IEnumerable{System.Int64})">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteArrayUInt64(System.Collections.Generic.IEnumerable{System.UInt64})">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteArrayDouble(System.Collections.Generic.IEnumerable{System.Double})">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteEventArray``1(System.Collections.Generic.IEnumerable{``0})">
+            <summary>
+            
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.WriteEventObj(YiDian.EventBus.MQ.IYiDianSeralize)">
+            <summary>
+            
+            </summary>
+            <param name="obj"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.GetBytes">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.GetStringSize(System.String,System.Text.Encoding)">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <param name="encoding"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.GetArrayStringSize(System.Collections.Generic.IEnumerable{System.String},System.Text.Encoding)">
+            <summary>
+            
+            </summary>
+            <param name="arr"></param>
+            <param name="encoding"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.GetValueArraySize``1(System.Byte,System.Collections.Generic.IEnumerable{``0})">
+            <summary>
+            
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="perszie"></param>
+            <param name="arr"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.WriteStream.GetArrayEventObjSize``1(System.Collections.Generic.IEnumerable{``0},System.Text.Encoding)">
+            <summary>
+            
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="arr"></param>
+            <param name="encoding"></param>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.ResponseBase`1">
+            <summary>
+            RPC请求响应同一模型
+            </summary>
+            <typeparam name="T">响应数据类型</typeparam>
+        </member>
+        <member name="P:YiDian.EventBus.ResponseBase`1.Data">
+            <summary>
+            响应数据
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.ResponseBase">
+            <summary>
+            RPC请求响应同一模型
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.ResponseBase.ServerState">
+            <summary>
+            响应状态码 200表示成功
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.ResponseBase.ServerMsg">
+            <summary>
+            错误消息
             </summary>
         </member>
         <member name="T:YiDian.Soa.Sp.Extensions.MQExtensions">

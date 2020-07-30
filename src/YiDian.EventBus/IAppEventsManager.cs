@@ -5,7 +5,7 @@ using System.Text;
 namespace YiDian.EventBus
 {
     /// <summary>
-    /// 消息管理器，注册消息，生成或消息编码
+    /// 消息名称管理器，注册消息，生成或消息编码
     /// </summary>
     public interface IAppEventsManager
     {

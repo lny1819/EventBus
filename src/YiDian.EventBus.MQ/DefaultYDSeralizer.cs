@@ -19,7 +19,12 @@ namespace YiDian.EventBus.MQ
         {
             this.encoding = encoding;
         }
-
+        /// <summary>
+        /// 反序列化
+        /// </summary>
+        /// <param name="data">字节数组</param>
+        /// <param name="type">消息类型</param>
+        /// <returns>消息</returns>
         public object DeserializeObject(ReadOnlyMemory<byte> data, Type type)
         {
             bool isArray = false;
@@ -76,20 +81,44 @@ namespace YiDian.EventBus.MQ
             else if (type == typeof(string)) return stream.ReadArrayString();
             else return stream.ReadArray(type);
         }
-
+        /// <summary>
+        /// 将消息对象序列化
+        /// </summary>
+        /// <typeparam name="T">消息类型</typeparam>
+        /// <param name="event">消息</param>
+        /// <returns>字节数组</returns>
         public ReadOnlyMemory<byte> Serialize<T>(T @event)
         {
             return Serialize(@event, typeof(T));
         }
-
+        /// <summary>
+        /// 将消息对象序列化
+        /// </summary>
+        /// <param name="obj">消息</param>
+        /// <param name="type">消息类型</param>
+        /// <returns>字节数组</returns>
         public ReadOnlyMemory<byte> Serialize(object obj, Type type)
         {
             return SerializeInternal(obj, type, new byte[2000], 0).GetBytes();
         }
+        /// <summary>
+        /// 将消息对象序列化到指定的字节数据中
+        /// </summary>
+        /// <param name="obj">消息</param>
+        /// <param name="type">消息类型</param>
+        /// <param name="bs">目标数组</param>
+        /// <param name="offset">目标数组起始位置</param>
+        /// <returns>数据字节长度</returns>
         public int Serialize(object obj, Type type, byte[] bs, int offset)
         {
             return SerializeInternal(obj, type, bs, offset).Length;
         }
+        /// <summary>
+        /// 获取消息对象序列化以后的字节长度
+        /// </summary>
+        /// <param name="obj">消息</param>
+        /// <param name="type">消息类型</param>
+        /// <returns>字节长度</returns>
         public uint GetSize(object obj, Type type)
         {
             bool isArray = false;

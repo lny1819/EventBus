@@ -2,11 +2,24 @@
 
 namespace YiDian.EventBus
 {
+    /// <summary>
+    /// 消息管理器 APP版本
+    /// </summary>
     public struct Version
     {
+        /// <summary>
+        /// A
+        /// </summary>
         public byte A { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
         public byte B { get; set; }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="version"></param>
+        /// <returns></returns>
         public static Version Parse(string version)
         {
             Version v = new Version();
@@ -18,6 +31,11 @@ namespace YiDian.EventBus
             v.B = temp;
             return v;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="version"></param>
+        /// <returns></returns>
         public static Version Parse(ushort version)
         {
             Version v = new Version
@@ -27,6 +45,12 @@ namespace YiDian.EventBus
             };
             return v;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="version"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
         public static bool TryParse(string version, out Version v)
         {
             v = new Version();
@@ -38,10 +62,18 @@ namespace YiDian.EventBus
             v.B = temp;
             return true;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return $"{A}.{B}";
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public byte[] ToBytes()
         {
             var res = new byte[4];
@@ -49,28 +81,57 @@ namespace YiDian.EventBus
             res[1] = B;
             return res;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public ushort GetValue()
         {
             return BitConverter.ToUInt16(new byte[] { B, A });
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
         public override bool Equals(object obj)
         {
             return base.Equals(obj);
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public override int GetHashCode()
         {
             return A ^ B;
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static bool operator ==(Version a, Version b)
         {
             return a.A == b.A && a.B == b.B;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static bool operator !=(Version a, Version b)
         {
             return a.A != b.A || a.B != b.B;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static bool operator >(Version a, Version b)
         {
             if (a.A > b.A) return true;
@@ -81,6 +142,12 @@ namespace YiDian.EventBus
 
             return false;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static bool operator <(Version a, Version b)
         {
             if (a.A > b.A) return false;
@@ -91,11 +158,22 @@ namespace YiDian.EventBus
 
             return false;
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static bool operator <=(Version a, Version b)
         {
             return !(a > b);
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static bool operator >=(Version a, Version b)
         {
             return !(a < b);

@@ -137,7 +137,14 @@ namespace YiDian.EventBus.MQ
             }
             return RegisterEnumType(appName, version, enumMeta);
         }
-
+        /// <summary>
+        /// 注册消息类型
+        /// </summary>
+        /// <typeparam name="T">消息类型</typeparam>
+        /// <param name="appName">APP名称</param>
+        /// <param name="version">APP版本</param>
+        /// <param name="enableDefaultSeralize">是否是默认序列化</param>
+        /// <returns></returns>
         public CheckResult RegisterEvent<T>(string appName, string version, bool enableDefaultSeralize) where T : IMQEvent
         {
             return SendTypeMeta(typeof(T), appName, version, enableDefaultSeralize);
@@ -185,6 +192,12 @@ namespace YiDian.EventBus.MQ
                 return new CheckResult() { IsVaild = false, InvaildMessage = ex.ToString() };
             }
         }
+        /// <summary>
+        /// 指示指定版本和名称的APP是否存在
+        /// </summary>
+        /// <param name="appname">APP名称</param>
+        /// <param name="version">APP版本</param>
+        /// <returns></returns>
         public CheckResult VaildityTest(string appname, string version)
         {
             try
@@ -198,6 +211,11 @@ namespace YiDian.EventBus.MQ
                 return new CheckResult() { IsVaild = false, InvaildMessage = ex.ToString() };
             }
         }
+        /// <summary>
+        /// 获取APP最新版本号
+        /// </summary>
+        /// <param name="appname">APP名称</param>
+        /// <returns></returns>
         public CheckResult GetVersion(string appname)
         {
             try
@@ -216,13 +234,18 @@ namespace YiDian.EventBus.MQ
                 return new CheckResult() { IsVaild = false, InvaildMessage = ex.ToString() };
             }
         }
+        /// <summary>
+        /// 获取APP最新的所有消息详情
+        /// </summary>
+        /// <param name="appname"></param>
+        /// <returns></returns>
         public AppMetas ListEvents(string appname)
         {
             var uri = "listevent?app=" + appname;
             var value = GetReq(uri);
             return ToMetas(value);
         }
-        public CheckResult IfExistNotEventType(string appName, Type type, string version)
+        CheckResult IfExistNotEventType(string appName, Type type, string version)
         {
             try
             {
@@ -236,7 +259,11 @@ namespace YiDian.EventBus.MQ
                 return new CheckResult() { IsVaild = false, InvaildMessage = ex.ToString() };
             }
         }
-
+        /// <summary>
+        /// 获取指定类型名称的消息编号
+        /// </summary>
+        /// <param name="typename"></param>
+        /// <returns></returns>
         public CheckResult GetEventId(string typename)
         {
             try
@@ -250,6 +277,11 @@ namespace YiDian.EventBus.MQ
                 return new CheckResult() { IsVaild = false, InvaildMessage = ex.ToString() };
             }
         }
+        /// <summary>
+        /// 获取APP最新的所有消息编码
+        /// </summary>
+        /// <param name="appname">APP名称</param>
+        /// <returns></returns>
         public List<EventId> GetEventIds(string appname)
         {
             var uri = "allids?app=" + appname;
@@ -312,7 +344,7 @@ namespace YiDian.EventBus.MQ
             new_stream.Close();
             return res;
         }
-        public string HttpGet(string url)
+        string HttpGet(string url)
         {
             WebRequest request = WebRequest.Create(url);
             request.Method = "GET";

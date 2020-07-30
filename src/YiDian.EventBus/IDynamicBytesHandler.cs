@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 namespace YiDian.EventBus
 {
     /// <summary>
-    /// 动态消息处理接口
+    /// 定义动态消息回调函数接口
     /// </summary>
-    public interface IBytesHandler
+    public interface IBytesHandler : IEventHandler
     {
         /// <summary>
         /// 动态消息回调处理方法

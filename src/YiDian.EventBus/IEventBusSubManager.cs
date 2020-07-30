@@ -80,8 +80,9 @@ namespace YiDian.EventBus
         /// </summary>
         /// <param name="key">订阅KEY</param>
         /// <param name="brokerName">交换机名称</param>
+        /// <param name="match">是否模糊匹配Key</param>
         /// <returns></returns>
-        IEnumerable<SubscriptionInfo> GetDymaicHandlersBySubKey(string key, string brokerName);
+        IEnumerable<SubscriptionInfo> GetDymaicHandlersBySubKey(string key, string brokerName, bool match = false);
     }
     /// <summary>
     /// 订阅管理器工厂接口

@@ -23,10 +23,15 @@ namespace YiDian.EventBus
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="TH"></typeparam>
         public void Subscribe<T, TH>()
-                            where T : IMQEvent
-                            where TH : IEventHandler<T>
+            where T : IMQEvent
+            where TH : IEventHandler<T>
         {
             __eventBus.Subscribe<T, TH>(__name);
+        }
+        public void SubscribeBytes<TH>()
+            where TH : IBytesHandler
+        {
+            __eventBus.SubscribeBytes<TH>(__name);
         }
     }
     /// <summary>

@@ -115,10 +115,53 @@ namespace YiDian.EventBus.MQ
         {
             return _subInfos.Where(x => !x.IsDynamic && string.Compare(x.EventKey, eventName, true) == 0 && string.Compare(x.BrokerName, brokerName, true) == 0);
         }
-        public IEnumerable<SubscriptionInfo> GetDymaicHandlersBySubKey(string key, string brokerName)
+        public IEnumerable<SubscriptionInfo> GetDymaicHandlersBySubKey(string key, string brokerName, bool match)
         {
-            return _subInfos.Where(x => x.IsDynamic && string.Compare(x.SubKey, key, true) == 0 && string.Compare(x.BrokerName, brokerName, true) == 0);
+            if (!match)
+            {
+                if (key == "*") return _subInfos.Where(x => x.IsDynamic && string.Compare(x.BrokerName, brokerName, true) == 0);
+                return _subInfos.Where(x => x.IsDynamic && string.Compare(x.SubKey, key, true) == 0 && string.Compare(x.BrokerName, brokerName, true) == 0);
+            }
+            return _subInfos.Where(x => x.IsDynamic && MathKey(x.SubKey, key) && string.Compare(x.BrokerName, brokerName, true) == 0);
         }
+        private bool MathKey(string subKey, string key)
+        {
+            if (string.Compare(subKey, key, true) == 0) return true;
+            if (subKey == "#") return true;
+            var arr1 = subKey.Split('.');
+            var arr2 = key.Split('.');
+            var j = 0;
+            for (var i = 0; i < arr1.Length; i++)
+            {
+                var s = arr1[i];
+                if (s == "*")
+                {
+                    j++;
+                    continue;
+                }
+                else if (s == "#")
+                {
+                    if (i == arr1.Length - 1) return true;
+                    i += 1;
+                    s = arr1[i];
+                    for (; j < arr2.Length; j++)
+                    {
+                        if (s == arr2[j])
+                        {
+                            goto Next;
+                        }
+                    }
+                    return false;
+                }
+                if (s != arr2[j]) return false;
+                Next:
+                j++;
+                continue;
+            }
+            if (j != arr2.Length) return false;
+            return true;
+        }
+
         private void SubMessage(string subkey, string brokerName)
         {
             lock (_sub_keys)

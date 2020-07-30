@@ -140,7 +140,7 @@ namespace YiDian.EventBus.MQ
         #endregion
 
         #region Event Publish And Subscribe
-        public bool Publish(ReadOnlyMemory<byte> datas, string key, out ulong tag, bool enableTransaction = false)
+        public bool PublishBytes(ReadOnlyMemory<byte> datas, string key, out ulong tag, bool enableTransaction = false)
         {
             tag = 0;
             try
@@ -324,12 +324,7 @@ namespace YiDian.EventBus.MQ
                 var eventName = GetEventKeyFromRoutingKey(key);
                 handlers = mgr.GetHandlersForEvent(eventName, BROKER_NAME);
             }
-            else
-            {
-                if (key == "_dy") key = "";
-                else key = key.Substring(3);
-                handlers = mgr.GetDymaicHandlersBySubKey(key, BROKER_NAME);
-            }
+            else handlers = GetDymaicHandlers(mgr, key);
             var ider = handlers.GetEnumerator();
             var flag = ider.MoveNext();
             if (!flag)
@@ -339,6 +334,9 @@ namespace YiDian.EventBus.MQ
             }
             ProcessEvent(handlers, item);
         }
+
+        protected abstract IEnumerable<SubscriptionInfo> GetDymaicHandlers(IEventBusSubManager mgr, string key);
+
         private void AckChannel(object obj)
         {
             var item = (QueueItem<IDirectEventBus, DirectSubscriber>)obj;

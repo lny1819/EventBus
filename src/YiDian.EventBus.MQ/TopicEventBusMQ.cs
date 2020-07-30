@@ -192,6 +192,11 @@ namespace YiDian.EventBus.MQ
         {
             UnsubscribeBytesInternal<TH>(queueName, subkey);
         }
+
+        protected override IEnumerable<SubscriptionInfo> GetDymaicHandlers(IEventBusSubManager mgr, string key)
+        {
+            return mgr.GetDymaicHandlersBySubKey(key, BROKER_NAME, true);
+        }
     }
     struct SendItem
     {

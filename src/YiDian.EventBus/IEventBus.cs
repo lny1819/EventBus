@@ -71,7 +71,7 @@ namespace YiDian.EventBus
         /// <param name="tag">当启用发送确认时，返回发送消息的tag</param>
         /// <param name="enableTransaction">启用发送确认</param>
         /// <returns></returns>
-        bool Publish(ReadOnlyMemory<byte> datas, string key, out ulong tag, bool enableTransaction = false);
+        bool PublishBytes(ReadOnlyMemory<byte> datas, string key, out ulong tag, bool enableTransaction = false);
         /// <summary>
         /// 在指定队列上消费消息
         /// </summary>

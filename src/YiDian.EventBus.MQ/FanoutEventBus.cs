@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 
 namespace YiDian.EventBus.MQ
 {
@@ -65,6 +66,11 @@ namespace YiDian.EventBus.MQ
         public void UnsubscribeBytes<TH>(string queueName) where TH : IBytesHandler
         {
             UnsubscribeBytesInternal<TH>(queueName, "");
+        }
+
+        protected override IEnumerable<SubscriptionInfo> GetDymaicHandlers(IEventBusSubManager mgr, string key)
+        {
+            return mgr.GetDymaicHandlersBySubKey("*", BROKER_NAME);
         }
     }
 }

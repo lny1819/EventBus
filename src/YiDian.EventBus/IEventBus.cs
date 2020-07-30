@@ -12,7 +12,7 @@ namespace YiDian.EventBus
         /// </summary>
         string BROKER_NAME { get; }
         /// <summary>
-        /// MQ连接命名称，既在连接字符串中的name定义；当name为空或未配置时，默认返回default
+        /// MQ连接命名称，既在连接字符串中的name定义；当name为空或未配置时，返回default
         /// </summary>
         string ConnectionName { get; }
         /// <summary>
@@ -30,6 +30,10 @@ namespace YiDian.EventBus
         /// <param name="queuename"></param>
         /// <param name="force"></param>
         void DeleteQueue(string queuename, bool force);
+        /// <summary>
+        /// 开始指定队列名称的消息消费
+        /// </summary>
+        /// <param name="queueName"></param>
         void Start(string queueName);
         /// <summary>
         /// 总是启用消息发送确认模式
@@ -40,10 +44,10 @@ namespace YiDian.EventBus
         /// 发布消息
         ///  <para>总是在路由键后追加消息在<see cref="IAppEventsManager"/>中的定义</para>
         ///  如 在<see cref="IAppEventsManager"/>中的定义为y 则最终的路由键为y
-        /// <para>当消息体有<see cref="KeyIndex"/>标识时 路由键为：a.b.c.y（a,b,c未keyIndex标识定义） ；没有keyIndex标识时，为y</para>
+        /// <para>当此消息总线是<see cref="ITopicEventBus"/>总线类型且消息体有<see cref="KeyIndex"/>标识时 路由键为：a.b.c.y（a,b,c未keyIndex标识定义） ；没有keyIndex标识时，为y</para>
         /// </summary>
         /// <typeparam name="T">消息类型</typeparam>
-        /// <param name="event">消息类型</param>
+        /// <param name="event">消息</param>
         /// <param name="tag">当启用发送确认时，返回发送消息的tag</param>
         /// <param name="enableTransaction">启用发送确认</param>
         bool Publish<T>(T @event, out ulong tag, bool enableTransaction = false) where T : IMQEvent;
@@ -51,58 +55,65 @@ namespace YiDian.EventBus
         /// 发送消息
         /// <para>总是在路由键后追加消息在<see cref="IAppEventsManager"/>中的定义</para>
         /// 如 在<see cref="IAppEventsManager"/>中的定义为y 则最终的路由键为y
-        /// <para>当消息体有<see cref="KeyIndex"/>标识时 路由键为：a.b.c.y（a,b,c未keyIndex标识定义） ；没有keyIndex标识时，为y</para>
+        /// <para>当此消息总线是<see cref="ITopicEventBus"/>总线类型且消息体有<see cref="KeyIndex"/>标识时 路由键为：a.b.c.y（a,b,c未keyIndex标识定义） ；没有keyIndex标识时，为y</para>
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="event"></param>
         /// <returns></returns>
         bool Publish<T>(T @event) where T : IMQEvent;
         /// <summary>
-        /// 自定义路由键发送消息 当消息体有keyIndex标识时 会将标识拼接在路由键的头部
+        /// 通过自定义路由键前缀来发送消息 当消息体有keyIndex标识时 会将标识拼接在路由键的头部
         /// <para>总是在路由键后追加消息在<see cref="IAppEventsManager"/>中的定义</para>
         /// 如key=x, 在<see cref="IAppEventsManager"/>中的定义为y 则最终的路由键为x.y
-        ///  <para>当消息体有keyIndex标识时 路由键为：a.b.c.x.y（a,b,c未keyIndex标识定义） ；没有keyIndex标识时，为x.y</para>
+        ///  <para>当此消息总线是<see cref="ITopicEventBus"/>总线类型且消息体有keyIndex标识时 路由键为：a.b.c.x.y（a,b,c未keyIndex标识定义） ；没有keyIndex标识时，为x.y</para>
         /// </summary>
         /// <typeparam name="T">消息类型</typeparam>
         /// <param name="event">消息</param>
         /// <param name="key">路由键前缀</param>
+        /// <param name="tag">当启用发送确认时，返回发送消息的tag</param>
         /// <param name="enableTransaction">启用发送确认</param>
         bool Publish<T>(T @event, string key, out ulong tag, bool enableTransaction = false) where T : IMQEvent;
+        /// <summary>
+        /// 发送字节流消息
+        /// 此类型消息只能通过<see cref="IBytesHandler"/>来接收处理
+        /// </summary>
+        /// <param name="datas">字节流消息</param>
+        /// <param name="key">路由键</param>
+        /// <param name="tag">当启用发送确认时，返回发送消息的tag</param>
+        /// <param name="enableTransaction">启用发送确认</param>
+        /// <returns></returns>
+        bool Publish(ReadOnlySpan<byte> datas, string key, out ulong tag, bool enableTransaction = false);
         /// <summary>
         /// 在指定队列上消费消息
         /// </summary>
         /// <typeparam name="T">消息类型</typeparam>
-        /// <typeparam name="TH">消费消息类型</typeparam>
-        /// <param name="queueName"></param>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
         void Subscribe<T, TH>(string queueName)
              where T : IMQEvent
              where TH : IEventHandler<T>;
         /// <summary>
         /// 移除指定队列上消费消息
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <typeparam name="TH"></typeparam>
-        /// <param name="queueName"></param>
+        /// <typeparam name="T">消息类型</typeparam>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
         void Unsubscribe<T, TH>(string queueName)
             where T : IMQEvent
             where TH : IEventHandler<T>;
         /// <summary>
         /// 在指定队列上消费消息
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <typeparam name="TH"></typeparam>
-        /// <param name="queueName"></param>
-        void SubscribeBytes<T, TH>(string queueName)
-          where T : IMQEvent
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
+        void SubscribeBytes<TH>(string queueName)
           where TH : IBytesHandler;
         /// <summary>
         /// 移除指定队列上消费消息
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <typeparam name="TH"></typeparam>
-        /// <param name="queueName"></param>
-        void UnsubscribeBytes<T, TH>(string queueName)
-            where T : IMQEvent
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
+        void UnsubscribeBytes<TH>(string queueName)
             where TH : IBytesHandler;
     }
     /// <summary>
@@ -110,6 +121,42 @@ namespace YiDian.EventBus
     /// </summary>
     public interface IDirectEventBus : IEventBus
     {
+        /// <summary>
+        /// 通过指定的路由键前缀订阅消息
+        /// </summary>
+        /// <typeparam name="T">消息类型</typeparam>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
+        /// <param name="subkey">路由键前缀</param>
+        void Subscribe<T, TH>(string queueName, string subkey)
+             where T : IMQEvent
+             where TH : IEventHandler<T>;
+        /// <summary>
+        /// 取消订阅
+        /// </summary>
+        /// <typeparam name="T">消息类型</typeparam>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
+        /// <param name="subkey">路由键前缀</param>
+        void Unsubscribe<T, TH>(string queueName, string subkey)
+            where T : IMQEvent
+            where TH : IEventHandler<T>;
+        /// <summary>
+        /// 通过指定的路由键前缀订阅动态消息
+        /// </summary>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
+        /// <param name="subkey">路由键前缀</param>
+        void SubscribeBytes<TH>(string queueName, string subkey)
+            where TH : IBytesHandler;
+        /// <summary>
+        /// 取消订阅
+        /// </summary>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
+        /// <param name="subkey">路由键前缀</param>
+        void UnsubscribeBytes<TH>(string queueName, string subkey)
+            where TH : IBytesHandler;
         /// <summary>
         /// 注册消息队列机器队列消费消息方法
         /// </summary>

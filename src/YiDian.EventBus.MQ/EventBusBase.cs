@@ -183,6 +183,36 @@ namespace YiDian.EventBus.MQ
                 return false;
             }
         }
+        protected void SubscribeInternal<T, TH>(string queueName, string key)
+            where T : IMQEvent
+            where TH : IEventHandler<T>
+        {
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    var eventKey = mgr.GetEventKey<T>();
+                    var subkey = key + eventKey;
+                    mgr.AddSubscription<T, TH>(subkey, BROKER_NAME);
+                    break;
+                }
+            }
+        }
+        protected void UnsubscribeInternal<T, TH>(string queueName)
+            where T : IMQEvent
+            where TH : IEventHandler<T>
+        {
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    mgr.RemoveSubscription<T, TH>();
+                    break;
+                }
+            }
+        }
         #endregion
 
         #region Consumer

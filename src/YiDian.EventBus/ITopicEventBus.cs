@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 namespace YiDian.EventBus
 {
     /// <summary>
-    /// 广播型 EventBus
+    /// Topic型 EventBus
     /// </summary>
     public interface ITopicEventBus : IEventBus
     {
@@ -21,27 +21,60 @@ namespace YiDian.EventBus
         /// <param name="autoStart">是否在注册完成后开启消息消费</param>
         void RegisterConsumer(string queuename, Action<TopicSubscriber> action, ushort fetchCount = 200, int queueLength = 200000, bool autodel = false, bool durable = true, bool autoAck = false, bool autoStart = true);
         /// <summary>
-        /// 订阅消息
+        /// 通过指定表达式订阅满足表达式条件的消息
         /// </summary>
-        /// <typeparam name="T">消息体</typeparam>
-        /// <typeparam name="TH">消息回调</typeparam>
+        /// <typeparam name="T">消息类型</typeparam>
+        /// <typeparam name="TH">消息消费类型</typeparam>
         /// <param name="queueName">队列名称</param>
         /// <param name="where">消息条件</param>
         void Subscribe<T, TH>(string queueName, Expression<Func<T, bool>> where)
              where T : IMQEvent
              where TH : IEventHandler<T>;
-        void Unsubscribe<T>(string queueName, Expression<Func<T, bool>> where)
-             where T : IMQEvent;
+        /// <summary>
+        /// 取消订阅
+        /// </summary>
+        /// <typeparam name="T">消息类型</typeparam>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
+        /// <param name="where">消息条件</param>
+        void Unsubscribe<T, TH>(string queueName, Expression<Func<T, bool>> where)
+             where T : IMQEvent
+             where TH : IEventHandler<T>;
+        /// <summary>
+        /// 通过指定的路由键前缀订阅消息，可使用*和#
+        /// </summary>
+        /// <typeparam name="T">消息类型</typeparam>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
+        /// <param name="subkey">路由键前缀</param>
         void Subscribe<T, TH>(string queueName, string subkey)
              where T : IMQEvent
              where TH : IEventHandler<T>;
-        void Unsubscribe<T>(string queueName, string subkey)
-             where T : IMQEvent;
-        void SubscribeBytes<T, TH>(string queueName, string subkey)
+        /// <summary>
+        /// 取消订阅
+        /// </summary>
+        /// <typeparam name="T">消息类型</typeparam>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
+        /// <param name="subkey">路由键前缀</param>
+        void Unsubscribe<T, TH>(string queueName, string subkey)
             where T : IMQEvent
+            where TH : IEventHandler<T>;
+        /// <summary>
+        /// 通过指定的路由键前缀订阅动态消息，可使用*和#
+        /// </summary>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
+        /// <param name="subkey">路由键前缀</param>
+        void SubscribeBytes<TH>(string queueName, string subkey)
             where TH : IBytesHandler;
-        void UnsubscribeBytes<T, TH>(string queueName)
-             where T : IMQEvent
+        /// <summary>
+        /// 取消订阅
+        /// </summary>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
+        /// <param name="subkey">路由键前缀</param>
+        void UnsubscribeBytes<T, TH>(string queueName, string subkey)
             where TH : IBytesHandler;
     }
 }

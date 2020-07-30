@@ -52,58 +52,11 @@ namespace YiDian.EventBus.MQ
 
         public override void Subscribe<T, TH>(string queueName)
         {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    var subkey = mgr.GetEventKey<T>();
-                    mgr.AddSubscription<T, TH>(subkey, BROKER_NAME);
-                    break;
-                }
-            }
+            SubscribeInternal<T, TH>(queueName, "");
         }
         public override void Unsubscribe<T, TH>(string queueName)
         {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    mgr.RemoveSubscription<T, TH>();
-                    break;
-                }
-            }
-        }
-
-        public void SubscribeBytes<T, TH>(string queueName)
-            where T : IMQEvent
-            where TH : IBytesHandler
-        {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    var subkey = mgr.GetEventKey<T>();
-                    mgr.AddBytesSubscription<T, TH>(subkey, BROKER_NAME);
-                    break;
-                }
-            }
-        }
-        public void UnsubscribeBytes<T, TH>(string queueName)
-            where T : IMQEvent
-            where TH : IBytesHandler
-        {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    mgr.RemoveBytesSubscription<T, TH>();
-                    break;
-                }
-            }
+            UnsubscribeInternal<T, TH>(queueName, "");
         }
         public void RegisterConsumer(string queueName, Action<DirectSubscriber> action, ushort fetchCount, int queueLength, bool autodel, bool durable, bool autoAck, bool autoStart)
         {
@@ -124,6 +77,30 @@ namespace YiDian.EventBus.MQ
             };
             consumerInfos.Add(config);
             CreateConsumerChannel(config, autoStart);
+        }
+
+        public void Subscribe<T, TH>(string queueName, string subkey)
+            where T : IMQEvent
+            where TH : IEventHandler<T>
+        {
+            SubscribeInternal<T, TH>(queueName, subkey);
+        }
+
+        public void Unsubscribe<T, TH>(string queueName, string subkey)
+            where T : IMQEvent
+            where TH : IEventHandler<T>
+        {
+            UnsubscribeInternal<T, TH>(queueName, subkey);
+        }
+
+        public void SubscribeBytes<TH>(string queueName, string subkey) where TH : IBytesHandler
+        {
+            SubscribeBytesInternal<TH>(queueName, subkey);
+        }
+
+        public void UnsubscribeBytes<TH>(string queueName, string subkey) where TH : IBytesHandler
+        {
+            UnsubscribeBytesInternal<TH>(queueName, subkey);
         }
     }
 }

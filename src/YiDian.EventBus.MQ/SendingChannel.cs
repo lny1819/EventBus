@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace YiDian.EventBus.MQ
 {
-    public class SendingChannel<T>
+    internal class SendingChannel<T>
     {
         int count = 0;
         const int MaxLength = 100000;

@@ -133,126 +133,64 @@ namespace YiDian.EventBus.MQ
             consumerInfos.Add(config);
             CreateConsumerChannel(config, autoStart);
         }
+        public override void Subscribe<T, TH>(string queueName)
+        {
+            var subkey = GetSubKey<T>();
+            SubscribeInternal<T, TH>(queueName, subkey);
+        }
+
+        public override void Unsubscribe<T, TH>(string queueName)
+        {
+            var subkey = GetSubKey<T>();
+            UnsubscribeInternal<T, TH>(queueName, subkey);
+        }
 
         public void Subscribe<T, TH>(string queueName, Expression<Func<T, bool>> where)
              where T : IMQEvent
              where TH : IEventHandler<T>
         {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    var eventKey = mgr.GetEventKey<T>();
-                    var subkey = GetSubKey(where);
-                    subkey += eventKey;
-                    mgr.AddSubscription<T, TH>(subkey, BROKER_NAME);
-                    break;
-                }
-            }
+            var subkey = GetSubKey(where);
+            SubscribeInternal<T, TH>(queueName, subkey);
         }
 
-        public void Unsubscribe<T>(string queueName, Expression<Func<T, bool>> where)
+        public void Unsubscribe<T, TH>(string queueName, Expression<Func<T, bool>> where)
             where T : IMQEvent
+             where TH : IEventHandler<T>
         {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    var eventKey = mgr.GetEventKey<T>();
-                    var subkey = GetSubKey(where);
-                    subkey += eventKey;
-                    mgr.RemoveSubscription(subkey, BROKER_NAME);
-                    break;
-                }
-            }
+            var subkey = GetSubKey(where);
+            UnsubscribeInternal<T, TH>(queueName, subkey);
         }
 
         public void Subscribe<T, TH>(string queueName, string subkey)
               where T : IMQEvent
              where TH : IEventHandler<T>
         {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    var eventKey = mgr.GetEventKey<T>();
-                    subkey += "." + eventKey;
-                    mgr.AddSubscription<T, TH>(subkey, BROKER_NAME);
-                    break;
-                }
-            }
+            SubscribeInternal<T, TH>(queueName, subkey);
         }
-        public void Unsubscribe<T>(string queueName, string subkey)
-              where T : IMQEvent
+        public void Unsubscribe<T, TH>(string queueName, string subkey)
+            where T : IMQEvent
+            where TH : IEventHandler<T>
         {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    var eventKey = mgr.GetEventKey<T>();
-                    subkey += "." + eventKey;
-                    mgr.RemoveSubscription(subkey, BROKER_NAME);
-                    break;
-                }
-            }
+            UnsubscribeInternal<T, TH>(queueName, subkey);
         }
-        public override void Subscribe<T, TH>(string queueName)
+        public void SubscribeBytes<TH>(string queueName) where TH : IBytesHandler
         {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    var eventKey = mgr.GetEventKey<T>();
-                    var subkey = GetSubKey<T>() + eventKey;
-                    mgr.AddSubscription<T, TH>(subkey, BROKER_NAME);
-                    break;
-                }
-            }
+            SubscribeBytesInternal<TH>(queueName, "#");
         }
 
-        public override void Unsubscribe<T, TH>(string queueName)
+        public void UnsubscribeBytes<TH>(string queueName) where TH : IBytesHandler
         {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    mgr.RemoveSubscription<T, TH>();
-                    break;
-                }
-            }
+            UnsubscribeBytesInternal<TH>(queueName, "#");
         }
 
-        public override void SubscribeBytes<T, TH>(string queueName)
+        public void SubscribeBytes<TH>(string queueName, string subkey) where TH : IBytesHandler
         {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    var eventKey = mgr.GetEventKey<T>();
-                    var subkey = GetSubKey<T>() + eventKey;
-                    mgr.AddBytesSubscription<T, TH>(subkey, BROKER_NAME);
-                    break;
-                }
-            }
+            SubscribeBytesInternal<TH>(queueName, subkey);
         }
-        public override void UnsubscribeBytes<T, TH>(string queueName)
+
+        public void UnsubscribeBytes<T, TH>(string queueName, string subkey) where TH : IBytesHandler
         {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    mgr.RemoveBytesSubscription<T, TH>();
-                    break;
-                }
-            }
+            UnsubscribeBytesInternal<TH>(queueName, subkey);
         }
     }
     struct SendItem

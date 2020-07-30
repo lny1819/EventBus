@@ -24,9 +24,10 @@ namespace YiDian.EventBus
         void RemoveSubscription<T, TH>(string subkey, string brokerName)
              where T : IMQEvent
              where TH : IEventHandler<T>;
-        IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventKey);
+        IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventKey, string brokerName);
         string GetEventKey<T>() where T : IMQEvent;
         string GetEventKey(Type type);
+        IEnumerable<SubscriptionInfo> GetDymaicHandlersBySubKey(string key, string brokerName);
     }
     public interface IEventBusSubManagerFactory
     {

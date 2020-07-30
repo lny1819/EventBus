@@ -14,4 +14,8 @@
     <PackageId>YiDian.EventBus</PackageId>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>E:\QuantProject\EventBus\src\YiDian.EventBus\YiDian.EventBus.xml</DocumentationFile>
+  </PropertyGroup>
+
 </Project>

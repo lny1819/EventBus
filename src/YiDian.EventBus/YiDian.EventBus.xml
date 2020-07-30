@@ -1,0 +1,738 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>YiDian.EventBus</name>
+    </assembly>
+    <members>
+        <member name="T:YiDian.EventBus.IAppEventsManager">
+            <summary>
+            消息管理器，注册消息，生成或消息编码
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.IAppEventsManager.AllowNoRegisterEvent">
+            <summary>
+            是否允许使用不经过注册的消息类型
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.IAppEventsManager.RegisterEvent``1(System.String,System.String,System.Boolean)">
+            <summary>
+            注册一个消息类型
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <param name="appName">APP名称</param>
+            <param name="version">APP版本</param>
+            <param name="enableDefaultSeralize">是否是默认序列化</param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.IAppEventsManager.VaildityTest(System.String,System.String)">
+            <summary>
+            指示指定版本和名称的APP是否存在
+            </summary>
+            <param name="appName">APP名称</param>
+            <param name="version">APP版本</param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.IAppEventsManager.GetVersion(System.String)">
+            <summary>
+            获取APP最新版本号
+            </summary>
+            <param name="appName">APP名称</param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.IAppEventsManager.ListEvents(System.String)">
+            <summary>
+            获取APP最新的所有消息详情
+            </summary>
+            <param name="appName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.IAppEventsManager.GetEventId(System.String)">
+            <summary>
+            获取指定类型名称的消息编号
+            </summary>
+            <param name="typename"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.IAppEventsManager.GetEventIds(System.String)">
+            <summary>
+            获取APP最新的所有消息编码
+            </summary>
+            <param name="appname">APP名称</param>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.CheckResult">
+            <summary>
+            获取结果
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.CheckResult.IsVaild">
+            <summary>
+            是否有效
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.CheckResult.InvaildMessage">
+            <summary>
+            提示信息
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.AttrType">
+            <summary>
+            消息字段特性枚举
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.AttrType.None">
+            <summary>
+            没有使用特性
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.AttrType.Index">
+            <summary>
+            使用l了<see cref="T:YiDian.EventBus.KeyIndex"/>特性
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.PropertyMetaInfo">
+            <summary>
+            消息字段描述信息
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.PropertyMetaInfo.P_Double">
+            <summary>
+            64位浮点数
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.PropertyMetaInfo.P_Int16">
+            <summary>
+            16位有符号整数
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.PropertyMetaInfo.P_UInt16">
+            <summary>
+            16位无符号整数
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.PropertyMetaInfo.P_Int32">
+            <summary>
+            32位有符号整数
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.PropertyMetaInfo.P_UInt32">
+            <summary>
+            32位无符号整数
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.PropertyMetaInfo.P_UInt64">
+            <summary>
+            64位无符号整数
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.PropertyMetaInfo.P_Int64">
+            <summary>
+            64位有符号整数
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.PropertyMetaInfo.P_String">
+            <summary>
+            字符串
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.PropertyMetaInfo.P_Date">
+            <summary>
+            日期
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.PropertyMetaInfo.P_Byte">
+            <summary>
+            单字节
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.PropertyMetaInfo.P_Boolean">
+            <summary>
+            布尔类型
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.PropertyMetaInfo.P_Enum">
+            <summary>
+            枚举类型
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.PropertyMetaInfo.P_Array">
+            <summary>
+            数组类型
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.PropertyMetaInfo.MetaTypeValues">
+            <summary>
+            基础数据类型列表
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.PropertyMetaInfo.Name">
+            <summary>
+            字段名称
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.PropertyMetaInfo.Type">
+            <summary>
+            字段数据类型
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.PropertyMetaInfo.SeralizeIndex">
+            <summary>
+            序列化编号
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.PropertyMetaInfo.Attr">
+            <summary>
+            字段特性
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.EnumValue">
+            <summary>
+             枚举值描述信息
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.EnumValue.Name">
+            <summary>
+            枚举值名称
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.EnumValue.Value">
+            <summary>
+            枚举值
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.EnumMeta">
+            <summary>
+            枚举元数据
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.EnumMeta.#ctor">
+            <summary>
+            枚举元数据
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.EnumMeta.Name">
+            <summary>
+            枚举名称
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.EnumMeta.DefaultSeralize">
+            <summary>
+            是否序列化 暂不使用
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.EnumMeta.Values">
+            <summary>
+            枚举值
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.EnumMeta.ToJson(System.Text.StringBuilder)">
+            <summary>
+            生成对象的JSON格式字符串
+            </summary>
+            <param name="sb"></param>
+        </member>
+        <member name="T:YiDian.EventBus.ClassMeta">
+            <summary>
+            消息类型元数据
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.ClassMeta.#ctor">
+            <summary>
+            消息类型元数据
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.ClassMeta.Attr">
+            <summary>
+            类型特性
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.ClassMeta.Name">
+            <summary>
+            类型名称
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.ClassMeta.IsEventType">
+            <summary>
+            是否是消息类型
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.ClassMeta.DefaultSeralize">
+            <summary>
+            是否使用默认序列化
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.ClassMeta.Properties">
+            <summary>
+            类型字段元数据
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.ClassMeta.ToJson(System.Text.StringBuilder)">
+            <summary>
+            生成对象的JSON格式字符串
+            </summary>
+            <param name="sb"></param>
+        </member>
+        <member name="T:YiDian.EventBus.MetaAttr">
+            <summary>
+            特性元数据
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MetaAttr.AttrType">
+            <summary>
+            特性类型
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MetaAttr.Value">
+            <summary>
+            特性值
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.AppMetas">
+            <summary>
+            APP元数据
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.AppMetas.#ctor">
+            <summary>
+            APP元数据
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.AppMetas.Enums">
+            <summary>
+            枚举字段元数据
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.AppMetas.MetaInfos">
+            <summary>
+            类型元数据
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.AppMetas.Version">
+            <summary>
+            版本号
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.AppMetas.Name">
+            <summary>
+            APP名称
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.AppMetas.ToJson">
+            <summary>
+            生成对象的JSON格式字符串
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.EventId">
+            <summary>
+            消息编码
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.EventId.Name">
+            <summary>
+            消息名称
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.EventId.ID">
+            <summary>
+            消息编码
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.IDirectEventBus">
+            <summary>
+            定义Direct类型消息总线
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.IDirectEventBus.Publish``1(``0,System.String,System.UInt64@,System.Boolean)">
+            <summary>
+            通过自定义路由键前缀来发送消息
+            <para>总是在路由键后追加消息在<see cref="T:YiDian.EventBus.IAppEventsManager"/>中的定义</para>
+            如key=x, 在<see cref="T:YiDian.EventBus.IAppEventsManager"/>中的定义为y 则最终的路由键为x.y
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <param name="event">消息</param>
+            <param name="key">路由键前缀,可以为空</param>
+            <param name="tag">当启用发送确认时，返回发送消息的tag</param>
+            <param name="enableTransaction">启用发送确认</param>
+        </member>
+        <member name="M:YiDian.EventBus.IDirectEventBus.Subscribe``2(System.String,System.String)">
+            <summary>
+            通过指定的路由键前缀订阅消息
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+            <param name="subkey">路由键前缀</param>
+        </member>
+        <member name="M:YiDian.EventBus.IDirectEventBus.Unsubscribe``2(System.String,System.String)">
+            <summary>
+            取消订阅
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+            <param name="subkey">路由键前缀</param>
+        </member>
+        <member name="M:YiDian.EventBus.IDirectEventBus.SubscribeBytes``1(System.String,System.String)">
+            <summary>
+            通过指定的路由键前缀订阅动态消息
+            </summary>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+            <param name="subkey">路由键前缀</param>
+        </member>
+        <member name="M:YiDian.EventBus.IDirectEventBus.UnsubscribeBytes``1(System.String,System.String)">
+            <summary>
+            取消订阅
+            </summary>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+            <param name="subkey">路由键前缀</param>
+        </member>
+        <member name="M:YiDian.EventBus.IDirectEventBus.RegisterConsumer(System.String,System.Action{YiDian.EventBus.DirectSubscriber},System.UInt16,System.Int32,System.Boolean,System.Boolean,System.Boolean,System.Boolean)">
+            <summary>
+            注册消息队列机器队列消费消息方法
+            </summary>
+            <param name="queuename">消费队列名称</param>
+            <param name="action">订阅队列消费消息类型</param>
+            <param name="fetchCount">每次最多获取消息数量</param>
+            <param name="queueLength">队列最大数据存储长度</param>
+            <param name="autodel">是否自动删除队列</param>
+            <param name="durable">队列数据是否持久化</param>
+            <param name="autoAck">队列数据是否自动确认</param>
+            <param name="autoStart">是否在注册完成后开启消息消费</param>
+        </member>
+        <member name="T:YiDian.EventBus.IBytesHandler">
+            <summary>
+            动态消息处理接口
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.IBytesHandler.Handle(System.String,System.ReadOnlyMemory{System.Byte})">
+            <summary>
+            动态消息回调处理方法
+            </summary>
+            <param name="routingKey">消息路由键 ，为_dy或者以_dy.开始</param>
+            <param name="datas">消息字节数据</param>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.IEventBus">
+            <summary>
+            定义消息总线的基本方法
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.IEventBus.BROKER_NAME">
+            <summary>
+            交换机名称
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.IEventBus.ConnectionName">
+            <summary>
+            MQ连接命名称，既在连接字符串中的name定义；当name为空或未配置时，返回default
+            </summary>
+        </member>
+        <member name="E:YiDian.EventBus.IEventBus.OnUncatchException">
+            <summary>
+            执行消费消息的方法时出错
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBus.EnableHandlerCache(System.Int32)">
+            <summary>
+            缓存消费类型实例
+            </summary>
+            <param name="cacheLength">缓存实例的数量</param>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBus.DeleteQueue(System.String,System.Boolean)">
+            <summary>
+            删除队列
+            </summary>
+            <param name="queuename"></param>
+            <param name="force"></param>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBus.Start(System.String)">
+            <summary>
+            开始指定队列名称的消息消费
+            </summary>
+            <param name="queueName"></param>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBus.EnablePubTrans(System.EventHandler{YiDian.EventBus.ConfirmArg})">
+            <summary>
+            总是启用消息发送确认模式
+            </summary>
+            <param name="action">消息确认回调方法</param>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBus.Publish``1(``0,System.UInt64@,System.Boolean)">
+            <summary>
+            发布消息
+             <para>总是在路由键后追加消息在<see cref="T:YiDian.EventBus.IAppEventsManager"/>中的定义</para>
+             如 在<see cref="T:YiDian.EventBus.IAppEventsManager"/>中的定义为y 则最终的路由键为y
+            <para>当此消息总线是<see cref="T:YiDian.EventBus.ITopicEventBus"/>总线类型且消息体有<see cref="T:YiDian.EventBus.KeyIndex"/>标识时 路由键为：a.b.c.y（a,b,c未keyIndex标识定义） ；没有keyIndex标识时，为y</para>
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <param name="event">消息</param>
+            <param name="tag">当启用发送确认时，返回发送消息的tag</param>
+            <param name="enableTransaction">启用发送确认</param>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBus.Publish``1(``0)">
+            <summary>
+            发送消息
+            <para>总是在路由键后追加消息在<see cref="T:YiDian.EventBus.IAppEventsManager"/>中的定义</para>
+            如 在<see cref="T:YiDian.EventBus.IAppEventsManager"/>中的定义为y 则最终的路由键为y
+            <para>当此消息总线是<see cref="T:YiDian.EventBus.ITopicEventBus"/>总线类型且消息体有<see cref="T:YiDian.EventBus.KeyIndex"/>标识时 路由键为：a.b.c.y（a,b,c未keyIndex标识定义） ；没有keyIndex标识时，为y</para>
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="event"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBus.Publish(System.ReadOnlyMemory{System.Byte},System.String,System.UInt64@,System.Boolean)">
+            <summary>
+            发送字节流消息
+            此类型消息只能通过<see cref="T:YiDian.EventBus.IBytesHandler"/>来接收处理
+            <para>路由键；当key是空，系统默认生成路由键：_dy；当key不为空时，系统会在key前拼接_dy.</para>
+            </summary>
+            <param name="datas">字节流消息</param>
+            <param name="key">路由键</param>
+            <param name="tag">当启用发送确认时，返回发送消息的tag</param>
+            <param name="enableTransaction">启用发送确认</param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBus.Subscribe``2(System.String)">
+            <summary>
+            在指定队列上消费消息
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+        </member>
+        <member name="M:YiDian.EventBus.IEventBus.Unsubscribe``2(System.String)">
+            <summary>
+            移除指定队列上消费消息
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+        </member>
+        <member name="T:YiDian.EventBus.ConfirmArg">
+            <summary>
+            异步发送确认回调事件消息
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.ConfirmArg.IsOk">
+            <summary>
+            消息是否处理成功
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.ConfirmArg.Tag">
+            <summary>
+            消息tag标识
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.ConfirmArg.Multiple">
+            <summary>
+            是否响应Tag之前的消息
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.IEventBusSubManager">
+            <summary>
+            消息订阅管理器
+            </summary>
+        </member>
+        <member name="E:YiDian.EventBus.IEventBusSubManager.OnEventRemoved">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.IFanoutEventBus">
+            <summary>
+            定义广播类型的消息总线
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.IFanoutEventBus.SubscribeBytes``1(System.String)">
+            <summary>
+            在指定队列上消费消息
+            </summary>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+        </member>
+        <member name="M:YiDian.EventBus.IFanoutEventBus.UnsubscribeBytes``1(System.String)">
+            <summary>
+            移除指定队列上消费消息
+            </summary>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+        </member>
+        <member name="M:YiDian.EventBus.IFanoutEventBus.RegisterConsumer(System.String,System.Action{YiDian.EventBus.FanoutSubscriber},System.UInt16,System.Int32,System.Boolean,System.Boolean,System.Boolean,System.Boolean)">
+            <summary>
+            注册消息队列机器队列消费消息方法
+            </summary>
+            <param name="queuename">消费队列名称</param>
+            <param name="action">订阅队列消费消息类型</param>
+            <param name="fetchCount">每次最多获取消息数量</param>
+            <param name="queueLength">队列最大数据存储长度</param>
+            <param name="autodel">是否自动删除队列</param>
+            <param name="durable">队列数据是否持久化</param>
+            <param name="autoAck">队列数据是否自动确认</param>
+            <param name="autoStart">是否在注册完成后开启消息消费</param>
+        </member>
+        <member name="T:YiDian.EventBus.ITopicEventBus">
+            <summary>
+            Topic型 EventBus
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.ITopicEventBus.Publish``1(``0,System.String,System.UInt64@,System.Boolean)">
+            <summary>
+            通过自定义路由键前缀来发送消息 当消息体有keyIndex标识时 会将标识拼接在路由键的头部
+            <para>总是在路由键后追加消息在<see cref="T:YiDian.EventBus.IAppEventsManager"/>中的定义</para>
+            如key=x, 在<see cref="T:YiDian.EventBus.IAppEventsManager"/>中的定义为y 则最终的路由键为x.y
+             <para>当此消息总线是<see cref="T:YiDian.EventBus.ITopicEventBus"/>总线类型且消息体有keyIndex标识时 路由键为：a.b.c.x.y（a,b,c未keyIndex标识定义） ；没有keyIndex标识时，为x.y</para>
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <param name="event">消息</param>
+            <param name="key">路由键前缀,可以为空</param>
+            <param name="tag">当启用发送确认时，返回发送消息的tag</param>
+            <param name="enableTransaction">启用发送确认</param>
+        </member>
+        <member name="M:YiDian.EventBus.ITopicEventBus.RegisterConsumer(System.String,System.Action{YiDian.EventBus.TopicSubscriber},System.UInt16,System.Int32,System.Boolean,System.Boolean,System.Boolean,System.Boolean)">
+            <summary>
+            注册消息队列机器队列消费消息方法
+            </summary>
+            <param name="queuename">消费队列名称</param>
+            <param name="action">订阅队列消费消息类型</param>
+            <param name="fetchCount">每次最多获取消息数量</param>
+            <param name="queueLength">队列最大数据存储长度</param>
+            <param name="autodel">是否自动删除队列</param>
+            <param name="durable">队列数据是否持久化</param>
+            <param name="autoAck">队列数据是否自动确认</param>
+            <param name="autoStart">是否在注册完成后开启消息消费</param>
+        </member>
+        <member name="M:YiDian.EventBus.ITopicEventBus.Subscribe``2(System.String,System.Linq.Expressions.Expression{System.Func{``0,System.Boolean}})">
+            <summary>
+            通过指定表达式订阅满足表达式条件的消息
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+            <param name="where">消息条件</param>
+        </member>
+        <member name="M:YiDian.EventBus.ITopicEventBus.Unsubscribe``2(System.String,System.Linq.Expressions.Expression{System.Func{``0,System.Boolean}})">
+            <summary>
+            取消订阅
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+            <param name="where">消息条件</param>
+        </member>
+        <member name="M:YiDian.EventBus.ITopicEventBus.Subscribe``2(System.String,System.String)">
+            <summary>
+            通过指定的路由键前缀订阅消息，可使用*和#
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+            <param name="subkey">路由键前缀</param>
+        </member>
+        <member name="M:YiDian.EventBus.ITopicEventBus.Unsubscribe``2(System.String,System.String)">
+            <summary>
+            取消订阅
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+            <param name="subkey">路由键前缀</param>
+        </member>
+        <member name="M:YiDian.EventBus.ITopicEventBus.SubscribeBytes``1(System.String)">
+            <summary>
+            在指定队列上消费消息
+            <para>此方法会消费绑定在此交换机上的所有消息</para>
+            </summary>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+        </member>
+        <member name="M:YiDian.EventBus.ITopicEventBus.UnsubscribeBytes``1(System.String)">
+            <summary>
+            移除指定队列上消费消息
+            </summary>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+        </member>
+        <member name="M:YiDian.EventBus.ITopicEventBus.SubscribeBytes``1(System.String,System.String)">
+            <summary>
+            通过指定的路由键前缀订阅动态消息，可使用*和#
+            </summary>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+            <param name="subkey">路由键前缀</param>
+        </member>
+        <member name="M:YiDian.EventBus.ITopicEventBus.UnsubscribeBytes``2(System.String,System.String)">
+            <summary>
+            取消订阅
+            </summary>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="queueName">队列名称</param>
+            <param name="subkey">路由键前缀</param>
+        </member>
+        <member name="T:YiDian.EventBus.SubscriptionInfo">
+            <summary>
+            消息订阅信息
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.SubscriptionInfo.IsDynamic">
+            <summary>
+            是否是动态消息
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.SubscriptionInfo.HandlerType">
+            <summary>
+            消息回调类型
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.SubscriptionInfo.EventType">
+            <summary>
+            消息类型
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.SubscriptionInfo.Handler">
+            <summary>
+            消息消费方法
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.SubscriptionInfo.SubKey">
+            <summary>
+            订阅KEY
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.SubscriptionInfo.EventKey">
+            <summary>
+            消息KEY
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.SubscriptionInfo.BrokerName">
+            <summary>
+            交换机名称
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.SubscriptionInfo.Dynamic(System.String,System.String,System.Type,YiDian.EventBus.FastInvokeHandler,System.String)">
+            <summary>
+            创建动态消息
+            </summary>
+            <param name="subkey"></param>
+            <param name="eventKey"></param>
+            <param name="handlerType"></param>
+            <param name="handler"></param>
+            <param name="borkerName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.SubscriptionInfo.Typed(System.String,System.String,System.Type,System.Type,YiDian.EventBus.FastInvokeHandler,System.String)">
+            <summary>
+            创建事件消息
+            </summary>
+            <param name="subkey"></param>
+            <param name="eventKey"></param>
+            <param name="handlerType"></param>
+            <param name="eventType"></param>
+            <param name="handler"></param>
+            <param name="borkerName"></param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>

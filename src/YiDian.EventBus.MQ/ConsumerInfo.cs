@@ -5,7 +5,7 @@ using RabbitMQ.Client.Events;
 
 namespace YiDian.EventBus.MQ
 {
-    public class ConsumerConfig<TEventBus, TSub>
+    internal class ConsumerConfig<TEventBus, TSub>
         where TEventBus : IEventBus
         where TSub : Subscriber<TEventBus>
     {

@@ -9,7 +9,7 @@ using System.Net.Sockets;
 
 namespace YiDian.EventBus.MQ.DefaultConnection
 {
-    public class DefaultRabbitMQPersistentConnection
+    internal class DefaultRabbitMQPersistentConnection
        : IRabbitMQPersistentConnection
     {
         private readonly IConnectionFactory _connectionFactory;

@@ -4,10 +4,16 @@ using System.Text;
 
 namespace YiDian.EventBus.MQ
 {
-    public class DefaultEventsManager : IAppEventsManager
+    /// <summary>
+    /// 默认的内存版本消息管理器
+    /// 消息名称既消息类型名称
+    /// </summary>
+    internal class DefaultEventsManager : IAppEventsManager
     {
         static readonly CheckResult Success = new CheckResult() { IsVaild = true, InvaildMessage = "" };
-
+        /// <summary>
+        /// 
+        /// </summary>
         public bool AllowNoRegisterEvent => true;
 
         public CheckResult GetEventId(string typename)

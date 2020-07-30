@@ -50,29 +50,21 @@ namespace YiDian.EventBus.MQ
 
         public override void Subscribe<T, TH>(string queueName)
         {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    var eventKey = mgr.GetEventKey<T>();
-                    mgr.AddSubscription<T, TH>(eventKey, BROKER_NAME);
-                    break;
-                }
-            }
+            SubscribeInternal<T, TH>(queueName, "");
         }
 
         public override void Unsubscribe<T, TH>(string queueName)
         {
-            foreach (var item in consumerInfos)
-            {
-                if (item.Name == queueName)
-                {
-                    var mgr = item.GetSubMgr();
-                    mgr.RemoveSubscription<T, TH>();
-                    break;
-                }
-            }
+            UnsubscribeInternal<T, TH>(queueName, "");
+        }
+
+        public void SubscribeBytes<TH>(string queueName) where TH : IBytesHandler
+        {
+            SubscribeBytesInternal<TH>(queueName, "");
+        }
+        public void UnsubscribeBytes<TH>(string queueName) where TH : IBytesHandler
+        {
+            UnsubscribeBytesInternal<TH>(queueName, "");
         }
     }
 }

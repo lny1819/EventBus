@@ -64,6 +64,7 @@ namespace YiDian.EventBus
         /// <summary>
         /// 发送字节流消息
         /// 此类型消息只能通过<see cref="IBytesHandler"/>来接收处理
+        /// <para>路由键；当key是空，系统默认生成路由键：_dy；当key不为空时，系统会在key前拼接_dy.</para>
         /// </summary>
         /// <param name="datas">字节流消息</param>
         /// <param name="key">路由键</param>
@@ -90,11 +91,22 @@ namespace YiDian.EventBus
             where T : IMQEvent
             where TH : IEventHandler<T>;
     }
-
+    /// <summary>
+    /// 异步发送确认回调事件消息
+    /// </summary>
     public class ConfirmArg : EventArgs
     {
+        /// <summary>
+        /// 消息是否处理成功
+        /// </summary>
         public bool IsOk { get; set; }
+        /// <summary>
+        /// 消息tag标识
+        /// </summary>
         public ulong Tag { get; set; }
+        /// <summary>
+        /// 是否响应Tag之前的消息
+        /// </summary>
         public bool Multiple { get; set; }
     }
 }

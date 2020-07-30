@@ -4,6 +4,55 @@
         <name>YiDian.EventBus.MQ</name>
     </assembly>
     <members>
+        <member name="T:YiDian.EventBus.MQ.DefaultConnection.DefaultMqConnectSource">
+            <summary>
+            默认MQ连接管理池
+            </summary>
+        </member>
+        <member name="E:YiDian.EventBus.MQ.DefaultConnection.DefaultMqConnectSource.ConnectFail">
+            <summary>
+            无法连接
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.DefaultConnection.DefaultMqConnectSource.#ctor(System.Int32,YiDian.EventBus.IEventBusSubManagerFactory)">
+            <summary>
+            创建一个默认的MQ连接管理池实例
+            </summary>
+            <param name="retryCount">MQ断开重连尝试次数</param>
+            <param name="subfactory">默认订阅管理工厂类</param>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.DefaultConnection.DefaultMqConnectSource.Create(System.String,YiDian.EventBus.IEventBusSubManagerFactory)">
+            <summary>
+            使用订阅管理工厂和指定的连接字符串  创建一个默认的MQ连接
+            </summary>
+            <param name="mqConnstr">MQ连接字符串</param>
+            <param name="subFactory">订阅管理工厂</param>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.DefaultConnection.DefaultMqConnectSource.Get(System.String)">
+            <summary>
+            获取指定名称的MQ连接
+            </summary>
+            <param name="name"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.DefaultConnection.DefaultMqConnectSource.Contains(System.String)">
+            <summary>
+            是否已经存在指定名称的MQ连接
+            </summary>
+            <param name="name"></param>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.DefaultEventsManager">
+            <summary>
+            默认的内存版本消息管理器
+            消息名称既消息类型名称
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.DefaultEventsManager.AllowNoRegisterEvent">
+            <summary>
+            
+            </summary>
+        </member>
         <member name="T:YiDian.EventBus.MQ.DefaultYDSeralizer">
             <summary>
             复合对象使用<see cref="T:YiDian.EventBus.MQ.IYiDianSeralize"/>的默认序列化
@@ -28,7 +77,6 @@
             <param name="autofac"></param>
             <param name="persistentConnection"></param>
             <param name="seralize"></param>
-            <param name="retryCount"></param>
             <param name="cacheCount"></param>
         </member>
         <member name="M:YiDian.EventBus.MQ.DirectEventBus.#ctor(System.String,Microsoft.Extensions.Logging.ILogger{YiDian.EventBus.IDirectEventBus},System.IServiceProvider,YiDian.EventBus.MQ.IRabbitMQPersistentConnection,YiDian.EventBus.IEventSeralize,System.Int32)">
@@ -40,20 +88,12 @@
             <param name="autofac"></param>
             <param name="persistentConnection"></param>
             <param name="seralize"></param>
-            <param name="retryCount"></param>
             <param name="cacheCount"></param>
         </member>
         <member name="P:YiDian.EventBus.MQ.DirectEventBus.BROKER_NAME">
             <summary>
             Exchange名称
             </summary>
-        </member>
-        <member name="M:YiDian.EventBus.MQ.DirectEventBus.GetEventKeyFromRoutingKey(System.String)">
-            <summary>
-            获取路由键
-            </summary>
-            <param name="routingKey"></param>
-            <returns></returns>
         </member>
         <member name="M:YiDian.EventBus.MQ.EventBusBase`2.EnablePubTrans(System.EventHandler{YiDian.EventBus.ConfirmArg})">
             <summary>
@@ -133,6 +173,15 @@
             </summary>
             <param name="web_api_address"></param>
             <param name="allow_no_reg"></param>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.InMemoryEventBusSubManager.AddSubscription``2(System.String,System.String)">
+            <summary>
+            通过制定Key和Exchange 订阅消息
+            </summary>
+            <typeparam name="T">消息类型</typeparam>
+            <typeparam name="TH">消息消费类型</typeparam>
+            <param name="subkey">消息路由键</param>
+            <param name="brokerName">交换机名称</param>
         </member>
         <member name="T:YiDian.EventBus.MQ.JsonSerializer">
             <summary>
@@ -264,6 +313,11 @@
             批量从队列获取消息数量
             </summary>
         </member>
+        <member name="T:YiDian.Soa.Sp.Extensions.MQExtensions">
+            <summary>
+            MqEventBus扩展方法
+            </summary>
+        </member>
         <member name="M:YiDian.Soa.Sp.Extensions.MQExtensions.UseRabbitMq(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.Action{YiDian.EventBus.MQ.DefaultConnection.DefaultMqConnectSource},YiDian.EventBus.IAppEventsManager,System.Int32)">
             <summary>
             注册MQ连接字符串
@@ -293,7 +347,15 @@
             <param name="enven_mgr_api">事件名称管理器地址</param>
             <returns></returns>
         </member>
-        <!-- Badly formed XML comment ignored for member "M:YiDian.Soa.Sp.Extensions.MQExtensions.UseRabbitMq(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.Action{YiDian.EventBus.MQ.DefaultConnection.DefaultMqConnectSource},System.String)" -->
+        <member name="M:YiDian.Soa.Sp.Extensions.MQExtensions.UseRabbitMq(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.Action{YiDian.EventBus.MQ.DefaultConnection.DefaultMqConnectSource},System.String)">
+            <summary>
+            多MQ链接和指定enven_mgr_api地址创建RabbitMq
+            </summary>
+            <param name="builder">构造器</param>
+            <param name="action"></param>
+            <param name="event_mgr_api">只支持WEBAPI地址</param>
+            <returns></returns>
+        </member>
         <member name="M:YiDian.Soa.Sp.Extensions.MQExtensions.AutoCreateAppEvents(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.String,System.String)">
             <summary>
             创建系统所依赖的消息总线中的消息类型

@@ -152,6 +152,8 @@ namespace YiDian.EventBus.MQ
                         if (publishPool == null) publishPool = new PublishPool(_logger, _conn, __seralize, BROKER_NAME, false);
                     }
                 }
+                if (string.IsNullOrEmpty(key)) key = "_dy";
+                else key = "_dy." + key;
                 return publishPool.Send(datas, key, enableTransaction, out _, out tag);
             }
             catch (Exception ex)
@@ -207,8 +209,8 @@ namespace YiDian.EventBus.MQ
                 {
                     var mgr = item.GetSubMgr();
                     var eventKey = mgr.GetEventKey<T>();
-                    var subkey = key + eventKey;
-                    mgr.AddSubscription<T, TH>(subkey, BROKER_NAME);
+                    if (!string.IsNullOrEmpty(key)) eventKey = key + "." + eventKey;
+                    mgr.AddSubscription<T, TH>(eventKey, BROKER_NAME);
                     break;
                 }
             }
@@ -223,8 +225,8 @@ namespace YiDian.EventBus.MQ
                 {
                     var mgr = item.GetSubMgr();
                     var eventKey = mgr.GetEventKey<T>();
-                    var subkey = key + eventKey;
-                    mgr.RemoveSubscription<T, TH>(subkey, BROKER_NAME);
+                    if (!string.IsNullOrEmpty(key)) eventKey = key + "." + eventKey;
+                    mgr.RemoveSubscription<T, TH>(eventKey, BROKER_NAME);
                     break;
                 }
             }
@@ -237,6 +239,8 @@ namespace YiDian.EventBus.MQ
                 if (item.Name == queueName)
                 {
                     var mgr = item.GetSubMgr();
+                    if (!string.IsNullOrEmpty(key)) key = "_dy." + key;
+                    else key = "_dy";
                     mgr.AddBytesSubscription<TH>(key, BROKER_NAME);
                     break;
                 }
@@ -250,6 +254,8 @@ namespace YiDian.EventBus.MQ
                 if (item.Name == queueName)
                 {
                     var mgr = item.GetSubMgr();
+                    if (!string.IsNullOrEmpty(key)) key = "_dy." + key;
+                    else key = "_dy";
                     mgr.RemoveBytesSubscription<TH>(key, BROKER_NAME);
                     break;
                 }
@@ -309,15 +315,26 @@ namespace YiDian.EventBus.MQ
         }
         private void StartProcess(QueueItem<TEventBus, TSub> item)
         {
-            var eventName = GetEventKeyFromRoutingKey(item.Event.RoutingKey);
+            var key = item.Event.RoutingKey;
             var consumer = item.ConsumerConfig;
             var mgr = consumer.GetSubMgr();
-            var handlers = mgr.GetHandlersForEvent(eventName);
+            IEnumerable<SubscriptionInfo> handlers;
+            if (!key.StartsWith("_dy.") && key != "_dy")
+            {
+                var eventName = GetEventKeyFromRoutingKey(key);
+                handlers = mgr.GetHandlersForEvent(eventName, BROKER_NAME);
+            }
+            else
+            {
+                if (key == "_dy") key = "";
+                else key = key.Substring(3);
+                handlers = mgr.GetDymaicHandlersBySubKey(key, BROKER_NAME);
+            }
             var ider = handlers.GetEnumerator();
             var flag = ider.MoveNext();
             if (!flag)
             {
-                _logger.LogWarning("routingkey=" + item.Event.RoutingKey + ",eventName=" + eventName + ",sub event but not set handlers");
+                _logger.LogWarning("routingkey=" + item.Event.RoutingKey + ",sub event but not set handlers");
                 return;
             }
             ProcessEvent(handlers, item);
@@ -328,7 +345,7 @@ namespace YiDian.EventBus.MQ
             var eventName = item.Event.RoutingKey;
             var consumer = item.ConsumerConfig;
             var mgr = consumer.GetSubMgr();
-            var handlers = mgr.GetHandlersForEvent(eventName);
+            var handlers = mgr.GetHandlersForEvent(eventName, BROKER_NAME);
             if (handlers == null) return;
             var ea = item.Event;
             var config = item.ConsumerConfig;

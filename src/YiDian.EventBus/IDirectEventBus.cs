@@ -17,7 +17,7 @@ namespace YiDian.EventBus
         /// </summary>
         /// <typeparam name="T">消息类型</typeparam>
         /// <param name="event">消息</param>
-        /// <param name="key">路由键前缀</param>
+        /// <param name="key">路由键前缀,可以为空</param>
         /// <param name="tag">当启用发送确认时，返回发送消息的tag</param>
         /// <param name="enableTransaction">启用发送确认</param>
         bool Publish<T>(T @event, string key, out ulong tag, bool enableTransaction = false) where T : IMQEvent;

@@ -40,11 +40,15 @@ namespace YiDian.EventBus
         {
             __eventBus.Subscribe<T, TH>(__name, subkey);
         }
-        public void SubscribeBytes<T, TH>(string subkey)
-            where T : IMQEvent
+        public void SubscribeBytes<TH>(string subkey)
             where TH : IBytesHandler
         {
-            __eventBus.SubscribeBytes<T, TH>(__name, subkey);
+            __eventBus.SubscribeBytes<TH>(__name, subkey);
+        }
+        public void SubscribeBytes<TH>()
+        where TH : IBytesHandler
+        {
+            __eventBus.SubscribeBytes<TH>(__name);
         }
     }
     public class DirectSubscriber : Subscriber<IDirectEventBus>
@@ -59,11 +63,16 @@ namespace YiDian.EventBus
         {
             __eventBus.Subscribe<T, TH>(__name);
         }
-        public void SubscribeBytes<T, TH>()
-            where T : IMQEvent
+        public void Subscribe<T, TH>(string key)
+        where T : IMQEvent
+        where TH : IEventHandler<T>
+        {
+            __eventBus.Subscribe<T, TH>(__name, key);
+        }
+        public void SubscribeBytes<TH>(string key)
             where TH : IBytesHandler
         {
-            __eventBus.SubscribeBytes<T, TH>(__name);
+            __eventBus.SubscribeBytes<TH>(__name, key);
         }
     }
     public abstract class Subscriber<TEventBus> where TEventBus : IEventBus

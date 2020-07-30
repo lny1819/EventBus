@@ -6,7 +6,7 @@ using YiDian.EventBus.MQ.KeyAttribute;
 
 namespace YiDian.EventBus.MQ
 {
-    public class InMemorySubFactory : IEventBusSubManagerFactory
+    internal class InMemorySubFactory : IEventBusSubManagerFactory
     {
         readonly IAppEventsManager _manager;
         public InMemorySubFactory(IAppEventsManager manager)
@@ -28,7 +28,7 @@ namespace YiDian.EventBus.MQ
             }
         }
     }
-    public class InMemoryEventBusSubManager : IEventBusSubManager
+    internal class InMemoryEventBusSubManager : IEventBusSubManager
     {
         readonly List<SubscriptionInfo> _subInfos;
         readonly HashSet<string> _sub_keys;
@@ -47,23 +47,6 @@ namespace YiDian.EventBus.MQ
             QueueName = name;
         }
         public string QueueName { get; }
-        public void AddBytesSubscription<T, TH>(string subkey, string brokerName)
-            where T : IMQEvent
-            where TH : IBytesHandler
-        {
-            lock (_subInfos)
-            {
-                var count = _subInfos.Where(x => x.IsDynamic && x.SubKey == subkey && x.HandlerType == typeof(TH)).Count();
-                if (count == 0)
-                {
-                    var eventkey = GetEventKey<T>();
-                    var flag = eventkey == subkey;
-                    var info = SubscriptionInfo.Dynamic(subkey, eventkey, flag, typeof(TH), null, brokerName);
-                    _subInfos.Add(info);
-                }
-            }
-            SubMessage(subkey, brokerName);
-        }
         /// <summary>
         /// 通过制定Key和Exchange 订阅消息
         /// </summary>
@@ -78,57 +61,63 @@ namespace YiDian.EventBus.MQ
             lock (_subInfos)
             {
                 var eventkey = GetEventKey<T>();
-                var count = _subInfos.Where(x => !x.IsDynamic && x.SubKey == subkey && x.HandlerType == typeof(TH)).Count();
-                if (count == 0)
+                var flag = _subInfos.Exists(x => !x.IsDynamic && x.SubKey == subkey && x.EventKey == eventkey && x.HandlerType == typeof(TH) && x.EventType == typeof(T) && x.BrokerName == brokerName);
+                if (!flag)
                 {
-                    var flag = eventkey == subkey;
                     var method = typeof(TH).GetMethod("Handle", new Type[] { typeof(T) });
                     var handler = FastInvoke.GetMethodInvoker(method);
-                    var info = SubscriptionInfo.Typed(subkey, eventkey, flag, typeof(TH), typeof(T), handler, brokerName);
+                    var info = SubscriptionInfo.Typed(subkey, eventkey, typeof(TH), typeof(T), handler, brokerName);
+                    _subInfos.Add(info);
+                }
+            }
+            SubMessage(subkey, brokerName);
+        }
+        public void RemoveSubscription<T, TH>(string subkey, string brokerName)
+            where T : IMQEvent
+            where TH : IEventHandler<T>
+        {
+            lock (_subInfos)
+            {
+                var eventkey = GetEventKey<T>();
+                var one = _subInfos.FirstOrDefault(x => !x.IsDynamic && x.SubKey == subkey && x.EventKey == eventkey && x.HandlerType == typeof(TH) && x.EventType == typeof(T) && x.BrokerName == brokerName);
+                if (one == null) return;
+                var i = _subInfos.Where(x => x.SubKey == subkey && x.BrokerName == brokerName).Count();
+                if (i == 1) UnSubMessage(one.SubKey, one.BrokerName);
+                _subInfos.Remove(one);
+            }
+        }
+        public void AddBytesSubscription<TH>(string subkey, string brokerName) where TH : IBytesHandler
+        {
+            lock (_subInfos)
+            {
+                var flag = _subInfos.Exists(x => x.IsDynamic && x.SubKey == subkey && x.EventKey == "" && x.HandlerType == typeof(TH) && x.BrokerName == brokerName);
+                if (!flag)
+                {
+                    var info = SubscriptionInfo.Dynamic(subkey, "", typeof(TH), null, brokerName);
                     _subInfos.Add(info);
                 }
             }
             SubMessage(subkey, brokerName);
         }
 
-        public void RemoveSubscription(string subkey, string brokerName)
-        {
-            UnSubMessage(subkey, brokerName);
-            lock (_subInfos)
-            {
-                var finds = _subInfos.Where(x => x.SubKey == subkey).ToList();
-                finds.ForEach(x => _subInfos.Remove(x));
-            }
-        }
-        public void RemoveBytesSubscription<T, TH>()
-            where T : IMQEvent
-            where TH : IBytesHandler
+        public void RemoveBytesSubscription<TH>(string subkey, string brokerName) where TH : IBytesHandler
         {
             lock (_subInfos)
             {
-                var one = _subInfos.FirstOrDefault(x => x.EventType == typeof(T) && x.HandlerType == typeof(TH));
-                if (one == null || !one.CanRemoveSubByEvent) return;
-                var i = _subInfos.Where(x => x.EventType == typeof(T) && x.IsDynamic).Count();
+                var one = _subInfos.FirstOrDefault(x => x.IsDynamic && x.SubKey == subkey && x.EventKey == "" && x.HandlerType == typeof(TH) && x.BrokerName == brokerName);
+                if (one == null) return;
+                var i = _subInfos.Where(x => x.SubKey == subkey && x.BrokerName == brokerName).Count();
+                if (i == 1) UnSubMessage(one.SubKey, one.BrokerName);
                 _subInfos.Remove(one);
-                if (i == 0) UnSubMessage(one.SubKey, one.BrokerName);
             }
         }
-        public void RemoveSubscription<T, TH>()
-            where TH : IEventHandler<T>
-            where T : IMQEvent
+        public IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventName, string brokerName)
         {
-            lock (_subInfos)
-            {
-                var one = _subInfos.FirstOrDefault(x => x.EventType == typeof(T) && x.HandlerType == typeof(TH));
-                if (one == null || !one.CanRemoveSubByEvent) return;
-                var i = _subInfos.Where(x => x.EventType == typeof(T) && !x.IsDynamic).Count();
-                _subInfos.Remove(one);
-                if (i == 0) UnSubMessage(one.SubKey, one.BrokerName);
-            }
+            return _subInfos.Where(x => !x.IsDynamic && string.Compare(x.EventKey, eventName, true) == 0 && string.Compare(x.BrokerName, brokerName, true) == 0);
         }
-        public IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventName)
+        public IEnumerable<SubscriptionInfo> GetDymaicHandlersBySubKey(string key, string brokerName)
         {
-            return _subInfos.Where(x => string.Compare(x.EventKey, eventName, true) == 0);
+            return _subInfos.Where(x => x.IsDynamic && string.Compare(x.SubKey, key, true) == 0 && string.Compare(x.BrokerName, brokerName, true) == 0);
         }
         private void SubMessage(string subkey, string brokerName)
         {

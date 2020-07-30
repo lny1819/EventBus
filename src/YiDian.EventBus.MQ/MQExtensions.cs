@@ -1,8 +1,6 @@
-﻿using Autofac;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RabbitMQ.Client;
 using System;
 using System.Text;
 using YiDian.EventBus;
@@ -11,6 +9,9 @@ using YiDian.EventBus.MQ.DefaultConnection;
 
 namespace YiDian.Soa.Sp.Extensions
 {
+    /// <summary>
+    /// MqEventBus扩展方法
+    /// </summary>
     public static class MQExtensions
     {
         const string mqsettings = "mqsettings";
@@ -84,9 +85,9 @@ namespace YiDian.Soa.Sp.Extensions
         /// <summary>
         /// 多MQ链接和指定enven_mgr_api地址创建RabbitMq
         /// </summary>
-        /// <param name="builder">构造器</</param>
+        /// <param name="builder">构造器</param>
         /// <param name="action"></param>
-        /// <param name="enven_mgr_api">只支持WEBAPI地址</param>
+        /// <param name="event_mgr_api">只支持WEBAPI地址</param>
         /// <returns></returns>
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action, string event_mgr_api)
         {

@@ -22,7 +22,8 @@ namespace YiDian.Soa.Sp.Extensions
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="action">创建MQ连接，可通过此方法创建多个连接；不同的连接通过name来区分</param>
-        /// <param name="eventsManager"></param>
+        /// <param name="eventsManager">消息名称管理器</param>
+        /// <param name="retryConnect">MQ断线重连尝试次数</param>
         /// <returns></returns>
         public static SoaServiceContainerBuilder UseRabbitMq(this SoaServiceContainerBuilder builder, Action<DefaultMqConnectSource> action, IAppEventsManager eventsManager = null, int retryConnect = 5)
         {

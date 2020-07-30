@@ -4,10 +4,22 @@ using System.Text;
 
 namespace YiDian.EventBus.MQ.Rpc
 {
+    /// <summary>
+    /// RPC消息响应编码方式
+    /// </summary>
     public enum ContentType
     {
+        /// <summary>
+        /// JSON格式
+        /// </summary>
         Json,
+        /// <summary>
+        /// YD格式
+        /// </summary>
         YDData,
+        /// <summary>
+        /// 纯文本格式
+        /// </summary>
         Text
     }
     internal class HeadersAnalysis

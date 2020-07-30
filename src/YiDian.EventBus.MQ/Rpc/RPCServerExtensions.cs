@@ -2,21 +2,22 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
-using YiDian.EventBus;
 using YiDian.EventBus.MQ;
 using YiDian.EventBus.MQ.DefaultConnection;
 using YiDian.EventBus.MQ.Rpc;
 
 namespace YiDian.Soa.Sp.Extensions
 {
+    /// <summary>
+    /// MQRPC使用扩展方法
+    /// </summary>
     public static class RPCServerExtensions
     {
         /// <summary>
         /// 在指定的MQ上创建一个RPC服务器
         /// </summary>
         /// <param name="builder"></param>
-        /// <param name="config"></param>
-        /// <param name="seralize"></param>
+        /// <param name="config">服务器配置</param>
         /// <returns></returns>
         public static SoaServiceContainerBuilder UseRpc(this SoaServiceContainerBuilder builder, RpcServerConfig config)
         {

@@ -4,7 +4,7 @@
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <RootNamespace>YiDian.EventBus.MQ</RootNamespace>
     <AssemblyName>YiDian.EventBus.MQ</AssemblyName>
-    <Version>3.0.2.4</Version>
+    <Version>3.0.3.1</Version>
     <Company>yanfeng.sun@Live.com</Company>
     <Product>消息总线</Product>
     <Copyright></Copyright>

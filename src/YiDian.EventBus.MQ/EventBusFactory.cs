@@ -74,7 +74,6 @@ namespace YiDian.EventBus.MQ
         /// <summary>
         /// 创建指定序列化，连接地址，交换机名称的IDirectEventBus类型EventBus
         /// </summary>
-        /// <typeparam name="T"></typeparam>
         /// <param name="serializer"></param>
         /// <param name="connSource">连接名称，由连接字符串中的name指定</param>
         /// <param name="brokerName">交换机名称</param>
@@ -97,7 +96,6 @@ namespace YiDian.EventBus.MQ
         /// <summary>
         ///  创建指定序列化，连接地址，交换机名称的ITopicEventBus类型EventBus
         /// </summary>
-        /// <typeparam name="T"></typeparam>
         /// <param name="serializer"></param>
         /// <param name="connSource">连接名称，由连接字符串中的name指定</param>
         /// <param name="brokerName">交换机名称</param>
@@ -120,7 +118,6 @@ namespace YiDian.EventBus.MQ
         /// <summary>
         ///  创建指定序列化，连接地址，交换机名称的IFanoutEventBus类型EventBus
         /// </summary>
-        /// <typeparam name="T"></typeparam>
         /// <param name="serializer"></param>
         /// <param name="connSource">连接名称，由连接字符串中的name指定</param>
         /// <param name="brokerName">交换机名称</param>

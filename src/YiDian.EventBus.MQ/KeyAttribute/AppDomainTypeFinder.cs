@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Linq;
-using System.IO;
 
 namespace YiDian.EventBus.MQ.KeyAttribute
 {
@@ -12,7 +11,7 @@ namespace YiDian.EventBus.MQ.KeyAttribute
     /// 基于特定关键字加载当前上下文中的所有程序集，
     /// 查找所有类型。
     /// </summary>
-    public class AppDomainTypeFinder
+    internal class AppDomainTypeFinder
     {
         #region Fields
 
@@ -229,12 +228,6 @@ namespace YiDian.EventBus.MQ.KeyAttribute
             return !Matches(assemblyFullName, AssemblySkipLoadingPattern)
                    && Matches(assemblyFullName, AssemblyRestrictToLoadingPattern);
         }
-
-        /// <summary>
-        /// 判断是否符合添加条件
-        /// </summary>
-        /// <param name="assemblyFullName"></param>
-        /// <returns></returns>
         protected bool Matches(string assemblyFullName, string pattern)
         {
             return Regex.IsMatch(assemblyFullName, pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);

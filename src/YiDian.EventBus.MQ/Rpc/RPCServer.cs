@@ -13,7 +13,7 @@ using System.Text;
 
 namespace YiDian.EventBus.MQ.Rpc
 {
-    public class RPCServer : IRPCServer
+    internal class RPCServer : IRPCServer
     {
         const string BROKER_NAME = "rpc_event_bus";
         const string AUTOFAC_NAME = "rpc_event_bus";

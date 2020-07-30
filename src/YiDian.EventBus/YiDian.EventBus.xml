@@ -724,6 +724,28 @@
             <param name="autoAck">队列数据是否自动确认</param>
             <param name="autoStart">是否在注册完成后开启消息消费</param>
         </member>
+        <member name="T:YiDian.EventBus.FastInvokeHandler">
+            <summary>
+            
+            </summary>
+            <param name="target"></param>
+            <param name="paramters"></param>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.SetValueDelegate">
+            <summary>
+            
+            </summary>
+            <param name="target"></param>
+            <param name="arg"></param>
+        </member>
+        <member name="T:YiDian.EventBus.VoidMethodExecutor">
+            <summary>
+            
+            </summary>
+            <param name="target"></param>
+            <param name="parameters"></param>
+        </member>
         <member name="T:YiDian.EventBus.ITopicEventBus">
             <summary>
             Topic型 EventBus
@@ -814,7 +836,7 @@
             <param name="queueName">队列名称</param>
             <param name="subkey">路由键前缀</param>
         </member>
-        <member name="M:YiDian.EventBus.ITopicEventBus.UnsubscribeBytes``2(System.String,System.String)">
+        <member name="M:YiDian.EventBus.ITopicEventBus.UnsubscribeBytes``1(System.String,System.String)">
             <summary>
             取消订阅
             </summary>

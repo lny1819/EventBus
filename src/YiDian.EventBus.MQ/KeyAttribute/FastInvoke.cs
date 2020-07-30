@@ -6,9 +6,8 @@ using System.Reflection.Emit;
 
 namespace YiDian.EventBus.MQ.KeyAttribute
 {
-    public class FastInvoke
+    internal class FastInvoke
     {
-
         static object InvokeMethod(FastInvokeHandler invoke, object target, params object[] paramters)
         {
             return invoke(null, paramters);
@@ -148,8 +147,7 @@ namespace YiDian.EventBus.MQ.KeyAttribute
         /// <summary>
         /// Emit获取对象的属性值
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="propertyName"></param>
+        /// <param name="property"></param>
         /// <returns></returns>
         public static Func<object, object> EmitGetter(PropertyInfo property)
         {

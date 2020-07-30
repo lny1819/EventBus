@@ -188,7 +188,7 @@ namespace YiDian.EventBus.MQ
             SubscribeBytesInternal<TH>(queueName, subkey);
         }
 
-        public void UnsubscribeBytes<T, TH>(string queueName, string subkey) where TH : IBytesHandler
+        public void UnsubscribeBytes<TH>(string queueName, string subkey) where TH : IBytesHandler
         {
             UnsubscribeBytesInternal<TH>(queueName, subkey);
         }

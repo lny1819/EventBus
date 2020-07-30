@@ -101,7 +101,7 @@ namespace YiDian.EventBus
         /// <typeparam name="TH">消息消费类型</typeparam>
         /// <param name="queueName">队列名称</param>
         /// <param name="subkey">路由键前缀</param>
-        void UnsubscribeBytes<T, TH>(string queueName, string subkey)
+        void UnsubscribeBytes<TH>(string queueName, string subkey)
             where TH : IBytesHandler;
     }
 }

@@ -13,7 +13,7 @@ using YiDian.Soa.Sp;
 
 namespace YiDian.EventBus.MQ
 {
-    public class MQRpcClientBase
+    internal class MQRpcClientBase
     {
         public const string BROKER_NAME = "rpc_event_bus";
         readonly IRabbitMQPersistentConnection _persistentConnection;

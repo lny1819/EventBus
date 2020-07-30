@@ -23,7 +23,7 @@ namespace YiDian.EventBus.MQ
         }
     }
 
-    public class MqEventsLocalBuild : IAppRun
+    internal class MqEventsLocalBuild : IAppRun
     {
         const string s_property = "        public {0} {1} ";
         const string list_property = "        public {0}[] {1} ";

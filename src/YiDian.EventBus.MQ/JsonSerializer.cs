@@ -46,7 +46,12 @@ namespace YiDian.EventBus.MQ
             var str = Encoding.GetString(data.Span);
             return str.JsonTo(type, opt);
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public uint GetSize(object obj, Type type)
         {
             return 0;
@@ -63,13 +68,25 @@ namespace YiDian.EventBus.MQ
             var str = @event.ToJson(opt);
             return new ReadOnlyMemory<byte>(Encoding.GetBytes(str));
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="event"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public ReadOnlyMemory<byte> Serialize(object @event, Type type)
         {
             var str = @event.ToJson(opt);
             return new ReadOnlyMemory<byte>(Encoding.GetBytes(str));
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="event"></param>
+        /// <param name="type"></param>
+        /// <param name="bs"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
         public int Serialize(object @event, Type type, byte[] bs, int offset)
         {
             var str = @event.ToJson(opt);

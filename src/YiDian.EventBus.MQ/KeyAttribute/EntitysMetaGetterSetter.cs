@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace YiDian.EventBus.MQ.KeyAttribute
 {
-    public class EntitysMetas
+    internal class EntitysMetas
     {
         static readonly ConcurrentDictionary<Type, ConcurrentDictionary<string, Tuple<Func<object, object>, SetValueDelegate>>> metas = new ConcurrentDictionary<Type, ConcurrentDictionary<string, Tuple<Func<object, object>, SetValueDelegate>>>();
 

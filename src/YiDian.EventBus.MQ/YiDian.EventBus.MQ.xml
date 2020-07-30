@@ -161,7 +161,6 @@
             <summary>
             创建指定序列化，连接地址，交换机名称的IDirectEventBus类型EventBus
             </summary>
-            <typeparam name="T"></typeparam>
             <param name="serializer"></param>
             <param name="connSource">连接名称，由连接字符串中的name指定</param>
             <param name="brokerName">交换机名称</param>
@@ -172,7 +171,6 @@
             <summary>
              创建指定序列化，连接地址，交换机名称的ITopicEventBus类型EventBus
             </summary>
-            <typeparam name="T"></typeparam>
             <param name="serializer"></param>
             <param name="connSource">连接名称，由连接字符串中的name指定</param>
             <param name="brokerName">交换机名称</param>
@@ -183,7 +181,6 @@
             <summary>
              创建指定序列化，连接地址，交换机名称的IFanoutEventBus类型EventBus
             </summary>
-            <typeparam name="T"></typeparam>
             <param name="serializer"></param>
             <param name="connSource">连接名称，由连接字符串中的name指定</param>
             <param name="brokerName">交换机名称</param>
@@ -271,6 +268,113 @@
             <param name="subkey">消息路由键</param>
             <param name="brokerName">交换机名称</param>
         </member>
+        <member name="T:YiDian.EventBus.MQ.IRabbitMQPersistentConnection">
+            <summary>
+            MQ连接
+            </summary>
+        </member>
+        <member name="E:YiDian.EventBus.MQ.IRabbitMQPersistentConnection.ConnectFail">
+            <summary>
+            连接失败
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.IRabbitMQPersistentConnection.Name">
+            <summary>
+            连接名称
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.IRabbitMQPersistentConnection.IsConnected">
+            <summary>
+            是否连接成功
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.IRabbitMQPersistentConnection.SubsFactory">
+            <summary>
+            订阅管理器工厂
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.IRabbitMQPersistentConnection.TryConnect">
+            <summary>
+            重连
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.IRabbitMQPersistentConnection.CreateModel">
+            <summary>
+            创建Channel
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.IYiDianSeralize">
+            <summary>
+            消息默认序列化接口
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.IYiDianSeralize.ToBytes(YiDian.EventBus.MQ.WriteStream)">
+            <summary>
+            序列化写入
+            </summary>
+            <param name="stream"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.IYiDianSeralize.BytesTo(YiDian.EventBus.MQ.ReadStream)">
+            <summary>
+            反序列化读取
+            </summary>
+            <param name="stream"></param>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.IYiDianSeralize.BytesSize(System.Text.Encoding)">
+            <summary>
+            消息长度
+            </summary>
+            <param name="encoding"></param>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.EventPropertyType">
+            <summary>
+            消息字段长度类型
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.MQ.EventPropertyType.L_8">
+            <summary>
+            8字节
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.MQ.EventPropertyType.L_16">
+            <summary>
+            16字节
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.MQ.EventPropertyType.L_32">
+            <summary>
+            32字节
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.MQ.EventPropertyType.L_Date">
+            <summary>
+            日期，11字节
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.MQ.EventPropertyType.L_64">
+            <summary>
+            64字节
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.MQ.EventPropertyType.L_Str">
+            <summary>
+            字符串，可变长
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.MQ.EventPropertyType.L_Array">
+            <summary>
+            数组，可变长
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.MQ.EventPropertyType.L_N">
+            <summary>
+            复合类型对象，可变长
+            </summary>
+        </member>
         <member name="T:YiDian.EventBus.MQ.JsonSerializer">
             <summary>
             实现IEventSeralize的Json序列化
@@ -299,12 +403,38 @@
             <param name="type"></param>
             <returns></returns>
         </member>
+        <member name="M:YiDian.EventBus.MQ.JsonSerializer.GetSize(System.Object,System.Type)">
+            <summary>
+            
+            </summary>
+            <param name="obj"></param>
+            <param name="type"></param>
+            <returns></returns>
+        </member>
         <member name="M:YiDian.EventBus.MQ.JsonSerializer.Serialize``1(``0)">
             <summary>
             序列化对象为字节数组
             </summary>
             <typeparam name="T"></typeparam>
             <param name="event"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.JsonSerializer.Serialize(System.Object,System.Type)">
+            <summary>
+            
+            </summary>
+            <param name="event"></param>
+            <param name="type"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.JsonSerializer.Serialize(System.Object,System.Type,System.Byte[],System.Int32)">
+            <summary>
+            
+            </summary>
+            <param name="event"></param>
+            <param name="type"></param>
+            <param name="bs"></param>
+            <param name="offset"></param>
             <returns></returns>
         </member>
         <member name="T:YiDian.EventBus.MQ.KeyAttribute.AppDomainTypeFinder">
@@ -356,13 +486,6 @@
             <param name="assemblyFullName"></param>
             <returns></returns>
         </member>
-        <member name="M:YiDian.EventBus.MQ.KeyAttribute.AppDomainTypeFinder.Matches(System.String,System.String)">
-            <summary>
-            判断是否符合添加条件
-            </summary>
-            <param name="assemblyFullName"></param>
-            <returns></returns>
-        </member>
         <member name="M:YiDian.EventBus.MQ.KeyAttribute.AppDomainTypeFinder.LoadMatchingAssemblies(System.String)">
             <summary>
             加载目录下符合条件的程序集
@@ -380,9 +503,333 @@
             <summary>
             Emit获取对象的属性值
             </summary>
-            <typeparam name="T"></typeparam>
-            <param name="propertyName"></param>
+            <param name="property"></param>
             <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.KeyAttribute.SeralizeIndex">
+            <summary>
+            序列化序号
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.KeyAttribute.SeralizeIndex.#ctor(System.Int32)">
+            <summary>
+            创建一个序列化序号特性实例
+            </summary>
+            <param name="v">序号</param>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.KeyAttribute.SeralizeIndex.Index">
+            <summary>
+            序号
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.ReadStream">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.#ctor(System.ReadOnlyMemory{System.Byte})">
+            <summary>
+            
+            </summary>
+            <param name="memory"></param>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.GetOrginalDatas">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.ReadStream.DataSize">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.ReadStream.Encoding">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.ReadStream.StreamLength">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadHeaders">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadInt32">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReReadInt32">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadUInt32">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadInt16">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadUInt16">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadInt64">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadUInt64">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadDouble">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadArrayString">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadArrayBool">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadArrayDate">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadArrayDouble">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadArrayInt32">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadArrayUInt32">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadArrayInt64">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadArrayUInt64">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadArrayInt16">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadArrayUInt16">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadArrayByte">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadArray(System.Type)">
+            <summary>
+            
+            </summary>
+            <param name="type"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadEventObj(System.Type)">
+            <summary>
+            
+            </summary>
+            <param name="type"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadString">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadDate">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.ReadByte">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.ReadStream.Advance(System.Int32)">
+            <summary>
+            
+            </summary>
+            <param name="length"></param>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.IRpcClientFactory">
+            <summary>
+            RPC客户端工厂类接口
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.IRpcClientFactory.Create(System.String,System.Int32)">
+            <summary>
+            创建一个MQRPC客户端实例
+            </summary>
+            <param name="serverId">RPC服务器编码</param>
+            <param name="timeOut">请求超时时间，单位：秒</param>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.RpcClientFactory">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.RpcClientFactory.Create(System.String,System.Int32)">
+            <summary>
+            创建一个MQRPC客户端实例
+            </summary>
+            <param name="serverId">RPC服务器编码</param>
+            <param name="timeOut">请求超时时间，单位：秒</param>
+            <returns></returns>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.Rpc.Abstractions.Request">
+            <summary>
+            RPC请求上下文
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.Rpc.Abstractions.Request.Headers">
+            <summary>
+            请求头
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.Rpc.Abstractions.Request.Url">
+            <summary>
+            请求地址
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.Rpc.Abstractions.Request.Seralize">
+            <summary>
+            请求体序列化方式
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.Rpc.Abstractions.Request.ContentLength">
+            <summary>
+            请求体内容长度
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.Rpc.Abstractions.Request.Body">
+            <summary>
+            请求体
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.Rpc.Abstractions.Request.InTime">
+            <summary>
+            接收请求时间
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.Rpc.Abstractions.RpcController">
+            <summary>
+            RPC服务端用户控制器基类
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.Rpc.Abstractions.RpcController.Request">
+            <summary>
+            请求上下文
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.Rpc.ActionResult`1">
+            <summary>
+            RPC服务数据响应格式
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.Rpc.ActionResult`1.#ctor(`0)">
+            <summary>
+            
+            </summary>
+            <param name="t"></param>
+        </member>
+        <member name="M:YiDian.EventBus.MQ.Rpc.ActionResult`1.op_Implicit(`0)~YiDian.EventBus.MQ.Rpc.ActionResult{`0}">
+            <summary>
+            
+            </summary>
+            <param name="t"></param>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.Rpc.ActionResult">
+            <summary>
+            RPC服务数据响应格式
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.MQ.Rpc.ActionResult.result">
+            <summary>
+            数据
+            </summary>
+        </member>
+        <member name="T:YiDian.EventBus.MQ.Rpc.ContentType">
+            <summary>
+            RPC消息响应编码方式
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.MQ.Rpc.ContentType.Json">
+            <summary>
+            JSON格式
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.MQ.Rpc.ContentType.YDData">
+            <summary>
+            YD格式
+            </summary>
+        </member>
+        <member name="F:YiDian.EventBus.MQ.Rpc.ContentType.Text">
+            <summary>
+            纯文本格式
+            </summary>
         </member>
         <member name="T:YiDian.EventBus.MQ.Rpc.IMQRpcClient">
             <summary>
@@ -467,6 +914,11 @@
             Action名称字典 Action名称=methodInfo
             </summary>
         </member>
+        <member name="T:YiDian.EventBus.MQ.Rpc.RpcServerConfig">
+            <summary>
+            RPC服务器配置
+            </summary>
+        </member>
         <member name="P:YiDian.EventBus.MQ.Rpc.RpcServerConfig.ApplicationId">
             <summary>
             服务器ID
@@ -474,9 +926,24 @@
             通过配置相同名称的服务器达到服务器间的负载均衡
             </summary>
         </member>
+        <member name="P:YiDian.EventBus.MQ.Rpc.RpcServerConfig.MQName">
+            <summary>
+            MQ连接名称
+            </summary>
+        </member>
         <member name="P:YiDian.EventBus.MQ.Rpc.RpcServerConfig.Fetchout">
             <summary>
             批量从队列获取消息数量
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.Rpc.RpcServerConfig.ControllerCache">
+            <summary>
+            缓存大小
+            </summary>
+        </member>
+        <member name="P:YiDian.EventBus.MQ.Rpc.RpcServerConfig.Delay">
+            <summary>
+            请求最大延迟时间
             </summary>
         </member>
         <member name="T:YiDian.EventBus.MQ.Rpc.TextSeralize">
@@ -823,7 +1290,8 @@
             </summary>
             <param name="builder"></param>
             <param name="action">创建MQ连接，可通过此方法创建多个连接；不同的连接通过name来区分</param>
-            <param name="eventsManager"></param>
+            <param name="eventsManager">消息名称管理器</param>
+            <param name="retryConnect">MQ断线重连尝试次数</param>
             <returns></returns>
         </member>
         <member name="M:YiDian.Soa.Sp.Extensions.MQExtensions.UseRabbitMq(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.String,System.String)">
@@ -896,13 +1364,17 @@
             <param name="broker_name">交换机名称</param>
             <returns></returns>
         </member>
+        <member name="T:YiDian.Soa.Sp.Extensions.RPCServerExtensions">
+            <summary>
+            MQRPC使用扩展方法
+            </summary>
+        </member>
         <member name="M:YiDian.Soa.Sp.Extensions.RPCServerExtensions.UseRpc(YiDian.Soa.Sp.SoaServiceContainerBuilder,YiDian.EventBus.MQ.Rpc.RpcServerConfig)">
             <summary>
             在指定的MQ上创建一个RPC服务器
             </summary>
             <param name="builder"></param>
-            <param name="config"></param>
-            <param name="seralize"></param>
+            <param name="config">服务器配置</param>
             <returns></returns>
         </member>
         <member name="M:YiDian.Soa.Sp.Extensions.RPCServerExtensions.UseMqRpcClient(YiDian.Soa.Sp.SoaServiceContainerBuilder,System.String,System.String)">

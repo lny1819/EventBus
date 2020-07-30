@@ -87,12 +87,6 @@ namespace YiDian.EventBus.MQ
         public abstract void Unsubscribe<T, TH>(string queueName)
             where T : IMQEvent
             where TH : IEventHandler<T>;
-        public abstract void SubscribeBytes<T, TH>(string queueName)
-         where T : IMQEvent
-         where TH : IBytesHandler;
-        public abstract void UnsubscribeBytes<T, TH>(string queueName)
-            where T : IMQEvent
-            where TH : IBytesHandler;
         public void EnableHandlerCache(int cacheLength)
         {
             hanlerCacheMgr.CacheLength = cacheLength;
@@ -145,7 +139,27 @@ namespace YiDian.EventBus.MQ
         }
         #endregion
 
-        #region Publish
+        #region Event Publish And Subscribe
+        public bool Publish(ReadOnlyMemory<byte> datas, string key, out ulong tag, bool enableTransaction = false)
+        {
+            tag = 0;
+            try
+            {
+                if (publishPool == null)
+                {
+                    lock (typeof(PublishPool))
+                    {
+                        if (publishPool == null) publishPool = new PublishPool(_logger, _conn, __seralize, BROKER_NAME, false);
+                    }
+                }
+                return publishPool.Send(datas, key, enableTransaction, out _, out tag);
+            }
+            catch (Exception ex)
+            {
+                LogError(ex);
+                return false;
+            }
+        }
 
         public bool Publish<T>(T @event) where T : IMQEvent
         {
@@ -199,7 +213,7 @@ namespace YiDian.EventBus.MQ
                 }
             }
         }
-        protected void UnsubscribeInternal<T, TH>(string queueName)
+        protected void UnsubscribeInternal<T, TH>(string queueName, string key)
             where T : IMQEvent
             where TH : IEventHandler<T>
         {
@@ -208,7 +222,35 @@ namespace YiDian.EventBus.MQ
                 if (item.Name == queueName)
                 {
                     var mgr = item.GetSubMgr();
-                    mgr.RemoveSubscription<T, TH>();
+                    var eventKey = mgr.GetEventKey<T>();
+                    var subkey = key + eventKey;
+                    mgr.RemoveSubscription<T, TH>(subkey, BROKER_NAME);
+                    break;
+                }
+            }
+        }
+        protected void SubscribeBytesInternal<TH>(string queueName, string key)
+        where TH : IBytesHandler
+        {
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    mgr.AddBytesSubscription<TH>(key, BROKER_NAME);
+                    break;
+                }
+            }
+        }
+        protected void UnsubscribeBytesInternal<TH>(string queueName, string key)
+            where TH : IBytesHandler
+        {
+            foreach (var item in consumerInfos)
+            {
+                if (item.Name == queueName)
+                {
+                    var mgr = item.GetSubMgr();
+                    mgr.RemoveBytesSubscription<TH>(key, BROKER_NAME);
                     break;
                 }
             }

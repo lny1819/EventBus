@@ -33,8 +33,12 @@ namespace YiDian.EventBus.MQ
 
         internal bool Send<T>(T @event, string pubkey, bool enableTransaction, out int length, out ulong seq_no, int trans_time_out = 10) where T : IMQEvent
         {
-            seq_no = 0;
             var data = __seralize.Serialize(@event);
+            return Send(data, pubkey, enableTransaction, out length, out seq_no, trans_time_out);
+        }
+        internal bool Send(ReadOnlyMemory<byte> data, string pubkey, bool enableTransaction, out int length, out ulong seq_no, int trans_time_out = 10)
+        {
+            seq_no = 0;
             length = data.Length;
             if (!_allwaysEnableTrans && enableTransaction) _pubC.ConfirmSelect();
             if (_allwaysEnableTrans || enableTransaction) seq_no = _pubC.NextPublishSeqNo;

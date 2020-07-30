@@ -3,22 +3,25 @@ using System.Collections.Generic;
 
 namespace YiDian.EventBus
 {
+    /// <summary>
+    /// 消息订阅管理器
+    /// </summary>
     public interface IEventBusSubManager
     {
+        /// <summary>
+        /// 
+        /// </summary>
         event EventHandler<ValueTuple<string, string>> OnEventRemoved;
         event EventHandler<ValueTuple<string, string>> OnEventAdd;
         string QueueName { get; }
-        void AddBytesSubscription<T, TH>(string subkey, string brokerName)
-            where T : IMQEvent
+        void AddBytesSubscription<TH>(string subkey, string brokerName)
             where TH : IBytesHandler;
-        void RemoveBytesSubscription<T, TH>()
-            where T : IMQEvent
+        void RemoveBytesSubscription<TH>(string subkey, string brokerName)
             where TH : IBytesHandler;
         void AddSubscription<T, TH>(string subkey, string brokerName)
             where T : IMQEvent
             where TH : IEventHandler<T>;
-        void RemoveSubscription(string subkey, string brokerName);
-        void RemoveSubscription<T, TH>()
+        void RemoveSubscription<T, TH>(string subkey, string brokerName)
              where T : IMQEvent
              where TH : IEventHandler<T>;
         IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventKey);

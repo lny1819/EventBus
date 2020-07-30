@@ -10,6 +10,20 @@ namespace YiDian.EventBus
     public interface IFanoutEventBus : IEventBus
     {
         /// <summary>
+        /// 在指定队列上消费消息
+        /// </summary>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
+        void SubscribeBytes<TH>(string queueName)
+          where TH : IBytesHandler;
+        /// <summary>
+        /// 移除指定队列上消费消息
+        /// </summary>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
+        void UnsubscribeBytes<TH>(string queueName)
+            where TH : IBytesHandler;
+        /// <summary>
         /// 注册消息队列机器队列消费消息方法
         /// </summary>
         /// <param name="queuename">消费队列名称</param>

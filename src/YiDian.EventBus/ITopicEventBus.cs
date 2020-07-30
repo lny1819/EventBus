@@ -9,6 +9,18 @@ namespace YiDian.EventBus
     public interface ITopicEventBus : IEventBus
     {
         /// <summary>
+        /// 通过自定义路由键前缀来发送消息 当消息体有keyIndex标识时 会将标识拼接在路由键的头部
+        /// <para>总是在路由键后追加消息在<see cref="IAppEventsManager"/>中的定义</para>
+        /// 如key=x, 在<see cref="IAppEventsManager"/>中的定义为y 则最终的路由键为x.y
+        ///  <para>当此消息总线是<see cref="ITopicEventBus"/>总线类型且消息体有keyIndex标识时 路由键为：a.b.c.x.y（a,b,c未keyIndex标识定义） ；没有keyIndex标识时，为x.y</para>
+        /// </summary>
+        /// <typeparam name="T">消息类型</typeparam>
+        /// <param name="event">消息</param>
+        /// <param name="key">路由键前缀</param>
+        /// <param name="tag">当启用发送确认时，返回发送消息的tag</param>
+        /// <param name="enableTransaction">启用发送确认</param>
+        bool Publish<T>(T @event, string key, out ulong tag, bool enableTransaction = false) where T : IMQEvent;
+        /// <summary>
         /// 注册消息队列机器队列消费消息方法
         /// </summary>
         /// <param name="queuename">消费队列名称</param>
@@ -60,6 +72,20 @@ namespace YiDian.EventBus
         void Unsubscribe<T, TH>(string queueName, string subkey)
             where T : IMQEvent
             where TH : IEventHandler<T>;
+        /// <summary>
+        /// 在指定队列上消费消息
+        /// </summary>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
+        void SubscribeBytes<TH>(string queueName)
+          where TH : IBytesHandler;
+        /// <summary>
+        /// 移除指定队列上消费消息
+        /// </summary>
+        /// <typeparam name="TH">消息消费类型</typeparam>
+        /// <param name="queueName">队列名称</param>
+        void UnsubscribeBytes<TH>(string queueName)
+            where TH : IBytesHandler;
         /// <summary>
         /// 通过指定的路由键前缀订阅动态消息，可使用*和#
         /// </summary>

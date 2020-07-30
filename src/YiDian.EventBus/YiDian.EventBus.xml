@@ -725,6 +725,11 @@
             <param name="autoAck">队列数据是否自动确认</param>
             <param name="autoStart">是否在注册完成后开启消息消费</param>
         </member>
+        <member name="T:YiDian.EventBus.IMQEvent">
+            <summary>
+            定义消息类型接口
+            </summary>
+        </member>
         <member name="T:YiDian.EventBus.FastInvokeHandler">
             <summary>
             
@@ -878,6 +883,12 @@
             
             </summary>
             <typeparam name="T"></typeparam>
+            <typeparam name="TH"></typeparam>
+        </member>
+        <member name="M:YiDian.EventBus.FanoutSubscriber.SubscribeBytes``1">
+            <summary>
+            
+            </summary>
             <typeparam name="TH"></typeparam>
         </member>
         <member name="T:YiDian.EventBus.TopicSubscriber">
